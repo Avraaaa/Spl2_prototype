@@ -95,6 +95,72 @@ function checkPrerequisites() {
 function currentState() {
   return JSON.parse(readFileSync(join(root, 'docs/progress.json'), 'utf8'));
 }
+// ---- Serialized integration (supports parallel runner processes) -------------------------
+const LOCK = join(root, '.agent_runs', 'merge.lock');
+const sleepMs = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+function withMergeLock(fn) {
+  mkdirSync(join(root, '.agent_runs'), { recursive: true });
+  const started = Date.now();
+  for (;;) {
+    try { writeFileSync(LOCK, `${process.pid} ${new Date().toISOString()}`, { flag: 'wx' }); break; }
+    catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      if (Date.now() - started > 90 * 60_000) throw new Error(`Merge lock held too long: ${readFileSync(LOCK, 'utf8')}`);
+      sleepMs(5_000);
+    }
+  }
+  try { return fn(); } finally { rmSync(LOCK, { force: true }); }
+}
+const GENERATED_FILES = ['contracts/openapi.yaml', 'apps/web/src/api/generated/schema.d.ts', 'docs/progress.json'];
+function runGates(task, wd, logs, env, label) {
+  run('node', ['scripts/check-contract.mjs', '--write'], wd, { timeout: 600_000, log: join(logs, `generate-${label}.log`) });
+  const evidence = [];
+  for (let idx = 0; idx < task.gates.length; idx++) {
+    run(task.gates[idx], [], wd, { shell: true, timeout: data.policy.timeout_seconds * 1000, log: join(logs, `gate-${label}-${idx}.log`), env });
+    evidence.push(`${task.gates[idx]}: EXIT 0`);
+    console.log(`PASS ${task.id} [${label}] ${task.gates[idx]}`);
+  }
+  return evidence;
+}
+/**
+ * Under a repo-wide lock: rebase the task commit onto the current HEAD (other tasks may have merged),
+ * auto-resolve only generated files, regenerate + re-run all gates if the base moved, record
+ * progress, then fast-forward the main branch. Any real conflict or gate failure => BLOCKED.
+ */
+function integrate(task, branch, wd, base, logs, env, evidence) {
+  withMergeLock(() => {
+    const head = git(root, 'rev-parse', 'HEAD');
+    if (head !== base) {
+      console.log(`REBASE ${task.id} onto ${head.slice(0, 8)}`);
+      try { git(wd, 'rebase', head); }
+      catch {
+        for (;;) {
+          const conflicts = git(wd, 'diff', '--name-only', '--diff-filter=U').split('\n').filter(Boolean);
+          const real = conflicts.filter(f => !GENERATED_FILES.includes(f));
+          if (real.length) {
+            try { git(wd, 'rebase', '--abort'); } catch { /* already aborted */ }
+            throw new Error(`Rebase conflict in ${real.join(', ')}; branch ${branch} kept for manual integration`);
+          }
+          // Generated files: take upstream; they are regenerated below.
+          for (const f of conflicts) { git(wd, 'checkout', '--ours', '--', f); git(wd, 'add', f); }
+          try { run('git', ['-c', 'core.editor=true', 'rebase', '--continue'], wd); break; }
+          catch (e) { if (!git(wd, 'diff', '--name-only', '--diff-filter=U')) throw e; }
+        }
+      }
+      evidence = { ...evidence, gates: runGates(task, wd, logs, env, 'rebased'), rebased_onto: head };
+    }
+    const state = currentState();
+    if (!state.completed.includes(task.id)) state.completed.push(task.id);
+    state.latest_review = 'PASS';
+    state.evidence = { ...(state.evidence ?? {}), [task.id]: evidence };
+    state.last_updated = new Date().toISOString().slice(0, 10);
+    writeFileSync(join(wd, 'docs/progress.json'), JSON.stringify(state, null, 2) + '\n');
+    git(wd, 'add', '-A');
+    git(wd, 'commit', '--amend', '--no-edit');
+    git(root, 'merge', '--ff-only', branch);
+    console.log(`PASS ${task.id}: locally merged. GitHub CI remains an independent gate.`);
+  });
+}
 function doTask(task) {
   const completed = currentState().completed;
   if (completed.includes(task.id)) return console.log(`SKIP ${task.id}: completed`);
@@ -115,12 +181,14 @@ function doTask(task) {
     run('node', ['scripts/bootstrap-agents.mjs'], wd);
     // CLAUDE.md is intentionally untracked (owner decision); copy the local one into the worktree.
     if (existsSync(join(root, 'CLAUDE.md'))) cpSync(join(root, 'CLAUDE.md'), join(wd, 'CLAUDE.md'));
+    // Per-task test database so parallel runner processes never share test_datasoft.
+    gateEnv = { POSTGRES_TEST_DB: `test_datasoft_${task.id.toLowerCase().replace(/[^a-z0-9]/g, '_')}` };
     const usesDocker = task.gates.some(g => /\bdocker\b/.test(g));
     if (usesDocker) {
       cpSync(join(wd, '.env.example'), join(wd, '.env'));
       const project = `datasoft_${task.id.toLowerCase().replace('-', '')}_${base.slice(0, 6)}`;
       const ports = 19000 + data.tasks.findIndex(t => t.id === task.id) * 10;
-      gateEnv = { COMPOSE_PROJECT_NAME: project, API_PUBLISHED_PORT: String(ports), ML_PUBLISHED_PORT: String(ports + 1), WEB_PUBLISHED_PORT: String(ports + 2) };
+      gateEnv = { ...gateEnv, COMPOSE_PROJECT_NAME: project, API_PUBLISHED_PORT: String(ports), ML_PUBLISHED_PORT: String(ports + 1), WEB_PUBLISHED_PORT: String(ports + 2) };
     }
     // Native setup: a fresh worktree has no .venv or node_modules (both gitignored).
     run('uv', ['sync', '--locked'], wd, { timeout: 600_000, log: join(logs, 'setup-uv.log') });
@@ -219,21 +287,14 @@ function doTask(task) {
     }
     if (!success) throw new Error('No confirmed PASS');
     checkChanges(wd, base, task);
-    const state = currentState();
-    state.completed.push(task.id);
-    state.latest_review = 'PASS';
-    state.evidence = state.evidence ?? {};
-    state.evidence[task.id] = { mode: 'native-windows', implemented_by: 'codex (agent-runner)', gates: lastEvidence, review: 'codex read-only PASS', attempts: attemptsUsed, base };
-    state.last_updated = new Date().toISOString().slice(0, 10);
-    writeFileSync(join(wd, 'docs/progress.json'), JSON.stringify(state, null, 2) + '\n');
     git(wd, 'add', '-A');
     // Owner is the sole author: local git identity, no Co-Authored-By or tool attribution.
     git(wd, 'commit', '-m', `feat(${task.id.toLowerCase()}): ${task.title.toLowerCase()}`);
-    git(root, 'merge', '--ff-only', branch);
+    integrate(task, branch, wd, base, logs, gateEnv,
+      { mode: 'native-windows', implemented_by: 'codex (agent-runner)', gates: lastEvidence, review: 'codex read-only PASS', attempts: attemptsUsed, base });
     merged = true;
-    console.log(`PASS ${task.id}: locally merged. GitHub CI remains an independent gate.`);
   } finally {
-    if (attached && gateEnv) {
+    if (attached && gateEnv?.COMPOSE_PROJECT_NAME) {
       try { run('docker', ['compose', '-f', 'compose.yaml', 'down', '--remove-orphans', '-v'], wd, { timeout: 120_000, env: gateEnv }); }
       catch (e) { console.error(`Could not clean disposable containers: ${e.message.slice(0, 300)}`); }
     }
@@ -248,7 +309,31 @@ function doTask(task) {
     console.log(`Evidence stored locally under ${logs}`);
   }
 }
-if (show) {
+const integrateId = argValue('--integrate');
+if (integrateId) {
+  // Recover a finished, reviewed task branch whose fast-forward failed (e.g. main moved meanwhile).
+  const task = data.tasks.find(t => t.id === integrateId);
+  const branch = argValue('--branch');
+  if (!task || !branch) { console.error('Usage: --integrate <TASK> --branch <agent/branch>'); process.exit(2); }
+  const base = git(root, 'merge-base', 'HEAD', branch);
+  const wd = join(mkdtempSync(join(tmpdir(), `datasoft-int-${task.id.toLowerCase()}-`)), 'repo');
+  const logs = join(root, '.agent_runs', task.id, `integrate-${base.slice(0, 8)}`);
+  mkdirSync(logs, { recursive: true });
+  run('git', ['worktree', 'add', wd, branch], root, { timeout: 60_000 });
+  try {
+    run('node', ['scripts/bootstrap-agents.mjs'], wd);
+    if (existsSync(join(root, 'CLAUDE.md'))) cpSync(join(root, 'CLAUDE.md'), join(wd, 'CLAUDE.md'));
+    run('uv', ['sync', '--locked'], wd, { timeout: 600_000, log: join(logs, 'setup-uv.log') });
+    run('npm', ['ci', '--prefix', 'apps/web', '--no-audit', '--no-fund', '--prefer-offline'], wd, { shell: true, timeout: 600_000, log: join(logs, 'setup-npm.log') });
+    const env = { POSTGRES_TEST_DB: `test_datasoft_${task.id.toLowerCase().replace(/[^a-z0-9]/g, '_')}` };
+    const prior = JSON.parse(readFileSync(join(wd, 'docs/progress.json'), 'utf8')).evidence?.[task.id] ?? {};
+    // Always re-run gates on the branch's own result before integrating.
+    const gates = runGates(task, wd, logs, env, 'integrate');
+    integrate(task, branch, wd, base, logs, env, { ...prior, gates, integrated_by: 'agent-runner --integrate' });
+    try { git(root, 'branch', '-d', branch); } catch { /* keep */ }
+  } catch (error) { console.error(`BLOCKED ${task.id}: ${error.message}`); process.exitCode = 1; }
+  finally { try { run('git', ['worktree', 'remove', '--force', wd], root, { timeout: 300_000 }); } catch { /* manual cleanup */ } }
+} else if (show) {
   const completed = currentState().completed;
   for (const t of data.tasks) {
     const state = completed.includes(t.id) ? 'DONE' : t.blocked_until ? 'HOLD' : 'TODO';

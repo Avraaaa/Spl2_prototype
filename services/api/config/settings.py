@@ -58,6 +58,8 @@ DATABASES = {
         "HOST": os.getenv("DATABASE_HOST", "localhost"),
         "PORT": os.getenv("DATABASE_PORT", "5432"),
         "CONN_MAX_AGE": 0,
+        # Parallel agent-runner tasks each get their own test database (default test_<NAME>).
+        "TEST": {"NAME": os.getenv("POSTGRES_TEST_DB") or None},
     }
 }
 AUTH_PASSWORD_VALIDATORS = [
