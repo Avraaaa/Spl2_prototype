@@ -3,6 +3,8 @@ from typing import Any
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import BasePermission
 
+from domains.tenants.selectors import portal_organization
+
 from .services import is_datasoft_admin
 
 
@@ -24,9 +26,7 @@ class HasPortalAccount(BasePermission):
     """Authenticated Django users without an Account (e.g. bare superusers) get no API access."""
 
     def has_permission(self, request: Any, view: Any) -> bool:
-        return bool(
-            request.user and request.user.is_authenticated and hasattr(request.user, "account")
-        )
+        return portal_organization(request.user) is not None
 
 
 class IsDataSoftAdmin(BasePermission):

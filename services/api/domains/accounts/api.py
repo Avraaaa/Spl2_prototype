@@ -19,6 +19,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from domains.tenants.models import Organization
+from domains.tenants.selectors import authorized_rows, portal_organization
 
 from . import services
 from .permissions import HasPortalAccount, IsDataSoftAdmin, PasswordChangeCompleted
@@ -77,7 +78,7 @@ class LoginView(APIView):
             username=data.validated_data["username"],
             password=data.validated_data["password"],
         )
-        if user is None or not hasattr(user, "account"):
+        if user is None or portal_organization(user) is None:
             return Response(INVALID, status=status.HTTP_401_UNAUTHORIZED)
         if services.temporary_credential_expired(user):
             return Response(
@@ -175,6 +176,14 @@ class OrganizationAdminViewSet(mixins.ListModelMixin, viewsets.GenericViewSet[Or
     serializer_class = OrganizationSerializer
     queryset = Organization.objects.all()
 
+    def get_queryset(self) -> QuerySet[Organization]:
+        return authorized_rows(
+            self.request.user,
+            Organization.objects.all(),
+            organization_field="pk",
+            allow_datasoft=True,
+        )
+
     @extend_schema(
         request=OrganizationSerializer, responses={201: OrganizationSerializer}, tags=["admin"]
     )
@@ -199,8 +208,11 @@ class UserAdminViewSet(
             .prefetch_related("memberships")
             .order_by("account__organization__name", "username")
         )
+        scoped = authorized_rows(
+            self.request.user, qs, organization_field="account__organization", allow_datasoft=True
+        )
         org = self.request.query_params.get("organization")
-        return qs.filter(account__organization_id=org) if org and org.isdigit() else qs
+        return scoped.filter(account__organization_id=org) if org and org.isdigit() else scoped
 
     @extend_schema(parameters=[OpenApiParameter("organization", int, required=False)])
     def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:

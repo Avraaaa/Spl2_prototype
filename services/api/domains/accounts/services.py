@@ -13,6 +13,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from domains.tenants.models import Organization, OrganizationKind
+from domains.tenants.selectors import portal_organization
 
 from .models import Account, AccountEvent, Membership
 from .roles import BANK_ROLES, DATASOFT_ROLES, Role
@@ -22,15 +23,24 @@ TEMPORARY_PASSWORD_TTL = timedelta(hours=settings.TEMPORARY_PASSWORD_TTL_HOURS)
 
 
 def roles_of(user: User) -> list[str]:
-    return sorted(m.role for m in user.memberships.all())
+    organization = portal_organization(user)
+    if organization is None:
+        return []
+    allowed = DATASOFT_ROLES if organization.kind == OrganizationKind.DATASOFT else BANK_ROLES
+    return sorted(
+        m.role
+        for m in user.memberships.all()
+        if m.organization_id == organization.pk and m.role in allowed
+    )
 
 
 def is_datasoft_admin(user: User) -> bool:
+    organization = portal_organization(user)
     return bool(
-        user.is_authenticated
-        and user.is_active
+        organization is not None
+        and organization.kind == OrganizationKind.DATASOFT
         and Membership.objects.filter(
-            user=user, role=Role.DATASOFT_ADMIN, organization__kind=OrganizationKind.DATASOFT
+            user=user, role=Role.DATASOFT_ADMIN, organization=organization
         ).exists()
     )
 
