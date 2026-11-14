@@ -58,6 +58,7 @@ Failure: any cross-bank leak halts all subsequent development.
 ### P2-T1: Ticket register, drafts and authorized submission
 Requirements: N-05..N-08, N-10.
 Models: Product/Module, Request with tenant foreign key and readable sequence (not enumeration for auth), request type, bug evidence, status, version, created_by; IssueEvent append-only with actor and timestamps. Authorized Issue Officer is submitting actor. Draft is invisible to DataSoft intake.
+Scope boundary (orchestrator decision 2026-11-14): **file attachments (N-06 attachments, N-08 screenshots/logs) are implemented in P3-T1** together with private, tenant-checked file storage (invariant 8). P2-T1 must not add attachment fields, uploads or UI, and reviewers must not fail P2-T1 for their absence. P2-T1 bug evidence = environment, steps to reproduce, expected and actual results (text).
 Acceptance: typed validation, required bug evidence, permanent readable IDs, draft saves/edits; one-click submit records officer+time once, starts Submitted, never a separate bank approval queue. Same-bank related requests only. Add two-bank negative API tests for GET/list/write/draft on the newly implemented issue domain; verify failures cannot reveal other bank IDs.
 
 ### P2-T2: Explicit transition service and concurrency

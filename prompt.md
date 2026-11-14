@@ -49,3 +49,8 @@ Findings it produced were real every time: logout state, temp-credential expiry,
 
 ## 5. Effort settings
 - First attempt: `high` (design work). Retries: `medium` (`DATASOFT_RETRY_EFFORT`), since they fix specific findings. Review: `medium` for phases 1, 2 and 5+, `low` otherwise.
+
+## 6. Scope boundaries for reviewers
+Add to the task section of `implementation.md`, and repeat in the note:
+> Scope boundary: X is implemented in <later task> ... reviewers must not fail <task> for its absence.
+The review prompt includes "Respect the scope boundaries in implementation.md" and the orchestrator note. Without that, the P2-T1 review failed for attachments planned for P3-T1.

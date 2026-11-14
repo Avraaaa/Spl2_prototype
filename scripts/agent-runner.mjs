@@ -305,6 +305,8 @@ function doTask(task) {
         `Check the requirement text in docs/requirements/qfd.md, the task section of implementation.md and the pitfalls in learning.md.\n` +
         `Look for tenant boundary leaks, invalid state changes, weak tests, privilege escalation, secrets, UI buttons not backed by real endpoints, and scope creep.\n` +
         `Only FAIL for real defects (correctness, security, missing acceptance criteria or tests); list minor suggestions as findings with a PASS verdict.\n` +
+        `Respect the scope boundaries in the task section of implementation.md: do not FAIL a task for work the plan assigns to a later task.\n` +
+        (note ? `Orchestrator note given to the coder (scope and context):\n${note}\n` : '') +
         `Return JSON verdict and findings only, FAIL when uncertain.`, logs, `review-${attempt}`,
         process.env.DATASOFT_REVIEWER_MODEL || null, task.phase === 1 || task.phase === 2 || task.phase >= 5 ? 'medium' : 'low', true);
       const review = JSON.parse(reviewText);
