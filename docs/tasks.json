@@ -346,6 +346,28 @@
       ]
     },
     {
+      "id": "P4-T2b",
+      "phase": 4,
+      "title": "Fix stale identity after sign-in and premature form validation banner",
+      "req": [
+        "N-01",
+        "EX-10"
+      ],
+      "depends_on": [
+        "P4-T2"
+      ],
+      "allow": [
+        "apps/web/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ]
+    },
+    {
       "id": "P5-T1",
       "phase": 5,
       "title": "Masked offline bilingual hybrid ranking and label suggestions",

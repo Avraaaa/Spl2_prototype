@@ -85,6 +85,9 @@ Requirements: N-03, N-04, N-06, N-10, N-23, EX-03, EX-10.
 Scope: fix the browser-reproduced blocking UI bugs (new-request form loses input, submit errors without guidance, stale identity after switching users, raw IDs/codes, no bank column for DataSoft) and separate the experiences: a Client portal for bank users and a visibly distinct DataSoft console with intake queue, all requests, my work, tasks and admin. Clean issue detail layout with a role-aware Next action panel. Full defect list and UX spec: docs/task-notes/P4-T2.md.
 Acceptance: all gates green; the orchestrator verifies officer create→submit, support accept→assign→deliver, verifier verify, support close, and user switching in a real browser before marking done.
 
+### P4-T2b: Browser-found follow-ups to P4-T2
+Requirements: N-01, EX-10. Fix the stale identity after sign-in (TanStack clear() orphaning observers) and the premature validation banner. Details: docs/task-notes/P4-T2b.md.
+
 ## Phase 5 — Optional bilingual ML
 P5-T1: Mask synchronously in Django before persist/ML; force local offline checkpoint; bilingual semantic and PostgreSQL keyword lookup; product/module/recent-window restriction; fuse ranks with RRF; suggest 0–5 tenant-scoped candidates; suggest labels with calibrated threshold and abstain; never auto-merge. Record suggestion feedback (E-01..E-07,E-09..E-15). Golden evaluation set should include Bangla, English, mixed language, typos, exact error codes, tenant-crossing decoys and false matches. Offline/local failure should not impact submission.
 P5-T2: Cluster only unidentified recent masked requests; propose topics for admin review; compute P@5 and recall@5 vs held-out labeled cases, report both banks independently (E-08,E-09). GPU is not required for proof-of-concept model selection; compare inference times on available CPU.
