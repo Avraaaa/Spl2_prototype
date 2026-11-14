@@ -22,6 +22,8 @@ INSTALLED_APPS = [
     "core",
     "domains.tenants",
     "domains.accounts",
+    "domains.products",
+    "domains.issues",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

@@ -4,6 +4,8 @@ import { LoginPage } from '../features/auth/LoginPage';
 import { useLogout, useMe } from '../features/auth/hooks';
 import { hasRole, landingFor, roleLabel, type PortalUser } from '../features/auth/roles';
 import { UsersAdminPage } from '../features/tenants/UsersAdminPage';
+import { IssueDetailPage, IssueDraftPage, IssuesListPage } from '../features/issues/IssuesPage';
+import { ProductsPage } from '../features/issues/ProductsPage';
 
 function Shell({ me, children }: { me: PortalUser; children: React.ReactNode }) {
   const logout = useLogout();
@@ -16,6 +18,8 @@ function Shell({ me, children }: { me: PortalUser; children: React.ReactNode }) 
         <nav>
           <NavLink to="/" end>Dashboard</NavLink>
           {isAdmin && <NavLink to="/admin/users">Users &amp; banks</NavLink>}
+          <NavLink to="/issues">Requests</NavLink>
+          {isAdmin && <NavLink to="/admin/products">Products</NavLink>}
         </nav>
         <div className="who">
           <div><strong>{me.full_name}</strong><small>{me.organization.name}</small></div>
@@ -46,7 +50,7 @@ function Dashboard({ me }: { me: PortalUser }) {
         {hasRole(me, 'SUPPORT_AGENT') && <div className="card"><h3>Support Agent</h3><p className="muted">Review submitted requests, plan delivery dates and deliver fixes.</p></div>}
         {hasRole(me, 'DATASOFT_ADMIN') && <div className="card"><h3>Administration</h3><p className="muted">Register client banks and manage user accounts and roles.</p><Link className="btn primary" to="/admin/users">Manage users</Link></div>}
       </div>
-      <p className="muted small">Issue registration and the request lifecycle arrive in the next tasks (P2-T1, P2-T2).</p>
+      <Link className="btn primary" to="/issues">View service requests</Link>
     </section>
   );
 }
@@ -69,6 +73,11 @@ export function App() {
       <Route path="/account/password" element={user ? <ChangePasswordPage /> : <Navigate to="/login" replace />} />
       <Route path="/" element={authed(u => <Dashboard me={u} />)} />
       <Route path="/admin/users" element={authed(u => <UsersAdminPage me={u} />, 'DATASOFT_ADMIN')} />
+      <Route path="/admin/products" element={authed(() => <ProductsPage />, 'DATASOFT_ADMIN')} />
+      <Route path="/issues" element={authed(u => <IssuesListPage me={u} />)} />
+      <Route path="/issues/new" element={authed(u => <IssueDraftPage me={u} />)} />
+      <Route path="/issues/:id/edit" element={authed(u => <IssueDraftPage me={u} />)} />
+      <Route path="/issues/:id" element={authed(u => <IssueDetailPage me={u} />)} />
       <Route path="*" element={<Navigate to={landingFor(user ?? null)} replace />} />
     </Routes>
   );

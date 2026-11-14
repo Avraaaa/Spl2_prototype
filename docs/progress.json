@@ -4,7 +4,8 @@
     "P0-T2",
     "P1-T1",
     "P1-T1b",
-    "P1-T2"
+    "P1-T2",
+    "P2-T1"
   ],
   "last_updated": "2026-11-14",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
@@ -73,6 +74,21 @@
       "attempts": 1,
       "base": "8d933202dc2f335a69eb1ac94671190d17139b91",
       "rebased_onto": "4637b5e9a54531947be417825d2b8da824023d2b"
+    },
+    "P2-T1": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 2,
+      "base": "770a0a9b78a5e75b121a50e8f9c4a8628d9b1d76",
+      "rebased_onto": "0e87e6587ef56bcb6744f069579729a2faee39e6"
     }
   },
   "latest_review": "PASS"

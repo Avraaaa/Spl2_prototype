@@ -9,6 +9,9 @@ from django.db import transaction
 
 from domains.accounts import services
 from domains.accounts.roles import Role
+from domains.issues.models import Issue, IssueStatus
+from domains.issues.services import create_draft, submit
+from domains.products.models import Module, Product
 from domains.tenants.models import Organization, OrganizationKind
 
 DEMO_PASSWORD = "Demo-Pass-2026!"  # synthetic, local-only; printed for the demo operator
@@ -51,6 +54,37 @@ class Command(BaseCommand):
             user.save(update_fields=["password"])
             user.account.must_change_password = False
             user.account.save(update_fields=["must_change_password"])
+        product, _ = Product.objects.get_or_create(name="Synthetic Service Core")
+        Module.objects.get_or_create(product=product, name="Test Ledger")
+        for code in ("NWD", "RSD"):
+            officer = User.objects.get(username=f"{code.lower()}.officer")
+            for title, request_type, submitted in (
+                (f"{code} synthetic login issue", "BUG", True),
+                (f"{code} synthetic support question", "SUPPORT", True),
+                (f"{code} synthetic draft change", "CHANGE", False),
+            ):
+                if Issue.objects.filter(
+                    organization=officer.account.organization, title=title
+                ).exists():
+                    continue
+                issue = create_draft(
+                    officer,
+                    {
+                        "title": title,
+                        "description": "Synthetic demonstration data only.",
+                        "request_type": request_type,
+                        "product": product,
+                        "priority": "MEDIUM",
+                        "environment": (
+                            "Synthetic test environment" if request_type == "BUG" else ""
+                        ),
+                        "steps_to_reproduce": "Open the test page" if request_type == "BUG" else "",
+                        "expected_result": "Test page loads" if request_type == "BUG" else "",
+                        "actual_result": "Synthetic error appears" if request_type == "BUG" else "",
+                    },
+                )
+                if submitted and issue.status == IssueStatus.DRAFT:
+                    submit(officer, issue)
         self.stdout.write(f"Synthetic demo users ready ({len(USERS)}); password: {DEMO_PASSWORD}")
         for username, code, _, roles in USERS:
             self.stdout.write(f"  {username:14} {code:9} {', '.join(roles)}")

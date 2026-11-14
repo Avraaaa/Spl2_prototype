@@ -20,6 +20,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/products/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["admin_products_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/products/{product_id}/modules/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["admin_products_modules_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/users/": {
         parameters: {
             query?: never;
@@ -220,10 +252,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/issues/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["issues_list"];
+        put?: never;
+        post: operations["issues_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/issues/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["issues_retrieve"];
+        put?: never;
+        post?: never;
+        delete: operations["issues_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["issues_partial_update"];
+        trace?: never;
+    };
+    "/api/issues/{id}/submit/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issues_submit_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["products_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @enum {unknown} */
+        BlankEnum: "";
         ChangePasswordRequest: {
             current_password: string;
             new_password: string;
@@ -241,6 +339,54 @@ export interface components {
             service: string;
             stage: string;
         };
+        Issue: {
+            readonly id: number;
+            reference?: string | null;
+            title?: string;
+            description?: string;
+            request_type?: components["schemas"]["RequestTypeEnum"] | components["schemas"]["BlankEnum"];
+            product?: number | null;
+            module?: number | null;
+            priority?: components["schemas"]["PriorityEnum"] | components["schemas"]["BlankEnum"];
+            environment?: string;
+            steps_to_reproduce?: string;
+            expected_result?: string;
+            actual_result?: string;
+            related_request?: number | null;
+            status?: components["schemas"]["StatusEnum"];
+            version?: number;
+            created_by: number;
+            submitted_by?: number | null;
+            /** Format: date-time */
+            submitted_at?: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            readonly events: components["schemas"]["IssueEvent"][];
+        };
+        IssueEvent: {
+            readonly id: number;
+            actor: number;
+            kind: string;
+            from_status: string;
+            to_status: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        IssueWriteRequest: {
+            title?: string;
+            description?: string;
+            request_type?: components["schemas"]["RequestTypeEnum"];
+            product?: number | null;
+            module?: number | null;
+            priority?: components["schemas"]["PriorityEnum"];
+            environment?: string;
+            steps_to_reproduce?: string;
+            expected_result?: string;
+            actual_result?: string;
+            related_request?: number | null;
+        };
         /**
          * @description * `DATASOFT` - DataSoft
          *     * `BANK` - Client bank
@@ -250,6 +396,15 @@ export interface components {
         LoginRequest: {
             username: string;
             password: string;
+        };
+        Module: {
+            readonly id: number;
+            readonly product: number;
+            name: string;
+            is_active?: boolean;
+        };
+        ModuleWriteRequest: {
+            name: string;
         };
         Organization: {
             readonly id: number;
@@ -269,6 +424,19 @@ export interface components {
             name: string;
             code: string;
             kind: components["schemas"]["KindEnum"];
+        };
+        PatchedIssueWriteRequest: {
+            title?: string;
+            description?: string;
+            request_type?: components["schemas"]["RequestTypeEnum"];
+            product?: number | null;
+            module?: number | null;
+            priority?: components["schemas"]["PriorityEnum"];
+            environment?: string;
+            steps_to_reproduce?: string;
+            expected_result?: string;
+            actual_result?: string;
+            related_request?: number | null;
         };
         PatchedProfileUpdateRequest: {
             full_name?: string;
@@ -299,6 +467,31 @@ export interface components {
             readonly date_joined: string;
         };
         /**
+         * @description * `LOW` - Low
+         *     * `MEDIUM` - Medium
+         *     * `HIGH` - High
+         *     * `CRITICAL` - Critical
+         * @enum {string}
+         */
+        PriorityEnum: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+        Product: {
+            readonly id: number;
+            name: string;
+            is_active?: boolean;
+            readonly modules: components["schemas"]["Module"][];
+        };
+        ProductWriteRequest: {
+            name: string;
+        };
+        /**
+         * @description * `BUG` - Bug
+         *     * `CHANGE` - Change
+         *     * `FEATURE` - Feature
+         *     * `SUPPORT` - Support
+         * @enum {string}
+         */
+        RequestTypeEnum: "BUG" | "CHANGE" | "FEATURE" | "SUPPORT";
+        /**
          * @description * `ISSUE_OFFICER` - Client Issue Officer
          *     * `ISSUE_VERIFIER` - Client Issue Verifier
          *     * `DATASOFT_ADMIN` - DataSoft Administrator
@@ -309,6 +502,12 @@ export interface components {
         RolesRequest: {
             roles: components["schemas"]["RolesEnum"][];
         };
+        /**
+         * @description * `DRAFT` - Draft
+         *     * `SUBMITTED` - Submitted
+         * @enum {string}
+         */
+        StatusEnum: "DRAFT" | "SUBMITTED";
         TemporaryCredential: {
             user: components["schemas"]["PortalUser"];
             /** @description Shown once. Never logged or stored in plaintext. */
@@ -371,6 +570,58 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Organization"];
+                };
+            };
+        };
+    };
+    admin_products_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ProductWriteRequest"];
+                "multipart/form-data": components["schemas"]["ProductWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+        };
+    };
+    admin_products_modules_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModuleWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ModuleWriteRequest"];
+                "multipart/form-data": components["schemas"]["ModuleWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Module"];
                 };
             };
         };
@@ -693,6 +944,163 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Health"];
+                };
+            };
+        };
+    };
+    issues_list: {
+        parameters: {
+            query?: {
+                priority?: string;
+                request_type?: string;
+                search?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"][];
+                };
+            };
+        };
+    };
+    issues_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["IssueWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["IssueWriteRequest"];
+                "multipart/form-data": components["schemas"]["IssueWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    issues_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedIssueWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedIssueWriteRequest"];
+                "multipart/form-data": components["schemas"]["PatchedIssueWriteRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_submit_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    products_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"][];
                 };
             };
         };

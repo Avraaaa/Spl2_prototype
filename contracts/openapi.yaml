@@ -44,6 +44,64 @@ paths:
               schema:
                 $ref: '#/components/schemas/Organization'
           description: ''
+  /api/admin/products/:
+    post:
+      operationId: admin_products_create
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductWriteRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+  /api/admin/products/{product_id}/modules/:
+    post:
+      operationId: admin_products_modules_create
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModuleWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ModuleWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ModuleWriteRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Module'
+          description: ''
   /api/admin/users/:
     get:
       operationId: admin_users_list
@@ -351,8 +409,169 @@ paths:
               schema:
                 $ref: '#/components/schemas/Health'
           description: ''
+  /api/issues/:
+    get:
+      operationId: issues_list
+      parameters:
+      - in: query
+        name: priority
+        schema:
+          type: string
+      - in: query
+        name: request_type
+        schema:
+          type: string
+      - in: query
+        name: search
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - issues
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Issue'
+          description: ''
+    post:
+      operationId: issues_create
+      tags:
+      - issues
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/IssueWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/IssueWriteRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+          description: ''
+  /api/issues/{id}/:
+    get:
+      operationId: issues_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - issues
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+          description: ''
+    patch:
+      operationId: issues_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - issues
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedIssueWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedIssueWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedIssueWriteRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+          description: ''
+    delete:
+      operationId: issues_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - issues
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/issues/{id}/submit/:
+    post:
+      operationId: issues_submit_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - issues
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+          description: ''
+  /api/products/:
+    get:
+      operationId: products_list
+      tags:
+      - products
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+          description: ''
 components:
   schemas:
+    BlankEnum:
+      enum:
+      - ''
     ChangePasswordRequest:
       type: object
       properties:
@@ -400,6 +619,138 @@ components:
       - service
       - stage
       - status
+    Issue:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        reference:
+          type: string
+          nullable: true
+          maxLength: 32
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        request_type:
+          oneOf:
+          - $ref: '#/components/schemas/RequestTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        product:
+          type: integer
+          nullable: true
+        module:
+          type: integer
+          nullable: true
+        priority:
+          oneOf:
+          - $ref: '#/components/schemas/PriorityEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        environment:
+          type: string
+        steps_to_reproduce:
+          type: string
+        expected_result:
+          type: string
+        actual_result:
+          type: string
+        related_request:
+          type: integer
+          nullable: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        version:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        created_by:
+          type: integer
+        submitted_by:
+          type: integer
+          nullable: true
+        submitted_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/IssueEvent'
+          readOnly: true
+      required:
+      - created_at
+      - created_by
+      - events
+      - id
+      - updated_at
+    IssueEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        actor:
+          type: integer
+        kind:
+          type: string
+          maxLength: 40
+        from_status:
+          type: string
+          maxLength: 20
+        to_status:
+          type: string
+          maxLength: 20
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - actor
+      - created_at
+      - from_status
+      - id
+      - kind
+      - to_status
+    IssueWriteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        request_type:
+          $ref: '#/components/schemas/RequestTypeEnum'
+        product:
+          type: integer
+          nullable: true
+        module:
+          type: integer
+          nullable: true
+        priority:
+          $ref: '#/components/schemas/PriorityEnum'
+        environment:
+          type: string
+        steps_to_reproduce:
+          type: string
+        expected_result:
+          type: string
+        actual_result:
+          type: string
+        related_request:
+          type: integer
+          minimum: 1
+          nullable: true
     KindEnum:
       enum:
       - DATASOFT
@@ -420,6 +771,33 @@ components:
       required:
       - password
       - username
+    Module:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        product:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 160
+        is_active:
+          type: boolean
+      required:
+      - id
+      - name
+      - product
+    ModuleWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - name
     Organization:
       type: object
       properties:
@@ -483,6 +861,36 @@ components:
       - id
       - kind
       - name
+    PatchedIssueWriteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        request_type:
+          $ref: '#/components/schemas/RequestTypeEnum'
+        product:
+          type: integer
+          nullable: true
+        module:
+          type: integer
+          nullable: true
+        priority:
+          $ref: '#/components/schemas/PriorityEnum'
+        environment:
+          type: string
+        steps_to_reproduce:
+          type: string
+        expected_result:
+          type: string
+        actual_result:
+          type: string
+        related_request:
+          type: integer
+          minimum: 1
+          nullable: true
     PatchedProfileUpdateRequest:
       type: object
       properties:
@@ -548,6 +956,59 @@ components:
       - organization
       - roles
       - username
+    PriorityEnum:
+      enum:
+      - LOW
+      - MEDIUM
+      - HIGH
+      - CRITICAL
+      type: string
+      description: |-
+        * `LOW` - Low
+        * `MEDIUM` - Medium
+        * `HIGH` - High
+        * `CRITICAL` - Critical
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 160
+        is_active:
+          type: boolean
+        modules:
+          type: array
+          items:
+            $ref: '#/components/schemas/Module'
+          readOnly: true
+      required:
+      - id
+      - modules
+      - name
+    ProductWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - name
+    RequestTypeEnum:
+      enum:
+      - BUG
+      - CHANGE
+      - FEATURE
+      - SUPPORT
+      type: string
+      description: |-
+        * `BUG` - Bug
+        * `CHANGE` - Change
+        * `FEATURE` - Feature
+        * `SUPPORT` - Support
     RolesEnum:
       enum:
       - ISSUE_OFFICER
@@ -569,6 +1030,14 @@ components:
             $ref: '#/components/schemas/RolesEnum'
       required:
       - roles
+    StatusEnum:
+      enum:
+      - DRAFT
+      - SUBMITTED
+      type: string
+      description: |-
+        * `DRAFT` - Draft
+        * `SUBMITTED` - Submitted
     TemporaryCredential:
       type: object
       properties:

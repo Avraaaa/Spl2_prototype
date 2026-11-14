@@ -8,5 +8,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/health/", HealthView.as_view(), name="health"),
     path("api/", include("domains.accounts.urls")),
+    path("api/", include("domains.products.urls")),
+    path("api/", include("domains.issues.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="openapi-schema"),
 ]
