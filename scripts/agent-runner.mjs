@@ -172,6 +172,16 @@ function integrate(task, branch, wd, base, logs, env, evidence) {
     state.evidence = { ...(state.evidence ?? {}), [task.id]: evidence };
     state.last_updated = new Date().toISOString().slice(0, 10);
     writeFileSync(join(wd, 'docs/progress.json'), JSON.stringify(state, null, 2) + '\n');
+    // Non-blocking review findings become a tracked backlog for a later hardening pass.
+    const followUps = evidence.follow_ups ?? [];
+    if (followUps.length) {
+      const backlog = join(wd, 'docs/review-backlog.md');
+      const header = existsSync(backlog) ? '' :
+        '# Review backlog (non-blocking findings)\n\nRecorded automatically by agent-runner when a task PASSed with follow-ups. ' +
+        'Prototype policy: only blocking defects fail a review; these are for a later hardening pass.\n';
+      const body = `\n## ${task.id} — ${new Date().toISOString().slice(0, 10)}\n` + followUps.map(f => `- [ ] ${f}`).join('\n') + '\n';
+      writeFileSync(backlog, (existsSync(backlog) ? readFileSync(backlog, 'utf8') : header) + body);
+    }
     git(wd, 'add', '-A');
     git(wd, 'commit', '--amend', '--no-edit');
     git(root, 'merge', '--ff-only', branch);
@@ -243,6 +253,7 @@ function doTask(task) {
     let findings = [];
     let lastEvidence = [];
     let attemptsUsed = 0;
+    let reviewFollowUps = [];
     let success = false;
     for (let attempt = 0; attempt <= data.policy.max_review_retries; attempt++) {
       const prompt = promptBase + `\nArchitecture guidance:\n${architecture}\n` +
@@ -304,15 +315,19 @@ function doTask(task) {
       const reviewText = codex(wd, `Read-only review of ${task.id}. Base ${base}. Inspect git diff, changed files, new tests, security invariants and acceptance criteria.\nGates: ${evidence.join('\n')}\n` +
         `Check the requirement text in docs/requirements/qfd.md, the task section of implementation.md and the pitfalls in learning.md.\n` +
         `Look for tenant boundary leaks, invalid state changes, weak tests, privilege escalation, secrets, UI buttons not backed by real endpoints, and scope creep.\n` +
-        `Only FAIL for real defects (correctness, security, missing acceptance criteria or tests); list minor suggestions as findings with a PASS verdict.\n` +
+        `This is a PROTOTYPE (owner decision 2026-11-14): verdict FAIL ONLY for blocking defects, which are: cross-bank data exposure, ` +
+        `authentication or permission bypass, privilege escalation, invalid workflow state changes, data loss or corruption, a core ` +
+        `feature of this task that is missing or broken, crashes on normal use, or UI actions not backed by real endpoints. ` +
+        `Everything else (hardening edge cases, unusual-input 500s, masking phrasings, style, extra tests) is NON-blocking: return PASS ` +
+        `and list each as a finding prefixed "[follow-up]". Prefix blocking findings with "[blocking]".\n` +
         `Respect the scope boundaries in the task section of implementation.md: do not FAIL a task for work the plan assigns to a later task.\n` +
         (note ? `Orchestrator note given to the coder (scope and context):\n${note}\n` : '') +
-        `Return JSON verdict and findings only, FAIL when uncertain.`, logs, `review-${attempt}`,
+        `Return JSON verdict and findings only.`, logs, `review-${attempt}`,
         process.env.DATASOFT_REVIEWER_MODEL || null, task.phase === 1 || task.phase === 2 || task.phase >= 5 ? 'medium' : 'low', true);
       const review = JSON.parse(reviewText);
       writeFileSync(join(logs, `review-${attempt}.json`), JSON.stringify(review, null, 2));
       console.log(`REVIEW ${task.id} attempt ${attempt}: ${review.verdict}${review.findings?.length ? ` (${review.findings.length} findings)` : ''}`);
-      if (review.verdict === 'PASS') { success = true; break; }
+      if (review.verdict === 'PASS') { success = true; reviewFollowUps = review.findings ?? []; break; }
       findings = review.findings ?? [];
       if (attempt === data.policy.max_review_retries) throw new Error(`Reviewer retry limit reached: ${findings.join('; ')}`);
     }
@@ -322,7 +337,7 @@ function doTask(task) {
     // Owner is the sole author: local git identity, no Co-Authored-By or tool attribution.
     git(wd, 'commit', '-m', `feat(${task.id.toLowerCase()}): ${task.title.toLowerCase()}`);
     integrate(task, branch, wd, base, logs, gateEnv,
-      { mode: 'native-windows', implemented_by: 'codex (agent-runner)', gates: lastEvidence, review: 'codex read-only PASS', attempts: attemptsUsed, base });
+      { mode: 'native-windows', implemented_by: 'codex (agent-runner)', gates: lastEvidence, review: 'codex read-only PASS', attempts: attemptsUsed, base, follow_ups: reviewFollowUps });
     merged = true;
   } finally {
     if (attached && gateEnv?.COMPOSE_PROJECT_NAME) {

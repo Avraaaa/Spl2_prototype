@@ -58,3 +58,7 @@ The review prompt includes "Respect the scope boundaries in implementation.md" a
 ## 7. Break a review loop with a design note
 When reviews keep finding one more case of the same kind (e.g. a new OTP phrasing every round), stop the run and give the coder a
 **design** plus a **must / must-not test table** instead of another patch request (`docs/task-notes/P2-T1-masking.md`).
+
+## 8. Review severity for a prototype
+The review prompt defines **blocking** (FAIL) vs **[follow-up]** (PASS and backlog). This turned "fix every edge case before merging"
+into "ship working features, harden later". Follow-ups land in `docs/review-backlog.md` for a dedicated hardening task.
