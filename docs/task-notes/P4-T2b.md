@@ -17,3 +17,11 @@ P4-T2b — two UI defects found by the orchestrator in a real browser after P4-T
    hasErrors count only truthy messages) and only show the banner after a save/submit attempt. Add a vitest case to draftForm.test.ts.
 
 Keep all other behaviour unchanged. Run `npm run --prefix apps/web check` and `node scripts/dev.mjs test` yourself and finish green.
+
+RESUME (orchestrator, after a harness block): the code fixes for both defects are already applied in the working tree
+(session.ts, IssueDraftPage.tsx, draftForm.ts). EXISTING test files are protected and must NOT be edited (the previous attempt
+was blocked for editing session.test.ts and draftForm.test.ts). Put the new tests in NEW files instead:
+apps/web/src/features/auth/session.observers.test.ts (a real QueryClient plus a QueryObserver subscribed BEFORE
+resetSession receives the new user, then null after logout; other cached queries are removed) and
+apps/web/src/features/issues/draftForm.errors.test.ts (`{ title: undefined }` does not count as an error). Verify the
+applied code, add those two test files, and run the checks.

@@ -108,3 +108,5 @@ Requirements source: `docs/requirements/qfd.md`. Plan: `implementation.md`. Task
 - Frontend logic needs unit tests (vitest) for form state, validation and role navigation, because the gates never exercise React.
 - Coder agents tended to cram JSX into 1000-character lines; require readable components.
 - Coder switched to **Claude Sonnet (medium) via the claude CLI** (Codex usage exhausted). Unlike the Codex sandbox it CAN run pytest, lint, check-contract and makemigrations itself, so it should finish with green checks. The prompt tells it to ignore CLAUDE.md's "delegate to the runner" instructions.
+- **Task notes must never ask the coder to edit an existing test file.** The harness blocks it (`Protected existing test modified`). Ask for NEW test files instead, e.g. `<name>.observers.test.ts` (P4-T2b was blocked once for this).
+- TanStack Query v5: `queryClient.clear()` orphans mounted observers, so the old user stayed on screen after a sign-in until reload. Set the identity with `setQueryData` and drop the other data with `removeQueries({ predicate })`.
