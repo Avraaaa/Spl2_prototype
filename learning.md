@@ -41,6 +41,12 @@ Requirements source: `docs/requirements/qfd.md`. Plan: `implementation.md`. Task
 - Deactivation: `user.is_active=False` makes `ModelBackend.get_user` return None, so live sessions die immediately. Never delete users; FKs use PROTECT to preserve history.
 - Logout is `AllowAny` and idempotent (204), so a 403 always means a CSRF failure with the session still alive. **The frontend must only clear local auth state after a 2xx logout** (review finding).
 - Organization/bank is always derived from `request.user.account`; never accept it from headers, query or body (tests cover spoofing).
+- **Tenant policy API (P1-T2), required for every bank-owned read:** `domains/tenants/selectors.py`
+  - `portal_organization(user)` returns the user's active org only if the membership role matches its kind, else `None`.
+  - `authorized_rows(user, qs, organization_field="organization", allow_datasoft=False)` gives a bank user only their own bank's rows. **DataSoft staff get no rows unless the call passes `allow_datasoft=True`**, which must be a deliberate, tested decision per endpoint (review suggestion: one test per `allow_datasoft=True` use).
+  - `get_authorized_object_or_404(user, qs, pk, ...)` makes another bank's object a 404, never a 403, so IDs are not confirmed.
+  - Never look an object up by ID first and check permission afterwards. Build the queryset through these helpers.
+  - Issues: DataSoft intake must never see `DRAFT` rows. Combine `allow_datasoft=True` with an explicit `exclude(status=DRAFT)` for staff.
 - Services raise Django `ValidationError`/`PermissionDenied`; API views translate them to DRF exceptions (`_translate`). Keep business rules in `services.py`, not views.
 - Append-only models override `save`/`delete` to refuse updates (see `AccountEvent`).
 
