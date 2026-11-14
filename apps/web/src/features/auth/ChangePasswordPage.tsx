@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useChangePassword, useLogout, useMe } from './hooks';
+import { ProfileSettings } from './ProfileSettings';
 
 export function ChangePasswordPage() {
   const me = useMe();
@@ -24,20 +25,23 @@ export function ChangePasswordPage() {
 
   return (
     <main className="auth-shell">
-      <form className="card auth-card" onSubmit={submit}>
-        <h1>{forced ? 'Set your password' : 'Change password'}</h1>
-        {forced && <p className="alert info">You signed in with a temporary password. Choose a new password to continue.</p>}
-        <label>{forced ? 'Temporary password' : 'Current password'}<input type="password" autoComplete="current-password" value={current} onChange={e => setCurrent(e.target.value)} required /></label>
-        <label>New password<input type="password" autoComplete="new-password" value={next} onChange={e => setNext(e.target.value)} required minLength={8} /></label>
-        <label>Confirm new password<input type="password" autoComplete="new-password" value={confirm} onChange={e => setConfirm(e.target.value)} required /></label>
-        {mismatch && <p className="alert error">Passwords do not match.</p>}
-        {change.isError && <p className="alert error" role="alert">{change.error.message}</p>}
-        {logout.isError && <p className="alert error" role="alert">{logout.error.message}</p>}
-        <button className="btn primary" disabled={change.isPending || mismatch}>Save password</button>
-        {forced
-          ? <button type="button" className="btn ghost" onClick={() => logout.mutate(undefined, { onSuccess: () => navigate('/login') })}>Sign out</button>
-          : <button type="button" className="btn ghost" onClick={() => navigate(-1)}>Cancel</button>}
-      </form>
+      <div className="stack">
+        <form className="card auth-card" onSubmit={submit}>
+          <h1>{forced ? 'Set your password' : 'Change password'}</h1>
+          {forced && <p className="alert info">You signed in with a temporary password. Choose a new password to continue.</p>}
+          <label>{forced ? 'Temporary password' : 'Current password'}<input type="password" autoComplete="current-password" value={current} onChange={e => setCurrent(e.target.value)} required /></label>
+          <label>New password<input type="password" autoComplete="new-password" value={next} onChange={e => setNext(e.target.value)} required minLength={8} /></label>
+          <label>Confirm new password<input type="password" autoComplete="new-password" value={confirm} onChange={e => setConfirm(e.target.value)} required /></label>
+          {mismatch && <p className="alert error">Passwords do not match.</p>}
+          {change.isError && <p className="alert error" role="alert">{change.error.message}</p>}
+          {logout.isError && <p className="alert error" role="alert">{logout.error.message}</p>}
+          <button className="btn primary" disabled={change.isPending || mismatch}>Save password</button>
+          {forced
+            ? <button type="button" className="btn ghost" onClick={() => logout.mutate(undefined, { onSuccess: () => navigate('/login') })}>Sign out</button>
+            : <button type="button" className="btn ghost" onClick={() => navigate(-1)}>Cancel</button>}
+        </form>
+        {!forced && <ProfileSettings user={me.data} />}
+      </div>
     </main>
   );
 }

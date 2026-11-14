@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import IntegrityError
 from django.db.models import QuerySet
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
@@ -23,10 +24,12 @@ from . import services
 from .permissions import HasPortalAccount, IsDataSoftAdmin, PasswordChangeCompleted
 from .serializers import (
     ChangePasswordSerializer,
+    ChangeUsernameSerializer,
     ErrorSerializer,
     LoginSerializer,
     OrganizationSerializer,
     PortalUserSerializer,
+    ProfileUpdateSerializer,
     RolesSerializer,
     TemporaryCredentialSerializer,
     UserCreateSerializer,
@@ -35,6 +38,7 @@ from .serializers import (
 INVALID = {"detail": "Invalid username or password.", "code": "invalid_credentials"}
 # Explicit lists replace DRF defaults, so the first-login gate must be repeated here.
 ADMIN_PERMISSIONS = [IsAuthenticated, HasPortalAccount, PasswordChangeCompleted, IsDataSoftAdmin]
+PROFILE_PERMISSIONS = [IsAuthenticated, HasPortalAccount, PasswordChangeCompleted]
 
 
 def _translate(exc: Exception) -> Exception:
@@ -107,9 +111,52 @@ class MeView(APIView):
         # Organization is always derived from the session user; headers/query are ignored.
         return Response(PortalUserSerializer(request.user).data)
 
+    @extend_schema(request=ProfileUpdateSerializer, responses=PortalUserSerializer, tags=["auth"])
+    def patch(self, request: Request) -> Response:
+        data = ProfileUpdateSerializer(data=request.data, partial=True)
+        data.is_valid(raise_exception=True)
+        allowed = {"full_name", "email"}
+        unknown = set(request.data) - allowed
+        if unknown:
+            raise ValidationError({key: "This field cannot be changed here." for key in unknown})
+        try:
+            user = services.update_profile(request.user, **data.validated_data)
+        except (DjangoValidationError, DjangoPermissionDenied) as exc:
+            raise _translate(exc) from exc
+        return Response(PortalUserSerializer(user).data)
+
+    def get_permissions(self) -> list[Any]:
+        if self.request.method == "PATCH":
+            return [permission() for permission in PROFILE_PERMISSIONS]
+        return super().get_permissions()
+
+
+class ChangeUsernameView(APIView):
+    permission_classes = PROFILE_PERMISSIONS
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "password_check"
+
+    @extend_schema(request=ChangeUsernameSerializer, responses=PortalUserSerializer, tags=["auth"])
+    def post(self, request: Request) -> Response:
+        data = ChangeUsernameSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        unknown = set(request.data) - {"username", "current_password"}
+        if unknown:
+            raise ValidationError({key: "This field cannot be changed here." for key in unknown})
+        try:
+            user = services.change_username(request.user, **data.validated_data)
+        except (DjangoValidationError, DjangoPermissionDenied) as exc:
+            raise _translate(exc) from exc
+        except IntegrityError as exc:
+            # A concurrent rename can pass the precheck; the unique index remains authoritative.
+            raise ValidationError({"username": "Username already exists."}) from exc
+        return Response(PortalUserSerializer(user).data)
+
 
 class ChangePasswordView(APIView):
     permission_classes = [HasPortalAccount]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "password_check"
 
     @extend_schema(request=ChangePasswordSerializer, responses=PortalUserSerializer, tags=["auth"])
     def post(self, request: Request) -> Response:

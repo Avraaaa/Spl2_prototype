@@ -75,6 +75,7 @@ USE_TZ = True
 STATIC_URL = "/static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_RATE_PER_MINUTE = int(os.getenv("LOGIN_RATE_PER_MINUTE", "10"))
+PASSWORD_CHECK_RATE_PER_MINUTE = int(os.getenv("PASSWORD_CHECK_RATE_PER_MINUTE", "10"))
 TEMPORARY_PASSWORD_TTL_HOURS = int(os.getenv("TEMPORARY_PASSWORD_TTL_HOURS", "72"))
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
@@ -83,7 +84,10 @@ REST_FRAMEWORK = {
         "domains.accounts.permissions.HasPortalAccount",
         "domains.accounts.permissions.PasswordChangeCompleted",
     ],
-    "DEFAULT_THROTTLE_RATES": {"login": f"{LOGIN_RATE_PER_MINUTE}/min"},
+    "DEFAULT_THROTTLE_RATES": {
+        "login": f"{LOGIN_RATE_PER_MINUTE}/min",
+        "password_check": f"{PASSWORD_CHECK_RATE_PER_MINUTE}/min",
+    },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 SPECTACULAR_SETTINGS = {

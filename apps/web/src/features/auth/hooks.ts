@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../api/client';
+import type { components } from '../../api/generated/schema';
 import type { PortalUser } from './roles';
 
 export const ME_KEY = ['auth', 'me'] as const;
@@ -62,6 +63,30 @@ export function useChangePassword() {
     mutationFn: async (body: { current_password: string; new_password: string }) => {
       const { data, error } = await api.POST('/api/auth/change-password/', { body });
       if (!data) throw new Error(errorMessage(error, 'Password change failed'));
+      return data;
+    },
+    onSuccess: user => qc.setQueryData(ME_KEY, user),
+  });
+}
+
+export function useUpdateProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: components['schemas']['PatchedProfileUpdateRequest']) => {
+      const { data, error } = await api.PATCH('/api/auth/me/', { body });
+      if (!data) throw new Error(errorMessage(error, 'Profile update failed'));
+      return data;
+    },
+    onSuccess: user => qc.setQueryData(ME_KEY, user),
+  });
+}
+
+export function useChangeUsername() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: components['schemas']['ChangeUsernameRequest']) => {
+      const { data, error } = await api.POST('/api/auth/change-username/', { body });
+      if (!data) throw new Error(errorMessage(error, 'Username change failed'));
       return data;
     },
     onSuccess: user => qc.setQueryData(ME_KEY, user),

@@ -13,5 +13,6 @@ urlpatterns = [
     path("auth/logout/", api.LogoutView.as_view(), name="auth-logout"),
     path("auth/me/", api.MeView.as_view(), name="auth-me"),
     path("auth/change-password/", api.ChangePasswordView.as_view(), name="auth-change-password"),
+    path("auth/change-username/", api.ChangeUsernameView.as_view(), name="auth-change-username"),
     path("", include(router.urls)),
 ]

@@ -85,6 +85,18 @@ class ChangePasswordSerializer(serializers.Serializer[Any]):
     new_password = serializers.CharField(trim_whitespace=False)
 
 
+class ProfileUpdateSerializer(serializers.Serializer[Any]):
+    full_name = serializers.CharField(max_length=200, required=False)
+    email = serializers.EmailField(max_length=254, required=False)
+
+
+class ChangeUsernameSerializer(serializers.Serializer[Any]):
+    username = serializers.RegexField(r"\A[\w.@+-]{3,150}\Z", trim_whitespace=False)
+    current_password = serializers.CharField(
+        trim_whitespace=False, style={"input_type": "password"}
+    )
+
+
 class ErrorSerializer(serializers.Serializer[Any]):
     detail = serializers.CharField()
     code = serializers.CharField(required=False)

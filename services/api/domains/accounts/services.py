@@ -183,3 +183,48 @@ def change_password(user: User, *, current_password: str, new_password: str) -> 
     account.temporary_password_expires_at = None
     account.save(update_fields=["must_change_password", "temporary_password_expires_at"])
     _event(user, user, "PASSWORD_CHANGED")
+
+
+@transaction.atomic
+def update_profile(user: User, *, full_name: str | None = None, email: str | None = None) -> User:
+    """Change only the caller's basic profile and record actual old/new values."""
+    locked = User.objects.select_for_update().get(pk=user.pk)
+    if not locked.is_active:
+        raise PermissionDenied("Inactive accounts cannot edit profiles.")
+    account = Account.objects.select_for_update().get(user=locked)
+    if account.must_change_password:
+        raise PermissionDenied("Password change required.")
+    changes: dict[str, dict[str, str]] = {}
+    if full_name is not None and full_name != account.full_name:
+        changes["full_name"] = {"old": account.full_name, "new": full_name}
+        account.full_name = full_name
+        account.save(update_fields=["full_name"])
+    if email is not None and email != locked.email:
+        changes["email"] = {"old": locked.email, "new": email}
+        locked.email = email
+        locked.save(update_fields=["email"])
+    if changes:
+        _event(locked, locked, "PROFILE_UPDATED", **changes)
+    user.email = locked.email
+    user.account.full_name = account.full_name
+    return user
+
+
+@transaction.atomic
+def change_username(user: User, *, username: str, current_password: str) -> User:
+    locked = User.objects.select_for_update().get(pk=user.pk)
+    if not locked.is_active:
+        raise PermissionDenied("Inactive accounts cannot change usernames.")
+    if locked.account.must_change_password:
+        raise PermissionDenied("Password change required.")
+    if not locked.check_password(current_password):
+        raise ValidationError({"current_password": "Current password is incorrect."})
+    if User.objects.filter(username__iexact=username).exclude(pk=locked.pk).exists():
+        raise ValidationError({"username": "Username already exists."})
+    if username != locked.username:
+        old = locked.username
+        locked.username = username
+        locked.save(update_fields=["username"])
+        _event(locked, locked, "USERNAME_CHANGED", username={"old": old, "new": username})
+    user.username = locked.username
+    return user

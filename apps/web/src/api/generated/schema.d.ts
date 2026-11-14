@@ -116,6 +116,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/change-username/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth_change_username_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/csrf/": {
         parameters: {
             query?: never;
@@ -181,7 +197,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        patch: operations["auth_me_partial_update"];
         trace?: never;
     };
     "/api/health/": {
@@ -211,6 +227,10 @@ export interface components {
         ChangePasswordRequest: {
             current_password: string;
             new_password: string;
+        };
+        ChangeUsernameRequest: {
+            username: string;
+            current_password: string;
         };
         Error: {
             detail: string;
@@ -249,6 +269,11 @@ export interface components {
             name: string;
             code: string;
             kind: components["schemas"]["KindEnum"];
+        };
+        PatchedProfileUpdateRequest: {
+            full_name?: string;
+            /** Format: email */
+            email?: string;
         };
         PortalUser: {
             readonly id: number;
@@ -515,6 +540,31 @@ export interface operations {
             };
         };
     };
+    auth_change_username_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeUsernameRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ChangeUsernameRequest"];
+                "multipart/form-data": components["schemas"]["ChangeUsernameRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalUser"];
+                };
+            };
+        };
+    };
     auth_csrf_retrieve: {
         parameters: {
             query?: never;
@@ -592,6 +642,31 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalUser"];
+                };
+            };
+        };
+    };
+    auth_me_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedProfileUpdateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedProfileUpdateRequest"];
+                "multipart/form-data": components["schemas"]["PatchedProfileUpdateRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
