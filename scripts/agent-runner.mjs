@@ -26,7 +26,7 @@ const frozen = ['AGENTS.template.md', 'CLAUDE.md', 'implementation.md', 'docs/ta
   '.github/', '.claude/', '.codex/', 'scripts/agent-runner.mjs',
   'scripts/bootstrap-agents.mjs', 'scripts/validate-repo.mjs', 'uv.lock',
   'apps/web/package-lock.json', 'package.json', 'pyproject.toml', 'learning.md',
-  'docs/requirements/', 'scripts/dev.mjs', 'scripts/check-contract.mjs'];
+  'docs/requirements/', 'scripts/dev.mjs', 'scripts/check-contract.mjs', 'prompt.md', 'docs/task-notes/'];
 const quoteArg = a => (/^[\w@%+=:,./\\-]+$/.test(a) ? a : `"${String(a).replaceAll('"', '\\"')}"`);
 function run(command, argv, cwd = root, options = {}) {
   // options.shell: needed on Windows for npm/codex .cmd shims (Node refuses them otherwise).
