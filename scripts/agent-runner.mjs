@@ -104,6 +104,24 @@ function codex(worktree, prompt, evidence, name, model, effort, review = false) 
  * Independent read-only review by Claude (subscription CLI, not a paid API). Owner decision 2026-11-14:
  * Sonnet at medium effort, to save Codex usage. Tools are limited to reading files and git inspection.
  */
+/**
+ * Coder via Claude Code CLI (owner decision 2026-11-15: Codex usage exhausted; Sonnet, medium effort).
+ * Runs inside the task worktree with an allowlist: file tools plus the project's check commands. No git commit/push,
+ * no servers, no package installs. It can run Python tests itself (unlike the Codex sandbox).
+ */
+function claudeCode(worktree, prompt, evidence, name, env) {
+  const timeout = (data.policy.coder_timeout_seconds ?? data.policy.timeout_seconds) * 1000;
+  run('claude', ['-p', '--model', process.env.DATASOFT_CLAUDE_CODER_MODEL || 'sonnet',
+    '--effort', process.env.DATASOFT_CLAUDE_CODER_EFFORT || 'medium', '--output-format', 'text',
+    '--max-turns', '250', '--no-session-persistence',
+    '--allowedTools', 'Read', 'Edit', 'Write', 'Grep', 'Glob',
+    'Bash(node scripts/dev.mjs pytest:*)', 'Bash(node scripts/dev.mjs lint:*)', 'Bash(node scripts/dev.mjs manage makemigrations:*)',
+    'Bash(node scripts/dev.mjs test:*)', 'Bash(node scripts/check-contract.mjs:*)', 'Bash(npm run --prefix apps/web check:*)',
+    'Bash(npm run --prefix apps/web test:*)', 'Bash(npm run --prefix apps/web lint:*)', 'Bash(npx --prefix apps/web tsc:*)',
+    'Bash(git status:*)', 'Bash(git diff:*)', 'Bash(uv run --locked ruff:*)',
+    '--disallowedTools', 'Bash(git commit:*)', 'Bash(git push:*)', 'Bash(npm install:*)', 'Bash(uv add:*)'],
+  worktree, { shell: true, input: prompt, timeout, log: join(evidence, `${name}.log`), env });
+}
 function claudeReview(worktree, prompt, evidence, name) {
   const schema = JSON.stringify({ type: 'object', properties: {
     verdict: { type: 'string', enum: ['PASS', 'FAIL'] }, findings: { type: 'array', items: { type: 'string' } },
@@ -249,17 +267,26 @@ function doTask(task) {
       git(wd, 'reset', '-q'); // keep the seeded changes unstaged, like a coder's own work
       console.log(`SEEDED ${task.id} from ${seedPatch}`);
     }
+    const coderKind = process.env.DATASOFT_CODER || data.policy.coder || 'codex';
+    const claudeEnv = `ROLE: you are the CODER for this one task, invoked by the harness. Ignore any CLAUDE.md instruction to ` +
+      `delegate to scripts/agent-runner.mjs or Codex. Write the code yourself in this working tree.\n` +
+      `Environment: native Windows, no Docker, PostgreSQL running locally. You CAN and MUST run the checks yourself ` +
+      `before finishing, and iterate until they are green: \`node scripts/check-contract.mjs --write\` after any API change ` +
+      `(regenerates contracts/openapi.yaml and apps/web/src/api/generated/schema.d.ts; never hand-edit them), ` +
+      `\`node scripts/dev.mjs pytest -q services/api/tests\`, \`npm run --prefix apps/web check\`, \`node scripts/dev.mjs lint\`, ` +
+      `\`node scripts/dev.mjs manage makemigrations <app>\` for model changes. Do not run servers, git commit/push, or install packages.\n`;
     const promptBase = `Implement ONLY ${task.id}: ${task.title}. Requirement IDs: ${task.req.join(', ')}.\n` +
       `Read in order: AGENTS.md, learning.md (hard-won findings; follow them), the ${task.id} section of implementation.md, ` +
       `the matching requirement text in docs/requirements/qfd.md, docs/security-invariants.md, then only the code you need.\n` +
       `Paths allowed: ${task.allow.join(', ')}.\nAcceptance commands (run by the harness afterwards): ${task.gates.join(' ; ')}.\n` +
-      `Environment: native Windows, no Docker. IMPORTANT: your sandbox CANNOT run Python (uv's interpreter is outside it: ` +
+      (coderKind === 'claude' ? claudeEnv : '') +
+      (coderKind === 'claude' ? '' : `Environment: native Windows, no Docker. IMPORTANT: your sandbox CANNOT run Python (uv's interpreter is outside it: ` +
       `"Access is denied"), so NEVER run uv, python, pytest, manage.py, node scripts/dev.mjs or check-contract: a failed attempt deletes files inside .venv and breaks the harness environment. Write Python code, Django migrations (by hand, matching ` +
       `Django's makemigrations output) and pytest tests carefully instead. The harness then regenerates contracts/openapi.yaml and ` +
       `apps/web/src/api/generated/schema.d.ts (never hand-edit them), runs all gates, and returns any failure log to you. ` +
       `\`npm run --prefix apps/web check\` does work in the sandbox; new endpoint types only exist after the harness regenerates the ` +
       `schema, so on a first attempt use the names drf-spectacular will generate (paths like '/api/...', components['schemas']['<Serializer name without "Serializer">'], ` +
-      `'<Name>Request' for request bodies).\n` +
+      `'<Name>Request' for request bodies).\n`) +
       `Write tests first, then implementation. Do not change existing tests, protected files, dependency locks, task definitions or policies. ` +
       `Do not add dependencies. Prefer TypeScript outside Django/FastAPI; use uv for all Python. ` +
       `Every UI action must call a real endpoint. Synthetic data only. Don't commit, never push. Output BLOCKED on uncertainty.\n`;
@@ -289,8 +316,9 @@ function doTask(task) {
         // go straight to gates + review without spending another coder call.
         console.log(`CODER ${task.id} attempt 0 skipped (--skip-coder with seed)`);
       } else {
-        console.log(`CODER ${task.id} attempt ${attempt}`);
-        codex(wd, prompt, logs, `coder-${attempt}`, process.env.DATASOFT_CODER_MODEL || null,
+        console.log(`CODER ${task.id} attempt ${attempt}: ${coderKind}`);
+        if (coderKind === 'claude') claudeCode(wd, prompt, logs, `coder-${attempt}`, gateEnv ?? {});
+        else codex(wd, prompt, logs, `coder-${attempt}`, process.env.DATASOFT_CODER_MODEL || null,
           // Speed: first attempt reasons deeply; retries only fix specific gate/review findings.
           attempt === 0 ? 'high' : (process.env.DATASOFT_RETRY_EFFORT || 'medium'));
       }

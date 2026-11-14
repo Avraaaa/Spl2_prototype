@@ -62,3 +62,8 @@ When reviews keep finding one more case of the same kind (e.g. a new OTP phrasin
 ## 8. Review severity for a prototype
 The review prompt defines **blocking** (FAIL) vs **[follow-up]** (PASS and backlog). This turned "fix every edge case before merging"
 into "ship working features, harden later". Follow-ups land in `docs/review-backlog.md` for a dedicated hardening task.
+
+## 9. UI tasks: give the coder the browser-reproduced defect list
+A note listing each defect with its exact cause (file, line, why), followed by a concrete UX spec per role (nav items,
+dashboard lists, detail layout, guards) and a quality bar (readable JSX, shared components, loading/empty/error states), works
+far better than "build the UI for N-xx". See `docs/task-notes/P4-T2.md`. Afterwards the orchestrator verifies in the browser.

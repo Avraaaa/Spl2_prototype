@@ -80,6 +80,11 @@ Acceptance: no credential appears in any API response, log or outbox payload oth
 ## Phase 4 — Reports and recurrence
 P4-T1: Date filters default current year, status/month/bank summaries, Detailed CSV, audit-safe exports, overdue warnings, recurring same-bank issue relations, bilingual synthetic seed (N-11,N-23,N-24,N-25). Gate: Bank A cannot infer Bank B from totals.
 
+### P4-T2: Usable portal (owner-reported UI breakage, 2026-11-15)
+Requirements: N-03, N-04, N-06, N-10, N-23, EX-03, EX-10.
+Scope: fix the browser-reproduced blocking UI bugs (new-request form loses input, submit errors without guidance, stale identity after switching users, raw IDs/codes, no bank column for DataSoft) and separate the experiences: a Client portal for bank users and a visibly distinct DataSoft console with intake queue, all requests, my work, tasks and admin. Clean issue detail layout with a role-aware Next action panel. Full defect list and UX spec: docs/task-notes/P4-T2.md.
+Acceptance: all gates green; the orchestrator verifies officer create→submit, support accept→assign→deliver, verifier verify, support close, and user switching in a real browser before marking done.
+
 ## Phase 5 — Optional bilingual ML
 P5-T1: Mask synchronously in Django before persist/ML; force local offline checkpoint; bilingual semantic and PostgreSQL keyword lookup; product/module/recent-window restriction; fuse ranks with RRF; suggest 0–5 tenant-scoped candidates; suggest labels with calibrated threshold and abstain; never auto-merge. Record suggestion feedback (E-01..E-07,E-09..E-15). Golden evaluation set should include Bangla, English, mixed language, typos, exact error codes, tenant-crossing decoys and false matches. Offline/local failure should not impact submission.
 P5-T2: Cluster only unidentified recent masked requests; propose topics for admin review; compute P@5 and recall@5 vs held-out labeled cases, report both banks independently (E-08,E-09). GPU is not required for proof-of-concept model selection; compare inference times on available CPU.

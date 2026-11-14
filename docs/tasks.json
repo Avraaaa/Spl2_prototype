@@ -10,7 +10,9 @@
     "parallel_note": "Up to 2 runner processes at once (memory). Independent after their deps: P1-T1b||P1-T2; P3-T1||P3-T2||P4-T1 after P2-T2. Merges are serialized by a lock with rebase + regenerate + re-gate.",
     "coder_timeout_seconds": 5400,
     "reviewer": "claude",
-    "reviewer_note": "Owner decision 2026-11-14: Claude Sonnet, medium effort, read-only, reviews (saves Codex usage). DATASOFT_REVIEWER=codex switches back."
+    "reviewer_note": "Owner decision 2026-11-14: Claude Sonnet, medium effort, read-only, reviews (saves Codex usage). DATASOFT_REVIEWER=codex switches back.",
+    "coder": "claude",
+    "coder_note": "Owner decision 2026-11-15: Codex usage exhausted; coder = Claude Sonnet (medium) via claude CLI. DATASOFT_CODER=codex switches back."
   },
   "tasks": [
     {
@@ -306,6 +308,34 @@
         "contracts/",
         "seed/",
         "apps/web/src/app/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ]
+    },
+    {
+      "id": "P4-T2",
+      "phase": 4,
+      "title": "Usable portal: fix broken UI flows, separate client portal and DataSoft console",
+      "req": [
+        "N-03",
+        "N-04",
+        "N-06",
+        "N-10",
+        "N-23",
+        "EX-03",
+        "EX-10"
+      ],
+      "depends_on": [
+        "P4-T1"
+      ],
+      "allow": [
+        "services/api/",
+        "apps/web/"
       ],
       "gates": [
         "node scripts/validate-repo.mjs",
