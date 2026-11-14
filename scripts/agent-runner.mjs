@@ -17,6 +17,8 @@ const taskId = argValue('--task');
 const seedPatch = argValue('--seed-patch');
 // Optional orchestrator note appended to the coder prompt (e.g. a prior reviewer finding).
 const note = argValue('--note') ?? (argValue('--note-file') ? readFileSync(resolve(argValue('--note-file')), 'utf8') : null);
+// --skip-coder (only with --seed-patch): run gates + review on the seeded work before any coder call.
+const skipFirstCoder = args.includes('--skip-coder') && Boolean(seedPatch);
 const all = args.includes('--all');
 const show = args.includes('--show') || (!taskId && !all);
 const planOnly = args.includes('--architect');
@@ -282,10 +284,16 @@ function doTask(task) {
           `Review it against the task, complete what is missing and fix what is wrong; do not start over.\n` : '') +
         (note ? `\nOrchestrator note (must be addressed):\n${note}\n` : '') +
         (attempt ?`\nThe previous attempt is still in the working tree. Fix ONLY these findings (do not weaken or delete tests):\n${findings.join('\n')}` : '');
-      console.log(`CODER ${task.id} attempt ${attempt}`);
-      codex(wd, prompt, logs, `coder-${attempt}`, process.env.DATASOFT_CODER_MODEL || null,
-        // Speed: first attempt reasons deeply; retries only fix specific gate/review findings.
-        attempt === 0 ? 'high' : (process.env.DATASOFT_RETRY_EFFORT || 'medium'));
+      if (skipFirstCoder && attempt === 0) {
+        // Seeded work is already complete (e.g. a coder run whose runner was stopped before review):
+        // go straight to gates + review without spending another coder call.
+        console.log(`CODER ${task.id} attempt 0 skipped (--skip-coder with seed)`);
+      } else {
+        console.log(`CODER ${task.id} attempt ${attempt}`);
+        codex(wd, prompt, logs, `coder-${attempt}`, process.env.DATASOFT_CODER_MODEL || null,
+          // Speed: first attempt reasons deeply; retries only fix specific gate/review findings.
+          attempt === 0 ? 'high' : (process.env.DATASOFT_RETRY_EFFORT || 'medium'));
+      }
       const changed = checkChanges(wd, base, task);
       if (!changed.length) throw new Error('No source changes; cannot mark task implemented');
       const evidence = [];
