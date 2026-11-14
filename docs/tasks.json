@@ -368,6 +368,31 @@
       ]
     },
     {
+      "id": "P4-T3",
+      "phase": 4,
+      "title": "Usable attachments and professional visual design",
+      "req": [
+        "N-06",
+        "N-08",
+        "EX-05",
+        "EX-10"
+      ],
+      "depends_on": [
+        "P4-T2b"
+      ],
+      "allow": [
+        "services/api/",
+        "apps/web/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ]
+    },
+    {
       "id": "P5-T1",
       "phase": 5,
       "title": "Masked offline bilingual hybrid ranking and label suggestions",

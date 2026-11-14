@@ -88,6 +88,9 @@ Acceptance: all gates green; the orchestrator verifies officer create→submit, 
 ### P4-T2b: Browser-found follow-ups to P4-T2
 Requirements: N-01, EX-10. Fix the stale identity after sign-in (TanStack clear() orphaning observers) and the premature validation banner. Details: docs/task-notes/P4-T2b.md.
 
+### P4-T3: Usable attachments and professional visual design (owner request 2026-11-15)
+Requirements: N-06, N-08, EX-05, EX-10. Attach files when creating a request and on comments, accept common office documents (docx/xlsx/pptx) with content checks, show real server errors, give clear upload feedback (dropzone, file list with icon/size/uploader, image thumbnails). Restyle the whole app with a token-based design system, a sidebar layout and shared components; no new dependencies. Spec: docs/task-notes/P4-T3.md. The orchestrator verifies uploads and the look in a real browser before marking done.
+
 ## Phase 5 — Optional bilingual ML
 P5-T1: Mask synchronously in Django before persist/ML; force local offline checkpoint; bilingual semantic and PostgreSQL keyword lookup; product/module/recent-window restriction; fuse ranks with RRF; suggest 0–5 tenant-scoped candidates; suggest labels with calibrated threshold and abstain; never auto-merge. Record suggestion feedback (E-01..E-07,E-09..E-15). Golden evaluation set should include Bangla, English, mixed language, typos, exact error codes, tenant-crossing decoys and false matches. Offline/local failure should not impact submission.
 P5-T2: Cluster only unidentified recent masked requests; propose topics for admin review; compute P@5 and recall@5 vs held-out labeled cases, report both banks independently (E-08,E-09). GPU is not required for proof-of-concept model selection; compare inference times on available CPU.
