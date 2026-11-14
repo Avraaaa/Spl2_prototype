@@ -54,3 +54,7 @@ Findings it produced were real every time: logout state, temp-credential expiry,
 Add to the task section of `implementation.md`, and repeat in the note:
 > Scope boundary: X is implemented in <later task> ... reviewers must not fail <task> for its absence.
 The review prompt includes "Respect the scope boundaries in implementation.md" and the orchestrator note. Without that, the P2-T1 review failed for attachments planned for P3-T1.
+
+## 7. Break a review loop with a design note
+When reviews keep finding one more case of the same kind (e.g. a new OTP phrasing every round), stop the run and give the coder a
+**design** plus a **must / must-not test table** instead of another patch request (`docs/task-notes/P2-T1-masking.md`).
