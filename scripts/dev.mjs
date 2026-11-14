@@ -9,6 +9,7 @@
  *   node scripts/dev.mjs test        Django + FastAPI + web checks
  *   node scripts/dev.mjs lint        ruff check, ruff format --check, mypy
  *   node scripts/dev.mjs manage ...  any manage.py command
+ *   node scripts/dev.mjs pytest ...  Django pytest with dev env (default: services/api/tests)
  *
  * The defaults below are SYNTHETIC LOCAL-ONLY values that match scripts/dev-db-setup.sql.
  * Any variable already present in the environment wins. Never put real credentials here.
@@ -77,6 +78,7 @@ async function sequence(list) {
 
 const [cmd = 'all', ...rest] = process.argv.slice(2);
 if (cmd === 'manage') await sequence([manage(...rest)]);
+else if (cmd === 'pytest') await sequence([[...api, 'pytest', ...(rest.length ? rest : ['-q', 'services/api/tests'])]]);
 else if (cmd === 'all') {
   await sequence(commands.migrate);
   const children = [start(commands.api[0], 'api'), start(commands.web[0], 'web')];

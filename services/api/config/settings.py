@@ -20,6 +20,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_spectacular",
     "core",
+    "domains.tenants",
+    "domains.accounts",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -70,9 +72,16 @@ USE_I18N = True
 USE_TZ = True
 STATIC_URL = "/static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+LOGIN_RATE_PER_MINUTE = int(os.getenv("LOGIN_RATE_PER_MINUTE", "10"))
+TEMPORARY_PASSWORD_TTL_HOURS = int(os.getenv("TEMPORARY_PASSWORD_TTL_HOURS", "72"))
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
-    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+        "domains.accounts.permissions.HasPortalAccount",
+        "domains.accounts.permissions.PasswordChangeCompleted",
+    ],
+    "DEFAULT_THROTTLE_RATES": {"login": f"{LOGIN_RATE_PER_MINUTE}/min"},
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 SPECTACULAR_SETTINGS = {

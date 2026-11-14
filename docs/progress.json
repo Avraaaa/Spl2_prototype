@@ -1,5 +1,9 @@
 {
-  "completed": ["P0-T1", "P0-T2"],
+  "completed": [
+    "P0-T1",
+    "P0-T2",
+    "P1-T1"
+  ],
   "last_updated": "2026-11-14",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
   "evidence": {
@@ -20,6 +24,25 @@
         "node scripts/check-contract.mjs": 0,
         "node scripts/dev.mjs test": 0
       }
+    },
+    "P1-T1": {
+      "mode": "native-windows",
+      "implemented_by": "Claude (one-time exception; Codex was not installed at start)",
+      "gates": {
+        "node scripts/validate-repo.mjs": 0,
+        "node scripts/check-contract.mjs": 0,
+        "node scripts/dev.mjs manage makemigrations --check --dry-run": 0,
+        "node scripts/dev.mjs lint": 0,
+        "node scripts/dev.mjs test": 0
+      },
+      "tests": "services/api: 32 passed; services/ml: 4 passed; web: 6 passed",
+      "review": {
+        "tool": "codex exec --sandbox read-only",
+        "round1": "FAIL (1 high, 2 medium) - fixed with tests",
+        "round2": "PASS"
+      },
+      "ui_verified": "Chrome: admin login, create dual-role bank user, one-time temp password, forced first-login change, role dashboard, admin route denied to bank user"
     }
-  }
+  },
+  "latest_review": "PASS"
 }
