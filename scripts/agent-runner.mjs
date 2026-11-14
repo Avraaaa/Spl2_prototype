@@ -98,6 +98,27 @@ function codex(worktree, prompt, evidence, name, model, effort, review = false) 
   }
   return readFileSync(file, 'utf8');
 }
+/**
+ * Independent read-only review by Claude (subscription CLI, not a paid API). Owner decision 2026-11-14:
+ * Sonnet at medium effort, to save Codex usage. Tools are limited to reading files and git inspection.
+ */
+function claudeReview(worktree, prompt, evidence, name) {
+  const schema = JSON.stringify({ type: 'object', properties: {
+    verdict: { type: 'string', enum: ['PASS', 'FAIL'] }, findings: { type: 'array', items: { type: 'string' } },
+  }, required: ['verdict', 'findings'], additionalProperties: false });
+  const schemaFile = join(evidence, 'claude-review-schema.json');
+  writeFileSync(schemaFile, schema);
+  const out = run('claude', ['-p', '--model', process.env.DATASOFT_CLAUDE_REVIEW_MODEL || 'sonnet',
+    '--effort', process.env.DATASOFT_CLAUDE_REVIEW_EFFORT || 'medium', '--output-format', 'json',
+    '--json-schema', schema, '--max-turns', '60', '--no-session-persistence',
+    '--allowedTools', 'Read', 'Grep', 'Glob', 'Bash(git diff:*)', 'Bash(git log:*)', 'Bash(git show:*)', 'Bash(git status:*)',
+    '--disallowedTools', 'Edit', 'Write', 'NotebookEdit'],
+  worktree, { shell: true, input: prompt, timeout: data.policy.timeout_seconds * 1000, log: join(evidence, `${name}.log`) });
+  const parsed = JSON.parse(out.slice(out.indexOf('{')));
+  const result = parsed.structured_output ?? JSON.parse(String(parsed.result).slice(String(parsed.result).indexOf('{')));
+  writeFileSync(join(evidence, `${name}.txt`), JSON.stringify(result));
+  return JSON.stringify(result);
+}
 function checkPrerequisites() {
   if (!existsSync(join(root, 'uv.lock')) || !existsSync(join(root, 'apps/web/package-lock.json')))
     throw new Error('Lockfiles missing; run uv lock && npm install --prefix apps/web, then commit both before using agents.');
@@ -312,7 +333,7 @@ function doTask(task) {
       lastEvidence = evidence;
       attemptsUsed = attempt + 1;
       // Supply evidence and require reviewer to inspect actual Git diff itself.
-      const reviewText = codex(wd, `Read-only review of ${task.id}. Base ${base}. Inspect git diff, changed files, new tests, security invariants and acceptance criteria.\nGates: ${evidence.join('\n')}\n` +
+      const reviewPrompt = (`Read-only review of ${task.id}. Base ${base}. Inspect git diff (including untracked files via git status), changed files, new tests, security invariants and acceptance criteria.\nGates: ${evidence.join('\n')}\n` +
         `Check the requirement text in docs/requirements/qfd.md, the task section of implementation.md and the pitfalls in learning.md.\n` +
         `Look for tenant boundary leaks, invalid state changes, weak tests, privilege escalation, secrets, UI buttons not backed by real endpoints, and scope creep.\n` +
         `This is a PROTOTYPE (owner decision 2026-11-14): verdict FAIL ONLY for blocking defects, which are: cross-bank data exposure, ` +
@@ -322,8 +343,14 @@ function doTask(task) {
         `and list each as a finding prefixed "[follow-up]". Prefix blocking findings with "[blocking]".\n` +
         `Respect the scope boundaries in the task section of implementation.md: do not FAIL a task for work the plan assigns to a later task.\n` +
         (note ? `Orchestrator note given to the coder (scope and context):\n${note}\n` : '') +
-        `Return JSON verdict and findings only.`, logs, `review-${attempt}`,
-        process.env.DATASOFT_REVIEWER_MODEL || null, task.phase === 1 || task.phase === 2 || task.phase >= 5 ? 'medium' : 'low', true);
+        `Return JSON verdict and findings only.`);
+      // Reviewer: Claude Sonnet (default, saves Codex usage) or Codex via DATASOFT_REVIEWER=codex.
+      const reviewer = process.env.DATASOFT_REVIEWER || data.policy.reviewer || 'claude';
+      console.log(`REVIEWER ${task.id} attempt ${attempt}: ${reviewer}`);
+      const reviewText = reviewer === 'codex'
+        ? codex(wd, reviewPrompt, logs, `review-${attempt}`, process.env.DATASOFT_REVIEWER_MODEL || null,
+          task.phase === 1 || task.phase === 2 || task.phase >= 5 ? 'medium' : 'low', true)
+        : claudeReview(wd, reviewPrompt, logs, `review-${attempt}`);
       const review = JSON.parse(reviewText);
       writeFileSync(join(logs, `review-${attempt}.json`), JSON.stringify(review, null, 2));
       console.log(`REVIEW ${task.id} attempt ${attempt}: ${review.verdict}${review.findings?.length ? ` (${review.findings.length} findings)` : ''}`);
