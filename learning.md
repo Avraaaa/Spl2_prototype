@@ -72,4 +72,5 @@ Requirements source: `docs/requirements/qfd.md`. Plan: `implementation.md`. Task
   - the harness runs `node scripts/check-contract.mjs --write` after each coder attempt (the generated files are always allowed), then the gates, and sends the failure log back (retry budget 3);
   - Node works in the sandbox (`npm run --prefix apps/web check`), but new endpoint types exist only after the harness regenerates the schema.
 - An interrupted run can be resumed: save the worktree diff (`git add -N <new files>; git diff --binary > .agent_runs/seeds/<task>.patch`) and run `node scripts/agent-runner.mjs --task <id> --seed-patch <file>`.
+- **Memory:** the dev servers (Django + Vite) plus a runner worktree setup (`uv sync`, `npm ci`) plus Codex ran this laptop critically low on memory, and Claude Code killed the background jobs. Stop the dev servers before a runner task, and run one task at a time.
 - Stopping the runner mid-task (TaskStop) skips its cleanup. Remove the leftover worktree with `git worktree remove --force <path>` and delete the `agent/<task>-<sha>` branch.
