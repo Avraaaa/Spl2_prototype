@@ -15,3 +15,8 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] Verification reminders are keyed by calendar day, so an issue past the threshold can generate a reminder every day rather than once per configured reminder period.
 - [ ] [follow-up] If an email send takes longer than the worker lease, another worker can claim and send the same message. The fixed Message-ID may help downstream deduplication, but the worker does not guarantee it.
 - [ ] [follow-up] Tests cover delivery, rollback, retries, reminders, and personal API access, but do not directly check notification recipients for the other required workflow events.
+
+## P3-T1 — 2026-11-14
+- [ ] [follow-up] Attachment content checks inspect only the first 8 KB of text files; later binary content can pass validation.
+- [ ] [follow-up] The task board can change status, but it has no controls to edit assignee or Git links after task creation.
+- [ ] [follow-up] New tests cover two-bank access for comments and attachments, but do not directly test cross-bank task creation or every internal-note response path.
