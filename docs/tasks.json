@@ -1,0 +1,321 @@
+{
+  "policy": {
+    "max_review_retries": 2,
+    "no_network": true,
+    "max_tasks_per_run": 12,
+    "timeout_seconds": 2400
+  },
+  "tasks": [
+    {
+      "id": "P0-T1",
+      "phase": 0,
+      "title": "Reproducible service bring-up and smoke tests",
+      "req": [
+        "EX-08",
+        "EX-09",
+        "EX-10"
+      ],
+      "depends_on": [],
+      "allow": [
+        "services/api/",
+        "services/ml/",
+        "apps/web/",
+        "compose.yaml",
+        "contracts/",
+        "README.md"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "docker compose -f compose.yaml config",
+        "docker compose -f compose.yaml up -d --build",
+        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api python services/api/manage.py migrate",
+        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
+        "docker compose -f compose.yaml exec -T ml uv run --no-sync --package datasoft-ml pytest -q services/ml/tests",
+        "npm run --prefix apps/web check",
+        "uv run --locked ruff check services",
+        "uv run --locked ruff format --check services",
+        "uv run --locked mypy services/api --config-file pyproject.toml"
+      ]
+    },
+    {
+      "id": "P0-T2",
+      "phase": 0,
+      "title": "OpenAPI schema and generated frontend contract",
+      "req": [
+        "EX-05"
+      ],
+      "depends_on": [
+        "P0-T1"
+      ],
+      "allow": [
+        "services/api/",
+        "apps/web/",
+        "contracts/",
+        "scripts/check-contract.mjs"
+      ],
+      "gates": [
+        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api python services/api/manage.py spectacular --file /tmp/openapi.yaml --validate",
+        "node scripts/check-contract.mjs",
+        "npm run --prefix apps/web check"
+      ]
+    },
+    {
+      "id": "P1-T1",
+      "phase": 1,
+      "title": "Organization, roles, admin-only onboarding and first-login password flow",
+      "req": [
+        "N-01",
+        "N-02",
+        "N-03",
+        "N-04",
+        "EX-01",
+        "EX-04"
+      ],
+      "depends_on": [
+        "P0-T2"
+      ],
+      "allow": [
+        "services/api/",
+        "apps/web/src/features/auth/",
+        "apps/web/src/features/tenants/",
+        "contracts/"
+      ],
+      "gates": [
+        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api python services/api/manage.py makemigrations --check --dry-run",
+        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
+        "npm run --prefix apps/web check"
+      ]
+    },
+    {
+      "id": "P1-T2",
+      "phase": 1,
+      "title": "Strict bank visibility across APIs and restricted resources",
+      "req": [
+        "EX-01",
+        "EX-02",
+        "EX-03",
+        "N-23"
+      ],
+      "depends_on": [
+        "P1-T1"
+      ],
+      "allow": [
+        "services/api/",
+        "apps/web/src/features/tenants/",
+        "contracts/"
+      ],
+      "gates": [
+        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
+        "npm run --prefix apps/web check"
+      ]
+    },
+    {
+      "id": "P2-T1",
+      "phase": 2,
+      "title": "Ticket domain and officer-authorized draft submission",
+      "req": [
+        "N-05",
+        "N-06",
+        "N-07",
+        "N-08",
+        "N-10"
+      ],
+      "depends_on": [
+        "P1-T2"
+      ],
+      "allow": [
+        "services/api/",
+        "apps/web/src/features/issues/",
+        "contracts/"
+      ],
+      "gates": [
+        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api python services/api/manage.py makemigrations --check --dry-run",
+        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
+        "npm run --prefix apps/web check"
+      ]
+    },
+    {
+      "id": "P2-T2",
+      "phase": 2,
+      "title": "Transactional transition services and optimistic concurrency",
+      "req": [
+        "N-09",
+        "N-12",
+        "N-13",
+        "N-16",
+        "N-17",
+        "N-18",
+        "N-19",
+        "EX-06",
+        "EX-07",
+        "EX-11"
+      ],
+      "depends_on": [
+        "P2-T1"
+      ],
+      "allow": [
+        "services/api/",
+        "apps/web/src/features/workflow/",
+        "apps/web/src/features/issues/",
+        "contracts/"
+      ],
+      "gates": [
+        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
+        "npm run --prefix apps/web check"
+      ]
+    },
+    {
+      "id": "P3-T1",
+      "phase": 3,
+      "title": "Internal tasks, notes, private attachments and comments",
+      "req": [
+        "N-14",
+        "N-15",
+        "N-21",
+        "N-26",
+        "EX-03",
+        "EX-05"
+      ],
+      "depends_on": [
+        "P2-T2"
+      ],
+      "allow": [
+        "services/api/",
+        "apps/web/src/features/tasks/",
+        "apps/web/src/features/issues/",
+        "contracts/"
+      ],
+      "gates": [
+        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
+        "npm run --prefix apps/web check"
+      ]
+    },
+    {
+      "id": "P3-T2",
+      "phase": 3,
+      "title": "Transactional outbox worker and notification/reminder retry",
+      "req": [
+        "N-17",
+        "N-20",
+        "N-22"
+      ],
+      "depends_on": [
+        "P3-T1"
+      ],
+      "allow": [
+        "services/api/",
+        "apps/web/src/features/notifications/",
+        "contracts/"
+      ],
+      "gates": [
+        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests"
+      ]
+    },
+    {
+      "id": "P4-T1",
+      "phase": 4,
+      "title": "Reports, CSV export, overdue monitoring, seeding",
+      "req": [
+        "N-23",
+        "N-24",
+        "N-25",
+        "N-11"
+      ],
+      "depends_on": [
+        "P3-T2"
+      ],
+      "allow": [
+        "services/api/",
+        "apps/web/src/features/reports/",
+        "contracts/",
+        "seed/"
+      ],
+      "gates": [
+        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
+        "npm run --prefix apps/web check"
+      ]
+    },
+    {
+      "id": "P5-T1",
+      "phase": 5,
+      "title": "Masked offline bilingual hybrid ranking and label suggestions",
+      "req": [
+        "E-01",
+        "E-02",
+        "E-03",
+        "E-04",
+        "E-05",
+        "E-06",
+        "E-07",
+        "E-09",
+        "E-10",
+        "E-11",
+        "E-12",
+        "E-13",
+        "E-14",
+        "E-15"
+      ],
+      "depends_on": [
+        "P4-T1"
+      ],
+      "allow": [
+        "services/api/",
+        "services/ml/",
+        "apps/web/src/features/search/",
+        "contracts/",
+        "seed/"
+      ],
+      "gates": [
+        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
+        "docker compose -f compose.yaml exec -T ml uv run --no-sync --package datasoft-ml pytest -q services/ml/tests"
+      ]
+    },
+    {
+      "id": "P5-T2",
+      "phase": 5,
+      "title": "Topic clustering, feedback and evaluation",
+      "req": [
+        "E-08",
+        "E-09"
+      ],
+      "depends_on": [
+        "P5-T1"
+      ],
+      "allow": [
+        "services/api/",
+        "services/ml/",
+        "apps/web/src/features/search/",
+        "seed/"
+      ],
+      "gates": [
+        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
+        "docker compose -f compose.yaml exec -T ml uv run --no-sync --package datasoft-ml pytest -q services/ml/tests"
+      ]
+    },
+    {
+      "id": "P6-T1",
+      "phase": 6,
+      "title": "Hash chain, verifiers, backup and restore drill",
+      "req": [
+        "E-16",
+        "E-17",
+        "E-18",
+        "EX-06",
+        "EX-09"
+      ],
+      "depends_on": [
+        "P5-T2"
+      ],
+      "allow": [
+        "services/api/",
+        "apps/web/src/features/audit/",
+        "infra/",
+        "scripts/"
+      ],
+      "gates": [
+        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
+        "node scripts/validate-repo.mjs"
+      ]
+    }
+  ]
+}

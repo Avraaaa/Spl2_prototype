@@ -1,0 +1,4 @@
+# GENERATED CONTRACT PLACEHOLDER. Replace in phase P0-T2 using drf-spectacular.
+openapi: 3.0.3
+info: {title: DataSoft Portal API, version: 0.1.0}
+paths: {}

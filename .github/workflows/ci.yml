@@ -1,0 +1,81 @@
+name: datasoft-ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions: {contents: read}
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  policy-and-types:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - name: Verify tracked repo structure
+        run: node scripts/validate-repo.mjs
+      - name: Guard protected tests and policy on automated PRs
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin main --depth=1
+          git diff --name-status origin/main...HEAD > /tmp/pr-changes.txt
+          if grep -E '^[MD][[:space:]].*(/tests/|\.test\.[jt]sx?$|(^|/)test_[^/]*\.py$)' /tmp/pr-changes.txt; then
+            echo 'Existing tests cannot be modified or deleted through the automated task workflow'; exit 1
+          fi
+          if grep -E '^[AMD][[:space:]](AGENTS\.template\.md|CLAUDE\.md|\.github/|\.claude/|\.codex/|docs/security-invariants\.md|docs/tasks\.json|scripts/agent-runner\.mjs)' /tmp/pr-changes.txt; then
+            echo 'Agent policy edits need a separately reviewed maintenance process'; exit 1
+          fi
+      - name: Enforce committed lockfiles
+        run: test -s uv.lock && test -s apps/web/package-lock.json
+      - name: Generate local agent instructions
+        run: node scripts/bootstrap-agents.mjs && node scripts/bootstrap-agents.mjs --check
+      - uses: astral-sh/setup-uv@v10.3.3
+        with: {python-version: '3.13'}
+      - name: Check Python lock
+        run: uv lock --check
+      - name: Sync Python via uv only
+        run: uv sync --locked
+      - name: Python lint
+        run: uv run --locked ruff check services && uv run --locked ruff format --check services
+      - name: ML tests
+        run: uv run --locked --package datasoft-ml pytest -q services/ml/tests
+      - name: Install Node dependencies
+        run: npm ci --prefix apps/web --no-audit --no-fund
+      - name: Frontend checks
+        run: npm run --prefix apps/web check
+      - name: Frontend production build
+        run: npm run --prefix apps/web build
+  compose-integration:
+    runs-on: ubuntu-latest
+    needs: policy-and-types
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Synthetic local environment
+        run: cp .env.example .env
+      - name: Compose configuration
+        run: docker compose -f compose.yaml config
+      - name: Start foundation
+        run: docker compose -f compose.yaml up -d --build
+      - name: Apply database migration
+        run: docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api python services/api/manage.py migrate --noinput
+      - name: Detect missing migrations
+        run: docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api python services/api/manage.py makemigrations --check --dry-run
+      - name: Django tests against PostgreSQL
+        run: docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests
+      - name: ML tests
+        run: docker compose -f compose.yaml exec -T ml uv run --no-sync --package datasoft-ml pytest -q services/ml/tests
+      - name: Health checks
+        run: |
+          curl --fail http://127.0.0.1:8000/api/health/
+          curl --fail http://127.0.0.1:8001/health
+      - name: Logs on failure
+        if: failure()
+        run: docker compose -f compose.yaml logs --no-color --tail=100
+      - name: Clean up
+        if: always()
+        run: docker compose -f compose.yaml down

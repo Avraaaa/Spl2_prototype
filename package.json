@@ -1,0 +1,18 @@
+{
+  "name": "datasoft-monorepo-tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "agents:bootstrap": "node scripts/bootstrap-agents.mjs",
+    "agents:check": "node scripts/bootstrap-agents.mjs --check",
+    "validate": "node scripts/validate-repo.mjs",
+    "setup": "node scripts/bootstrap-agents.mjs && uv lock && uv sync --locked && npm install --prefix apps/web --no-audit --no-fund",
+    "check:web": "npm run --prefix apps/web check",
+    "check:api": "uv run --locked --package datasoft-api pytest -q services/api/tests",
+    "check:ml": "uv run --locked --package datasoft-ml pytest -q services/ml/tests",
+    "check:python": "uv run --locked ruff check services && uv run --locked ruff format --check services",
+    "dev": "node scripts/dev.mjs",
+    "tasks": "node scripts/agent-runner.mjs --show"
+  }
+}

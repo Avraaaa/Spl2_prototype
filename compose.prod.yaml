@@ -1,0 +1,10 @@
+# Reference overlay ONLY, not production-approved. A security review and separate env are required.
+services:
+  api:
+    volumes: []
+    command: ["uv", "run", "--no-sync", "--package", "datasoft-api", "gunicorn", "--chdir", "services/api", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+  ml:
+    volumes: []
+  web:
+    volumes: []
+# Production requires reverse proxy TLS, hardened secrets, object storage, health probes and backup verification.

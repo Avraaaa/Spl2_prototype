@@ -1,0 +1,15 @@
+# Workspace-local conservative defaults; CLI flags for a specific invocation take precedence.
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+model_reasoning_effort = "high"
+
+[sandbox_workspace_write]
+network_access = false
+
+[profiles.review]
+sandbox_mode = "read-only"
+model_reasoning_effort = "medium"
+
+[profiles.implement]
+sandbox_mode = "workspace-write"
+model_reasoning_effort = "high"

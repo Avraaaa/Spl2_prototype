@@ -1,0 +1,12 @@
+.git
+.env
+.venv
+**/node_modules
+**/dist
+**/__pycache__
+**/.pytest_cache
+.agent_runs
+models
+*.log
+**/AGENTS.md
+**/AGENTS.md

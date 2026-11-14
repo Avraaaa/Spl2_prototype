@@ -1,0 +1,11 @@
+[project]
+name = "datasoft-api"
+version = "0.1.0"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "Django>=6.1,<6.2", "djangorestframework>=3.16,<3.20", "drf-spectacular>=0.28,<0.31",
+  "psycopg[binary]>=3.2,<3.5", "pgvector>=0.4,<0.7", "gunicorn>=23,<26"
+]
+
+[tool.uv]
+package = false

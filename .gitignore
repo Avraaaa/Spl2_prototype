@@ -1,0 +1,24 @@
+# Local agent instructions are deliberately not tracked. See AGENTS.template.md.
+AGENTS.md
+agents.md
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage/
+node_modules/
+dist/
+*.sqlite3
+.agent_runs/
+.run-state.json
+*.log
+.DS_Store
+services/api/media/
+models/
+CLAUDE.md

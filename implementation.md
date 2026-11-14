@@ -1,0 +1,74 @@
+> **Bootstrap requirement:** First run `node scripts/bootstrap-agents.mjs`, `uv lock`, `uv sync --locked`, and `npm install --prefix apps/web` on a network-connected machine; commit both lockfiles before running any autonomous task. All Python tooling must use uv; TypeScript/JavaScript is preferred for non-Django automations. `AGENTS.md` is ignored and regenerated in every worktree.
+
+# implementation.md — task execution plan / agent contract
+
+This plan is intentionally detailed for P0–P2 and skeletal beyond. Only `docs/tasks.json` defines executable task order, allowlisted paths and command gates. The local `scripts/agent-runner.mjs` enforces them. **All tasks begin incomplete.** Progress is updated only after independent gates and reviewer PASS.
+
+## Global automatic execution protocol
+
+- Preflight: validate clean Git working tree, current CLI authentication, Docker availability, no real bank data, and no secrets in worktree. Start worktree from current HEAD.
+- Coder reads its one selected task and only relevant docs/files; no unapproved dependency or requirement changes.
+- Reviewer runs in a read-only Codex sandbox and judges the code diff plus test evidence. Reviewer verdict is advisory; gates are independently executed by runner.
+- Retry failed review at most twice. If tests fail, runner does not auto-patch tests; stop and record BLOCKED or FAIL.
+- Verify no tracked preexisting test is edited/deleted and no CI/AGENTS/security-policy file changed. Match files to allowed paths. Stronger production CI must check against protected branch outside AI control.
+- All gates must report actual exit status 0; otherwise STOP without merge. Commits are created by runner only; branch merge must be fast-forward. No auto-push, real email, cloud provisioning or deployment.
+- Stop on run limit, model quota, nonzero exit, unsafe request, conflicting specs, dependency download failure, unreadable source, reviewer repeated rejection, tool inability, or unstable tests. Don't loop forever.
+- Each task ends with one commit and tracked progress file; restart runner chooses next incomplete task. Run `node scripts/agent-runner.mjs --show` for status.
+
+## Phase 0 — Foundation
+
+### P0-T1: Reproducible Compose + health + smoke
+Requirements: EX-08, EX-09, EX-10.
+Scope: Verify Django DRF, FastAPI and React Vite Docker services, PostgreSQL/pgvector extension migration, lint/test commands and local-only ports. Remove placeholder bugs but not unrelated features.
+Acceptance: DB health; Django schema migration succeeds; GET `/api/health/` returns 200 and explicit `skeleton` stage; FastAPI GET `/health` 200 with offline ML; React renders without errors; no external network calls during requests; fail closed if secret missing from production. No live data.
+Commands: exactly those in `docs/tasks.json`; additional manual smoke `curl http://localhost:8000/api/health/` and `curl http://localhost:8001/health`.
+Failure: if Docker missing, do not mark pass. If a migration cannot apply to a clean database, STOP.
+
+### P0-T2: Single OpenAPI source of truth
+Requirements: EX-05 and API interoperability.
+Scope: Generate schema from DRF/drf-spectacular; produce `contracts/openapi.yaml`; generate TypeScript type declarations; use openapi-fetch in React, no handwritten duplication. CI checks regeneration. Ensure health endpoint excluded only intentionally. Test API schema consistency.
+Acceptance: schema generation valid; TS type regeneration does not change checked-in file; runtime client exercises Django API; frontend check is green. Never let frontend manually define server domain DTOs.
+
+## Phase 1 — Accounts, roles and tenant isolation
+
+### P1-T1: Role matrix and controlled onboarding
+Requirements: N-01..N-04, EX-01, EX-04.
+Data model: Organization; User (Django auth), OrganizationMembership (bank + role, unique user/bank/role); DataSoftStaffRole; TemporaryCredential or FirstLoginSetup token; onboarding events. A person may be Officer and Verifier; DataSoft roles are exclusive unless deliberately allowed by policy.
+Services: `register_organization`, `create_user`, `deactivate_user`, `assign_role`, `force_password_reset`. Only DataSoft Admin calls admin creation. No public registration endpoint; inactive users have no live access. Temporary credentials are salted/hashed and expire; first sign-in must not expose other API paths until changed. For a real client, request approval to replace emailed plaintext password with one-time setup URL.
+Acceptance tests: anonymous 401/403; unprivileged 403 for create; temporary credential expiry, forced-change gate, reset replay; dual Officer+Verifier membership; DataSoft support may work issues but not add users; deactivated users lose access; no raw credentials in logs.
+
+### P1-T2: Bank isolation by construction
+Requirements: EX-01, EX-02, EX-03.
+Add shared `authorized_issues(user)` selector and row-object policy; deny bank switching via forged headers/body/query, direct object ID, attachments, comments, reports, export, notifications and search. Every new domain must use policy. DataSoft scoped aggregate access separately audited.
+Acceptance tests at P1: create Bank A and B and test role-matrix membership/organization APIs, guessed organization IDs, direct-object access, bank spoofing via headers/body, and cross-tenant selectors. Issue, attachment, search and export negative tests MUST be added once these domains exist in P2–P5; do not claim they pass before implementation. Internal-only notes never serialized for clients. Add property tests for role matrix later.
+Failure: any cross-bank leak halts all subsequent development.
+
+## Phase 2 — Transactional issue lifecycle
+
+### P2-T1: Ticket register, drafts and authorized submission
+Requirements: N-05..N-08, N-10.
+Models: Product/Module, Request with tenant foreign key and readable sequence (not enumeration for auth), request type, bug evidence, status, version, created_by; IssueEvent append-only with actor and timestamps. Authorized Issue Officer is submitting actor. Draft is invisible to DataSoft intake.
+Acceptance: typed validation, required bug evidence, permanent readable IDs, draft saves/edits; one-click submit records officer+time once, starts Submitted, never a separate bank approval queue. Same-bank related requests only. Add two-bank negative API tests for GET/list/write/draft on the newly implemented issue domain; verify failures cannot reveal other bank IDs.
+
+### P2-T2: Explicit transition service and concurrency
+Requirements: N-09, N-12, N-13, N-16..N-19, EX-06, EX-07, EX-11.
+Allowed sequence: DRAFT -> SUBMITTED -> ACCEPTED or REJECTED; ACCEPTED -> PENDING -> IN_PROGRESS -> DELIVERED -> AWAITING_VERIFICATION -> VERIFIED -> CLOSED. If verification fails: AWAITING_VERIFICATION -> IN_PROGRESS (record VERIFICATION_FAILED event), then redelivery. Closed issue can reopen within configurable default 30-day period; later submit Recurring with same-bank linkage. Every accept requires a tentative date or explicit unknown flag; deliver requires delivery notes and actual date. Closure DataSoft only.
+Implementation: one service per action; atomic `select_for_update` on Ticket; check current version and actor permissions; append event and notification outbox records within same transaction, then commit. Use database timestamps and UTC timezone-aware arithmetic. Don't expose client-visible internal tasks.
+Acceptance: table-driven positive/negative role x state transitions including rejection/failed verification/reopen boundary at 29, 30 and 31 days; tentative-date revision history; actual delivery only on delivery; no automatic verification/closure; `409 Conflict` on simultaneous versioned edits; immutable event cannot be changed via API. Test two sessions racing transition in PostgreSQL, not SQLite.
+
+## Phase 3 — Internal work and reliable notifications
+P3-T1: Internal task list and Kanban, staff-only notes, authorized attachments, comments in all stages; task Git links (N-14,N-15,N-21,N-26,EX-03,EX-05). Gate: separate client DTO, no private file bypass.
+P3-T2: Transactional outbox for in-app/email, idempotency, retries, worker leases, verification reminder (N-17,N-20,N-22). Gate: SMTP off causes retry and UI continues.
+
+## Phase 4 — Reports and recurrence
+P4-T1: Date filters default current year, status/month/bank summaries, Detailed CSV, audit-safe exports, overdue warnings, recurring same-bank issue relations, bilingual synthetic seed (N-11,N-23,N-24,N-25). Gate: Bank A cannot infer Bank B from totals.
+
+## Phase 5 — Optional bilingual ML
+P5-T1: Mask synchronously in Django before persist/ML; force local offline checkpoint; bilingual semantic and PostgreSQL keyword lookup; product/module/recent-window restriction; fuse ranks with RRF; suggest 0–5 tenant-scoped candidates; suggest labels with calibrated threshold and abstain; never auto-merge. Record suggestion feedback (E-01..E-07,E-09..E-15). Golden evaluation set should include Bangla, English, mixed language, typos, exact error codes, tenant-crossing decoys and false matches. Offline/local failure should not impact submission.
+P5-T2: Cluster only unidentified recent masked requests; propose topics for admin review; compute P@5 and recall@5 vs held-out labeled cases, report both banks independently (E-08,E-09). GPU is not required for proof-of-concept model selection; compare inference times on available CPU.
+
+## Phase 6 — Audit evidence and deployment readiness
+P6-T1: Append-only hash chain with canonicalized serialized records, per-tenant sequence and external periodic head anchor; verification finds first inconsistency; privilege tests; database backup+restore drill in disposable environment (E-16,E-17,E-18,EX-06,EX-09). Gate: tamper detection and disaster-recovery restore evidence. Production requires separate formal client/security approval, TLS, secret distribution, real SMTP, AV scanning, retention policy and monitoring.
+
+## Exit rules
+A phase is complete only if every listed task is marked passed by the runner, all independent test gates pass, no critical finding is unresolved and a human can reproduce the demo with synthetic records. Never interpret this as authorization for production banking data.

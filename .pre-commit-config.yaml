@@ -1,0 +1,26 @@
+# Every Python tool uses the uv-managed workspace; no pre-commit pip environments.
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: Ruff lint via uv
+        language: system
+        entry: uv run --locked ruff check
+        types_or: [python]
+      - id: ruff-format
+        name: Ruff format check via uv
+        language: system
+        entry: uv run --locked ruff format --check
+        types_or: [python]
+      - id: portal-policy
+        name: Validate repo contract
+        language: system
+        entry: node scripts/validate-repo.mjs
+        pass_filenames: false
+        always_run: true
+      - id: web-check
+        name: TypeScript lint and unit tests
+        language: system
+        entry: npm run --prefix apps/web check
+        pass_filenames: false
+        files: ^apps/web/

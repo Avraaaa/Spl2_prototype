@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(rm -rf:*)",
+      "Bash(docker compose -f compose.prod.yaml:*)",
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(models/**)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/agent-hook.mjs",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

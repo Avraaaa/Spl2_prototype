@@ -1,0 +1,30 @@
+[
+  {
+    "organization": "Synthetic Bank A",
+    "title": "Fund transfer OTP rejected",
+    "description": "OTP verification failed with error code TRX-401 when transferring funds",
+    "product": "CoreBank",
+    "status": "SUBMITTED"
+  },
+  {
+    "organization": "Synthetic Bank A",
+    "title": "ওটিপি যাচাই হচ্ছে না",
+    "description": "টাকা ট্রান্সফারের সময় TRX-401 ত্রুটি দেখায়",
+    "product": "CoreBank",
+    "status": "DRAFT"
+  },
+  {
+    "organization": "Synthetic Bank B",
+    "title": "Transaction OTP error",
+    "description": "OTP validation fails with TRX-401",
+    "product": "CoreBank",
+    "status": "SUBMITTED"
+  },
+  {
+    "organization": "Synthetic Bank B",
+    "title": "অ্যাপ ধীরগতিতে চলছে",
+    "description": "মোবাইল ব্যাংকিং অ্যাপ খুলতে অনেক সময় লাগে",
+    "product": "Mobile",
+    "status": "SUBMITTED"
+  }
+]
