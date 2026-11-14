@@ -86,3 +86,25 @@ const stale = await get(officer, 'officer');
 expect(await support.req('POST', `/api/issues/${id}/deliver/`, { version: stale.version - 1, delivery_note: 'x', deployment_details: 'y' }), 409, 'stale version is rejected');
 const final = await get(officer, 'officer');
 console.log(`\nLIFECYCLE OK: final status ${final.status}, ${final.events?.length ?? '?'} timeline events, version ${final.version}`);
+
+// ---- P3/P4 features: comments, notifications, internal tasks, reports, CSV --------------------------
+console.log('\n-- collaboration, notifications, reports --');
+expect(await officer.req('POST', `/api/issues/${id}/comments/`, { body: 'Bank: still seeing it on joint accounts after OTP 556677.' }), 201, 'officer comments');
+expect(await support.req('POST', `/api/issues/${id}/comments/`, { body: 'DataSoft: investigating the month-end batch.' }), 201, 'support comments');
+const comments = expect(await officer.req('GET', `/api/issues/${id}/comments/`), 200, 'officer reads comments');
+const list = comments.results ?? comments;
+console.log(`    ${list.length} comments; OTP masked in comment: ${!JSON.stringify(list).includes('556677')}`);
+expect(await otherBank.req('GET', `/api/issues/${id}/comments/`), 404, 'other bank cannot read comments');
+expect(await officer.req('GET', '/api/tasks/'), [403, 404], 'bank user cannot see internal tasks');
+expect(await support.req('GET', '/api/tasks/'), 200, 'support lists internal tasks');
+const unread = expect(await verifier.req('GET', '/api/notifications/unread-count/'), 200, 'verifier unread notifications');
+console.log(`    verifier unread notifications: ${unread.count}`);
+if (!(unread.count > 0)) { console.error('expected delivery notifications for the verifier'); process.exit(1); }
+const summary = expect(await officer.req('GET', '/api/reports/summary/'), 200, 'officer summary report');
+const otherSummary = expect(await otherBank.req('GET', '/api/reports/summary/'), 200, 'other bank summary report');
+console.log(`    bank A total ${summary.total} (by_bank present: ${'by_bank' in summary && summary.by_bank != null}); bank B total ${otherSummary.total}`);
+const csv = await officer.req('GET', '/api/reports/detailed/csv/');
+expect(csv, 200, 'officer exports detailed CSV');
+if (!String(csv.data).includes('SR-')) { console.error('CSV missing request references'); process.exit(1); }
+expect(await support.req('GET', '/api/reports/dashboard/'), 200, 'DataSoft dashboard counts');
+console.log('\nALL SMOKE CHECKS OK');
