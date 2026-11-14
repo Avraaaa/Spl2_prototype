@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from domains.accounts.models import Membership
 from domains.accounts.roles import BANK_ROLES, DATASOFT_ROLES, Role
+from domains.notifications.services import notify_issue_event
 from domains.tenants.models import OrganizationKind
 from domains.tenants.selectors import get_authorized_object_or_404, portal_organization
 
@@ -63,7 +64,7 @@ def _record(
         issue.last_status_at = now
     issue.version += 1
     issue.save()
-    IssueEvent.objects.create(
+    event = IssueEvent.objects.create(
         issue=issue,
         actor=actor,
         kind=kind,
@@ -72,7 +73,7 @@ def _record(
         reason=mask_sensitive(reason),
         details=details or {},
     )
-    # P3-T2 adds a transactional notification outbox here, keyed by this event.
+    notify_issue_event(event)
     return issue
 
 

@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "domains.accounts",
     "domains.products",
     "domains.issues",
+    "domains.notifications",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -76,6 +77,11 @@ USE_I18N = True
 USE_TZ = True
 STATIC_URL = "/static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+NOTIFICATION_EMAIL_ENABLED = os.getenv("NOTIFICATION_EMAIL_ENABLED", "1") == "1"
+VERIFICATION_REMINDER_DAYS = int(os.getenv("VERIFICATION_REMINDER_DAYS", "3"))
+OUTBOX_MAX_ATTEMPTS = int(os.getenv("OUTBOX_MAX_ATTEMPTS", "5"))
+OUTBOX_LEASE_SECONDS = int(os.getenv("OUTBOX_LEASE_SECONDS", "60"))
 LOGIN_RATE_PER_MINUTE = int(os.getenv("LOGIN_RATE_PER_MINUTE", "10"))
 PASSWORD_CHECK_RATE_PER_MINUTE = int(os.getenv("PASSWORD_CHECK_RATE_PER_MINUTE", "10"))
 TEMPORARY_PASSWORD_TTL_HOURS = int(os.getenv("TEMPORARY_PASSWORD_TTL_HOURS", "72"))

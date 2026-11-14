@@ -6,6 +6,7 @@ import { hasRole, landingFor, roleLabel, type PortalUser } from '../features/aut
 import { UsersAdminPage } from '../features/tenants/UsersAdminPage';
 import { IssueDetailPage, IssueDraftPage, IssuesListPage } from '../features/issues/IssuesPage';
 import { ProductsPage } from '../features/issues/ProductsPage';
+import { NotificationBell, NotificationsPage } from '../features/notifications/NotificationsPage';
 
 function Shell({ me, children }: { me: PortalUser; children: React.ReactNode }) {
   const logout = useLogout();
@@ -20,6 +21,7 @@ function Shell({ me, children }: { me: PortalUser; children: React.ReactNode }) 
           {isAdmin && <NavLink to="/admin/users">Users &amp; banks</NavLink>}
           <NavLink to="/issues">Requests</NavLink>
           {isAdmin && <NavLink to="/admin/products">Products</NavLink>}
+          <NotificationBell />
         </nav>
         <div className="who">
           <div><strong>{me.full_name}</strong><small>{me.organization.name}</small></div>
@@ -78,6 +80,7 @@ export function App() {
       <Route path="/issues/new" element={authed(u => <IssueDraftPage me={u} />)} />
       <Route path="/issues/:id/edit" element={authed(u => <IssueDraftPage me={u} />)} />
       <Route path="/issues/:id" element={authed(u => <IssueDetailPage me={u} />)} />
+      <Route path="/notifications" element={authed(() => <NotificationsPage />)} />
       <Route path="*" element={<Navigate to={landingFor(user ?? null)} replace />} />
     </Routes>
   );

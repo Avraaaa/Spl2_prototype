@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from domains.accounts.models import Membership
 from domains.accounts.roles import Role
+from domains.notifications.services import notify_issue_event
 from domains.tenants.models import OrganizationKind
 from domains.tenants.selectors import (
     authorized_rows,
@@ -172,11 +173,12 @@ def submit(user, issue: Issue) -> Issue:
                 "updated_at",
             ]
         )
-        IssueEvent.objects.create(
+        event = IssueEvent.objects.create(
             issue=locked,
             actor=user,
             kind="SUBMITTED",
             from_status=IssueStatus.DRAFT,
             to_status=IssueStatus.SUBMITTED,
         )
+        notify_issue_event(event)
     return locked
