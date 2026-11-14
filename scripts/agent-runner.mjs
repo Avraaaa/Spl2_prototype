@@ -109,6 +109,8 @@ function doTask(task) {
     run('git', ['worktree', 'add', '-b', branch, wd, base], root, { timeout: 60_000 });
     attached = true;
     run('node', ['scripts/bootstrap-agents.mjs'], wd);
+    // CLAUDE.md is intentionally untracked (owner decision); copy the local one into the worktree.
+    if (existsSync(join(root, 'CLAUDE.md'))) cpSync(join(root, 'CLAUDE.md'), join(wd, 'CLAUDE.md'));
     const usesDocker = task.gates.some(g => /\bdocker\b/.test(g));
     if (usesDocker) {
       cpSync(join(wd, '.env.example'), join(wd, '.env'));

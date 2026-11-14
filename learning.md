@@ -65,3 +65,5 @@ Requirements source: `docs/requirements/qfd.md`. Plan: `implementation.md`. Task
 - `codex` is an npm `.cmd` shim, so it must be spawned with `shell: true`. The `codex exec --sandbox read-only` review works with ChatGPT login. Leave out `--model` unless `DATASOFT_CODER_MODEL`/`DATASOFT_REVIEWER_MODEL` are set.
 - Gates come from `docs/tasks.json` and run natively through `scripts/dev.mjs` (Docker gates are kept only for later integration work).
 - A fresh worktree has no `.venv` or `node_modules`. The runner runs `uv sync --locked` and `npm ci --prefix apps/web` there before the coder starts.
+- **`CLAUDE.md` is intentionally untracked** (in `.gitignore`, owner decision; never commit it). A fresh worktree therefore lacks it and `validate-repo.mjs` fails with `Missing CLAUDE.md`. The runner copies the local `CLAUDE.md` into the worktree. Versioned agent policy (e.g. sole authorship) lives in `AGENTS.template.md`.
+- Check that every gate passes on an untouched worktree of HEAD before blaming the coder for a gate failure.
