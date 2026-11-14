@@ -2,6 +2,8 @@
 
 # implementation.md — task execution plan / agent contract
 
+**Requirements source:** `docs/requirements/qfd.md` (text of `DataSoft_QFD_General_Requirements5 (3).docx`). Where this plan and the QFD disagree, the QFD wins unless an owner decision recorded here says otherwise.
+
 This plan is intentionally detailed for P0–P2 and skeletal beyond. Only `docs/tasks.json` defines executable task order, allowlisted paths and command gates. The local `scripts/agent-runner.mjs` enforces them. **All tasks begin incomplete.** Progress is updated only after independent gates and reviewer PASS.
 
 ## Global automatic execution protocol
@@ -36,6 +38,12 @@ Requirements: N-01..N-04, EX-01, EX-04.
 Data model: Organization; User (Django auth), OrganizationMembership (bank + role, unique user/bank/role); DataSoftStaffRole; TemporaryCredential or FirstLoginSetup token; onboarding events. A person may be Officer and Verifier; DataSoft roles are exclusive unless deliberately allowed by policy.
 Services: `register_organization`, `create_user`, `deactivate_user`, `assign_role`, `force_password_reset`. Only DataSoft Admin calls admin creation. No public registration endpoint; inactive users have no live access. Temporary credentials are salted/hashed and expire; first sign-in must not expose other API paths until changed. For a real client, request approval to replace emailed plaintext password with one-time setup URL.
 Acceptance tests: anonymous 401/403; unprivileged 403 for create; temporary credential expiry, forced-change gate, reset replay; dual Officer+Verifier membership; DataSoft support may work issues but not add users; deactivated users lose access; no raw credentials in logs.
+**Interim prototype behaviour (owner decision 2026-11-14, until email is configured):** the temporary password is returned once in the admin API response and shown once in the admin UI; it is never logged or stored in plaintext. Organizations have no official contact email yet. Both are **deferred to P3-T3** and must not be implemented earlier. Do not add any email sending, SMTP settings or contact-email field before P3-T3.
+
+### P1-T1b: Profile maintenance and username change
+Requirements: N-01.
+Scope: an authenticated user can view and edit a basic profile (full name, email) and change their own username (unique, case-insensitive; password re-entry required); changes append an AccountEvent with old/new values. Organization and roles stay admin-controlled and cannot be changed through the profile API. Deactivation keeps historical actions attributable to the user (no deletes). No email sending (see P3-T3).
+Acceptance: user edits own profile only; cannot edit organization/roles/is_active via profile; username uniqueness (case-insensitive) and validation; wrong current password rejects username change; forced-password-change gate still blocks profile edits until the temporary password is changed; two-bank tests show no cross-bank profile access.
 
 ### P1-T2: Bank isolation by construction
 Requirements: EX-01, EX-02, EX-03.
@@ -58,7 +66,12 @@ Acceptance: table-driven positive/negative role x state transitions including re
 
 ## Phase 3 — Internal work and reliable notifications
 P3-T1: Internal task list and Kanban, staff-only notes, authorized attachments, comments in all stages; task Git links (N-14,N-15,N-21,N-26,EX-03,EX-05). Gate: separate client DTO, no private file bypass.
-P3-T2: Transactional outbox for in-app/email, idempotency, retries, worker leases, verification reminder (N-17,N-20,N-22). Gate: SMTP off causes retry and UI continues.
+P3-T2: Transactional outbox for in-app/email, idempotency, retries, worker leases, verification reminder (N-17,N-20,N-22). Gate: SMTP off causes retry and UI continues. Development uses Django's console/locmem email backend; real SMTP is configured by the owner later.
+
+### P3-T3: Account email delivery (deferred from P1-T1; starts only after the owner sets up email)
+Requirements: N-01, N-02, EX-04.
+Scope: add the organization **official contact email** (required for new organizations; data migration backfills existing rows with an admin-editable placeholder flag). Temporary credentials are delivered **only** to the user's registered email through the P3-T2 outbox; remove `temporary_password` from admin API responses and the admin UI (UI shows "credentials sent to <masked email>"). Self-service "forgot password" sends a one-time, hashed, expiring reset link (prefer setup links over plaintext passwords per security invariant 11); responses never reveal whether an account exists. Contact-email requests for new users, role changes and deactivations are recorded for the admin.
+Acceptance: no credential appears in any API response, log or outbox payload other than the email body; email failure is retried and leaves the account in "credentials pending" state visible to the admin; reset link single use, expires, and is invalidated by a later reset; rate-limited; two-bank tests unchanged.
 
 ## Phase 4 — Reports and recurrence
 P4-T1: Date filters default current year, status/month/bank summaries, Detailed CSV, audit-safe exports, overdue warnings, recurring same-bank issue relations, bilingual synthetic seed (N-11,N-23,N-24,N-25). Gate: Bank A cannot infer Bank B from totals.

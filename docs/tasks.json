@@ -87,6 +87,28 @@
       ]
     },
     {
+      "id": "P1-T1b",
+      "phase": 1,
+      "title": "Profile maintenance and username change",
+      "req": [
+        "N-01"
+      ],
+      "depends_on": [
+        "P1-T1"
+      ],
+      "allow": [
+        "services/api/",
+        "apps/web/src/features/auth/",
+        "contracts/"
+      ],
+      "gates": [
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ]
+    },
+    {
       "id": "P1-T2",
       "phase": 1,
       "title": "Strict bank visibility across APIs and restricted resources",
@@ -97,7 +119,7 @@
         "N-23"
       ],
       "depends_on": [
-        "P1-T1"
+        "P1-T1b"
       ],
       "allow": [
         "services/api/",
@@ -209,6 +231,32 @@
       ],
       "gates": [
         "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests"
+      ]
+    },
+    {
+      "id": "P3-T3",
+      "phase": 3,
+      "title": "Account email delivery: contact email, emailed temporary credentials, reset links",
+      "req": [
+        "N-01",
+        "N-02",
+        "EX-04"
+      ],
+      "depends_on": [
+        "P3-T2"
+      ],
+      "blocked_until": "Owner configures email (deferred by owner decision 2026-11-14)",
+      "allow": [
+        "services/api/",
+        "apps/web/src/features/auth/",
+        "apps/web/src/features/tenants/",
+        "contracts/"
+      ],
+      "gates": [
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
       ]
     },
     {

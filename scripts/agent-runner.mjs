@@ -180,11 +180,17 @@ function doTask(task) {
 }
 if (show) {
   const completed = currentState().completed;
-  for (const t of data.tasks) console.log(`${completed.includes(t.id) ? 'DONE' : 'TODO'} ${t.id}: ${t.title}`);
+  for (const t of data.tasks) {
+    const state = completed.includes(t.id) ? 'DONE' : t.blocked_until ? 'HOLD' : 'TODO';
+    console.log(`${state} ${t.id}: ${t.title}${t.blocked_until && state === 'HOLD' ? ` [${t.blocked_until}]` : ''}`);
+  }
 } else {
-  const pending = data.tasks.filter(t => !currentState().completed.includes(t.id));
+  // Tasks with blocked_until are owner-deferred: never selected by --all, refused by --task.
+  const pending = data.tasks.filter(t => !currentState().completed.includes(t.id) && !t.blocked_until);
   const selection = all ? pending : data.tasks.filter(t => t.id === taskId);
   if (selection.length === 0) throw new Error(`Unknown or already-completed task ${taskId ?? ''}`);
+  const held = selection.find(t => t.blocked_until);
+  if (held) throw new Error(`${held.id} is on hold: ${held.blocked_until}`);
   if (selection.length > data.policy.max_tasks_per_run) throw new Error('Task cap exceeded');
   for (const task of selection) {
     try { doTask(task); }
