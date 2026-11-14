@@ -238,8 +238,13 @@ function doTask(task) {
       if (!changed.length) throw new Error('No source changes; cannot mark task implemented');
       const evidence = [];
       let gateFailure = null;
-      // Deterministic generation the coder's sandbox cannot do (no Python there). The output stays in
-      // the worktree, so a retry attempt sees the up-to-date generated TypeScript types.
+      // Deterministic steps the coder's sandbox cannot do (no Python there): ruff auto-format/fix, then
+      // contract generation. Output stays in the worktree, so a retry sees the up-to-date generated types.
+      // The lint gate still fails on anything ruff cannot fix automatically.
+      try {
+        run('uv', ['run', '--locked', 'ruff', 'format', 'services'], wd, { timeout: 300_000, log: join(logs, `format-${attempt}.log`) });
+        run('uv', ['run', '--locked', 'ruff', 'check', '--fix', '--exit-zero', 'services'], wd, { timeout: 300_000, log: join(logs, `fix-${attempt}.log`) });
+      } catch (error) { console.log(`WARN ${task.id} auto-format: ${String(error.message).slice(0, 300)}`); }
       try {
         run('node', ['scripts/check-contract.mjs', '--write'], wd, { timeout: 600_000, log: join(logs, `generate-${attempt}.log`) });
         console.log(`GENERATED ${task.id} contract`);
@@ -297,6 +302,21 @@ function doTask(task) {
     if (attached && gateEnv?.COMPOSE_PROJECT_NAME) {
       try { run('docker', ['compose', '-f', 'compose.yaml', 'down', '--remove-orphans', '-v'], wd, { timeout: 120_000, env: gateEnv }); }
       catch (e) { console.error(`Could not clean disposable containers: ${e.message.slice(0, 300)}`); }
+    }
+    if (attached && !merged) {
+      // Never lose coder work: save it as a seed patch for --seed-patch before removing the worktree.
+      try {
+        const untracked = git(wd, 'ls-files', '--others', '--exclude-standard').split('\n').filter(Boolean);
+        if (untracked.length) git(wd, 'add', '-N', '--', ...untracked);
+        // Direct spawn: run() truncates long output, which would corrupt a large patch.
+        const patch = spawnSync('git', ['diff', '--binary', base], { cwd: wd, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 }).stdout;
+        if (patch && patch.trim()) {
+          mkdirSync(join(root, '.agent_runs', 'seeds'), { recursive: true });
+          const file = join(root, '.agent_runs', 'seeds', `${task.id}-${base.slice(0, 8)}.patch`);
+          writeFileSync(file, patch);
+          console.log(`SAVED ${task.id} work to ${file} (resume with --seed-patch)`);
+        }
+      } catch (e) { console.error(`Could not save seed patch: ${String(e.message).slice(0, 300)}`); }
     }
     if (attached) {
       try { run('git', ['worktree', 'remove', '--force', wd], root, { timeout: 300_000 }); }
