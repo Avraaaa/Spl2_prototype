@@ -208,7 +208,7 @@ function doTask(task) {
       gateEnv = { ...gateEnv, COMPOSE_PROJECT_NAME: project, API_PUBLISHED_PORT: String(ports), ML_PUBLISHED_PORT: String(ports + 1), WEB_PUBLISHED_PORT: String(ports + 2) };
     }
     // Native setup: a fresh worktree has no .venv or node_modules (both gitignored).
-    run('uv', ['sync', '--locked'], wd, { timeout: 600_000, log: join(logs, 'setup-uv.log') });
+    run('uv', ['sync', '--locked', '--all-packages'], wd, { timeout: 600_000, log: join(logs, 'setup-uv.log') });
     run('npm', ['ci', '--prefix', 'apps/web', '--no-audit', '--no-fund', '--prefer-offline'], wd,
       { shell: true, timeout: 600_000, log: join(logs, 'setup-npm.log') });
     if (seedPatch) {
@@ -221,7 +221,7 @@ function doTask(task) {
       `the matching requirement text in docs/requirements/qfd.md, docs/security-invariants.md, then only the code you need.\n` +
       `Paths allowed: ${task.allow.join(', ')}.\nAcceptance commands (run by the harness afterwards): ${task.gates.join(' ; ')}.\n` +
       `Environment: native Windows, no Docker. IMPORTANT: your sandbox CANNOT run Python (uv's interpreter is outside it: ` +
-      `"Access is denied"), so do not try uv/pytest/manage.py/check-contract. Write Python code, Django migrations (by hand, matching ` +
+      `"Access is denied"), so NEVER run uv, python, pytest, manage.py, `node scripts/dev.mjs` or check-contract: a failed attempt deletes files inside .venv and breaks the harness environment. Write Python code, Django migrations (by hand, matching ` +
       `Django's makemigrations output) and pytest tests carefully instead. The harness then regenerates contracts/openapi.yaml and ` +
       `apps/web/src/api/generated/schema.d.ts (never hand-edit them), runs all gates, and returns any failure log to you. ` +
       `\`npm run --prefix apps/web check\` does work in the sandbox; new endpoint types only exist after the harness regenerates the ` +
@@ -260,6 +260,10 @@ function doTask(task) {
       // contract generation. Output stays in the worktree, so a retry sees the up-to-date generated types.
       // The lint gate still fails on anything ruff cannot fix automatically.
       try {
+        // The coder sandbox can delete files inside .venv (it may try to run Python and fail half-way)
+        // but cannot reinstall them, leaving dist-info without modules. Rebuild the env from the uv cache
+        // (exact, all workspace packages) before anything else touches Python in this attempt.
+        run('uv', ['sync', '--locked', '--all-packages', '--reinstall'], wd, { timeout: 600_000, log: join(logs, `resync-${attempt}.log`) });
         run('uv', ['run', '--locked', 'ruff', 'format', 'services'], wd, { timeout: 300_000, log: join(logs, `format-${attempt}.log`) });
         run('uv', ['run', '--locked', 'ruff', 'check', '--fix', '--exit-zero', 'services'], wd, { timeout: 300_000, log: join(logs, `fix-${attempt}.log`) });
       } catch (error) { console.log(`WARN ${task.id} auto-format: ${String(error.message).slice(0, 300)}`); }
@@ -361,7 +365,7 @@ if (integrateId) {
   try {
     run('node', ['scripts/bootstrap-agents.mjs'], wd);
     if (existsSync(join(root, 'CLAUDE.md'))) cpSync(join(root, 'CLAUDE.md'), join(wd, 'CLAUDE.md'));
-    run('uv', ['sync', '--locked'], wd, { timeout: 600_000, log: join(logs, 'setup-uv.log') });
+    run('uv', ['sync', '--locked', '--all-packages'], wd, { timeout: 600_000, log: join(logs, 'setup-uv.log') });
     run('npm', ['ci', '--prefix', 'apps/web', '--no-audit', '--no-fund', '--prefer-offline'], wd, { shell: true, timeout: 600_000, log: join(logs, 'setup-npm.log') });
     const env = { POSTGRES_TEST_DB: `test_datasoft_${task.id.toLowerCase().replace(/[^a-z0-9]/g, '_')}` };
     const prior = JSON.parse(readFileSync(join(wd, 'docs/progress.json'), 'utf8')).evidence?.[task.id] ?? {};
