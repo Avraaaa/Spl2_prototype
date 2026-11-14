@@ -15,6 +15,8 @@ const argValue = key => args.includes(key) ? args[args.indexOf(key) + 1] : null;
 const taskId = argValue('--task');
 // Optional: re-apply a previous interrupted coder attempt (git diff) before the coder starts.
 const seedPatch = argValue('--seed-patch');
+// Optional orchestrator note appended to the coder prompt (e.g. a prior reviewer finding).
+const note = argValue('--note');
 const all = args.includes('--all');
 const show = args.includes('--show') || (!taskId && !all);
 const planOnly = args.includes('--architect');
@@ -231,6 +233,7 @@ function doTask(task) {
       const prompt = promptBase + `\nArchitecture guidance:\n${architecture}\n` +
         (seedPatch && !attempt ? `\nAn earlier, interrupted attempt of this task is already applied in the working tree (see git status/diff). ` +
           `Review it against the task, complete what is missing and fix what is wrong; do not start over.\n` : '') +
+        (note ? `\nOrchestrator note (must be addressed):\n${note}\n` : '') +
         (attempt ?`\nThe previous attempt is still in the working tree. Fix ONLY these findings (do not weaken or delete tests):\n${findings.join('\n')}` : '');
       console.log(`CODER ${task.id} attempt ${attempt}`);
       codex(wd, prompt, logs, `coder-${attempt}`, process.env.DATASOFT_CODER_MODEL || null, 'high');
