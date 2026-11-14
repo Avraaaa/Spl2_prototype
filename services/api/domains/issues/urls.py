@@ -1,9 +1,47 @@
 from django.urls import path
 
-from .api import IssueDetailView, IssueListView, IssueSubmitView
+from .api import (
+    IssueAcceptView,
+    IssueAssignView,
+    IssueCloseView,
+    IssueDateRevisionView,
+    IssueDeliverView,
+    IssueDetailView,
+    IssueEventDetailView,
+    IssueFailVerificationView,
+    IssueListView,
+    IssueRejectView,
+    IssueReopenView,
+    IssueStartView,
+    IssueSubmitView,
+    IssueVerifyView,
+    WorkflowAssigneesView,
+    WorkflowSettingsView,
+)
 
 urlpatterns = [
     path("issues/", IssueListView.as_view(), name="issue-list"),
+    path("issues/workflow-settings/", WorkflowSettingsView.as_view(), name="workflow-settings"),
+    path("issues/assignees/", WorkflowAssigneesView.as_view(), name="workflow-assignees"),
     path("issues/<int:id>/", IssueDetailView.as_view(), name="issue-detail"),
     path("issues/<int:id>/submit/", IssueSubmitView.as_view(), name="issue-submit"),
+    path("issues/<int:id>/accept/", IssueAcceptView.as_view(), name="issue-accept"),
+    path("issues/<int:id>/reject/", IssueRejectView.as_view(), name="issue-reject"),
+    path("issues/<int:id>/revise-date/", IssueDateRevisionView.as_view(), name="issue-revise-date"),
+    path("issues/<int:id>/assign/", IssueAssignView.as_view(), name="issue-assign"),
+    path("issues/<int:id>/start/", IssueStartView.as_view(), name="issue-start"),
+    path("issues/<int:id>/deliver/", IssueDeliverView.as_view(), name="issue-deliver"),
+    path("issues/<int:id>/verify/", IssueVerifyView.as_view(), name="issue-verify"),
+    path(
+        "issues/<int:id>/fail-verification/",
+        IssueFailVerificationView.as_view(),
+        name="issue-fail-verification",
+    ),
+    path("issues/<int:id>/close/", IssueCloseView.as_view(), name="issue-close"),
+    path("issues/<int:id>/reopen/", IssueReopenView.as_view(), name="issue-reopen"),
+    path(
+        "issues/<int:id>/events/<int:event_id>/",
+        IssueEventDetailView.as_view(),
+        name="issue-event-detail",
+    ),
 ]

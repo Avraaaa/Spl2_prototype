@@ -110,6 +110,8 @@ def create_draft(user, fields: dict) -> Issue:
 
 
 def edit_draft(user, issue: Issue, fields: dict) -> Issue:
+    from .workflow import VersionConflict
+
     with transaction.atomic():
         locked = get_authorized_object_or_404(user, Issue.objects.select_for_update(), issue.pk)
         if (
@@ -118,8 +120,11 @@ def edit_draft(user, issue: Issue, fields: dict) -> Issue:
             or locked.status != IssueStatus.DRAFT
         ):
             raise PermissionDenied("Only the creator can edit this draft.")
+        if "version" in fields and locked.version != fields["version"]:
+            raise VersionConflict("This request was changed by someone else — reload.")
         _validate_links(user, fields, locked)
-        for key, value in _clean(fields).items():
+        changes = {key: value for key, value in fields.items() if key != "version"}
+        for key, value in _clean(changes).items():
             setattr(locked, key, value)
         locked.version += 1
         locked.save()
@@ -155,9 +160,17 @@ def submit(user, issue: Issue) -> Issue:
         locked.status = IssueStatus.SUBMITTED
         locked.submitted_by = user
         locked.submitted_at = timezone.now()
+        locked.last_status_at = locked.submitted_at
         locked.version += 1
         locked.save(
-            update_fields=["status", "submitted_by", "submitted_at", "version", "updated_at"]
+            update_fields=[
+                "status",
+                "submitted_by",
+                "submitted_at",
+                "last_status_at",
+                "version",
+                "updated_at",
+            ]
         )
         IssueEvent.objects.create(
             issue=locked,

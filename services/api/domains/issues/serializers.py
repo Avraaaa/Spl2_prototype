@@ -1,15 +1,28 @@
+from django.contrib.auth.models import User
 from rest_framework import serializers
 
 from domains.products.models import Module, Product
 from domains.tenants.selectors import authorized_rows
 
-from .models import Issue, IssueEvent, Priority, RequestType
+from .models import Issue, IssueEvent, Priority, RequestType, WorkflowSettings
 
 
 class IssueEventSerializer(serializers.ModelSerializer):
+    actor_name = serializers.CharField(source="actor.account.full_name", read_only=True)
+
     class Meta:
         model = IssueEvent
-        fields = ("id", "actor", "kind", "from_status", "to_status", "created_at")
+        fields = (
+            "id",
+            "actor",
+            "actor_name",
+            "kind",
+            "from_status",
+            "to_status",
+            "reason",
+            "details",
+            "created_at",
+        )
 
 
 class IssueSerializer(serializers.ModelSerializer):
@@ -33,6 +46,14 @@ class IssueSerializer(serializers.ModelSerializer):
             "related_request",
             "status",
             "version",
+            "assignee",
+            "tentative_delivery_date",
+            "tentative_delivery_later",
+            "actual_delivery_at",
+            "delivery_note",
+            "deployment_details",
+            "closed_at",
+            "last_status_at",
             "created_by",
             "submitted_by",
             "submitted_at",
@@ -79,3 +100,49 @@ class IssueWriteSerializer(serializers.Serializer):
                 raise serializers.ValidationError({"related_request": "Invalid related request."})
             attrs["related_request"] = related
         return attrs
+
+
+class IssueDraftEditSerializer(IssueWriteSerializer):
+    version = serializers.IntegerField(min_value=1, required=False)
+
+
+class TransitionVersionSerializer(serializers.Serializer):
+    version = serializers.IntegerField(min_value=1)
+
+
+class AcceptSerializer(TransitionVersionSerializer):
+    tentative_delivery_date = serializers.DateField(required=False, allow_null=True)
+    tentative_delivery_later = serializers.BooleanField(required=False, default=False)
+
+
+class DateRevisionSerializer(AcceptSerializer):
+    pass
+
+
+class ReasonSerializer(TransitionVersionSerializer):
+    reason = serializers.CharField(trim_whitespace=True, allow_blank=False)
+
+
+class AssignSerializer(TransitionVersionSerializer):
+    assignee = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
+
+class DeliverySerializer(TransitionVersionSerializer):
+    delivery_note = serializers.CharField(trim_whitespace=True, allow_blank=False)
+    deployment_details = serializers.CharField(trim_whitespace=True, allow_blank=False)
+
+
+class WorkflowSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkflowSettings
+        fields = ("reopen_days",)
+
+    reopen_days = serializers.IntegerField(min_value=1, max_value=365)
+
+
+class WorkflowAssigneeSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source="account.full_name", read_only=True)
+
+    class Meta:
+        model = User
+        fields = ("id", "full_name")

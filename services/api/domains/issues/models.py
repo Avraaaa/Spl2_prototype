@@ -24,6 +24,13 @@ class Priority(models.TextChoices):
 class IssueStatus(models.TextChoices):
     DRAFT = "DRAFT", "Draft"
     SUBMITTED = "SUBMITTED", "Submitted"
+    ACCEPTED = "ACCEPTED", "Accepted"
+    REJECTED = "REJECTED", "Rejected"
+    PENDING = "PENDING", "Pending"
+    IN_PROGRESS = "IN_PROGRESS", "In progress"
+    AWAITING_VERIFICATION = "AWAITING_VERIFICATION", "Awaiting client verification"
+    VERIFIED = "VERIFIED", "Verified"
+    CLOSED = "CLOSED", "Closed"
 
 
 class Issue(models.Model):
@@ -41,8 +48,22 @@ class Issue(models.Model):
     expected_result = models.TextField(blank=True)
     actual_result = models.TextField(blank=True)
     related_request = models.ForeignKey("self", on_delete=models.PROTECT, null=True, blank=True)
-    status = models.CharField(max_length=20, choices=IssueStatus.choices, default=IssueStatus.DRAFT)
+    status = models.CharField(max_length=24, choices=IssueStatus.choices, default=IssueStatus.DRAFT)
     version = models.PositiveIntegerField(default=1)
+    assignee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="assigned_issues",
+    )
+    tentative_delivery_date = models.DateField(null=True, blank=True)
+    tentative_delivery_later = models.BooleanField(default=False)
+    actual_delivery_at = models.DateTimeField(null=True, blank=True)
+    delivery_note = models.TextField(blank=True)
+    deployment_details = models.TextField(blank=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
+    last_status_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="created_issues"
     )
@@ -65,8 +86,10 @@ class IssueEvent(models.Model):
     issue = models.ForeignKey(Issue, on_delete=models.PROTECT, related_name="events")
     actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     kind = models.CharField(max_length=40)
-    from_status = models.CharField(max_length=20)
-    to_status = models.CharField(max_length=20)
+    from_status = models.CharField(max_length=24)
+    to_status = models.CharField(max_length=24)
+    reason = models.TextField(blank=True)
+    details = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -79,3 +102,9 @@ class IssueEvent(models.Model):
 
     def delete(self, *args: Any, **kwargs: Any) -> Any:
         raise ValueError("IssueEvent is append-only")
+
+
+class WorkflowSettings(models.Model):
+    """Singleton policy edited only by DataSoft administrators."""
+
+    reopen_days = models.PositiveIntegerField(default=30)

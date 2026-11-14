@@ -5,7 +5,8 @@
     "P1-T1",
     "P1-T1b",
     "P1-T2",
-    "P2-T1"
+    "P2-T1",
+    "P2-T2"
   ],
   "last_updated": "2026-11-14",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
@@ -89,6 +90,25 @@
       "attempts": 2,
       "base": "770a0a9b78a5e75b121a50e8f9c4a8628d9b1d76",
       "rebased_onto": "0e87e6587ef56bcb6744f069579729a2faee39e6"
+    },
+    "P2-T2": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 1,
+      "base": "42c4f6f131765dcceb0a8e91ee9f37426b167548",
+      "follow_ups": [
+        "[follow-up] services/api/domains/issues/api.py:115: Draft PATCH validates `version` before checking whether the actor can edit the draft. An invalid version on a non-editable issue returns 400 instead of the requested 403. Check edit permission and state first.",
+        "[follow-up] services/api/domains/issues/workflow.py:243: Failed verification clears `actual_delivery_at`; reopening does the same. The delivery event retains the timestamp, but the issue detail then shows “Not delivered.” Show the prior delivery clearly in the UI.",
+        "[follow-up] services/api/tests/test_p2_t2_workflow.py:304: Event access is tested for immutability, but not for cross-bank reads. Add a negative GET test for the event endpoint."
+      ]
     }
   },
   "latest_review": "PASS"

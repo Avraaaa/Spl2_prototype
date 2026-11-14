@@ -5,6 +5,7 @@ import { api } from '../../api/client';
 import type { components } from '../../api/generated/schema';
 import { errorMessage } from '../auth/hooks';
 import { hasRole, type PortalUser } from '../auth/roles';
+import { WorkflowActions, WorkflowSettingsPanel } from '../workflow/WorkflowActions';
 
 type Issue = components['schemas']['Issue'];
 type Product = components['schemas']['Product'];
@@ -62,9 +63,10 @@ export function IssuesListPage({ me }: { me: PortalUser }) {
   return <section className="stack">
     <div className="page-head"><div><h1>Service requests</h1><p className="muted">Requests visible to your organization.</p></div>
       {officer && <Link className="btn primary" to="/issues/new">New draft</Link>}</div>
+    {hasRole(me, 'DATASOFT_ADMIN') && <WorkflowSettingsPanel />}
     <div className="card toolbar">
       <input aria-label="Search title or reference" placeholder="Search title or reference" value={filters.search} onChange={e => update('search', e.target.value)} />
-      <select aria-label="Status" value={filters.status} onChange={e => update('status', e.target.value)}><option value="">All statuses</option><option value="DRAFT">Draft</option><option value="SUBMITTED">Submitted</option></select>
+      <select aria-label="Status" value={filters.status} onChange={e => update('status', e.target.value)}><option value="">All statuses</option>{['DRAFT', 'SUBMITTED', 'ACCEPTED', 'REJECTED', 'PENDING', 'IN_PROGRESS', 'AWAITING_VERIFICATION', 'VERIFIED', 'CLOSED'].map(status => <option key={status} value={status}>{status.replaceAll('_', ' ')}</option>)}</select>
       <select aria-label="Request type" value={filters.request_type} onChange={e => update('request_type', e.target.value)}><option value="">All types</option>{['BUG', 'CHANGE', 'FEATURE', 'SUPPORT'].map(x => <option key={x} value={x}>{x}</option>)}</select>
       <select aria-label="Priority" value={filters.priority} onChange={e => update('priority', e.target.value)}><option value="">All priorities</option>{['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map(x => <option key={x} value={x}>{x}</option>)}</select>
     </div>
@@ -86,7 +88,7 @@ export function IssueDraftPage({ me }: { me: PortalUser }) {
   const related = useIssues({ status: 'SUBMITTED', request_type: '', priority: '', search: '' });
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const [changes, setChanges] = useState<{ id: number; values: Partial<Draft> }>({ id, values: {} });
+  const [changes, setChanges] = useState<{ id: number; version?: number; values: Partial<Draft> }>({ id, values: {} });
   const row = issue.data;
   const initial: Draft = editing && row ? { title: row.title, description: row.description, request_type: row.request_type || 'SUPPORT', product: row.product, module: row.module, priority: row.priority || 'MEDIUM', environment: row.environment, steps_to_reproduce: row.steps_to_reproduce, expected_result: row.expected_result, actual_result: row.actual_result, related_request: row.related_request } : blank;
   const values = changes.id === id ? changes.values : {};
@@ -94,7 +96,10 @@ export function IssueDraftPage({ me }: { me: PortalUser }) {
   const save = useMutation({
     mutationFn: async () => {
       if (editing) {
-        const { data, error } = await api.PATCH('/api/issues/{id}/', { params: { path: { id } }, body: draft });
+        if (!row) throw new Error('Request version is unavailable. Reload this request.');
+        const body = { ...draft, version: changes.version ?? row.version };
+        const { data, error, response } = await api.PATCH('/api/issues/{id}/', { params: { path: { id } }, body });
+        if (response.status === 409) throw new Error('This request was changed by someone else — reload');
         if (!data) throw new Error(errorMessage(error));
         return data;
       }
@@ -104,7 +109,7 @@ export function IssueDraftPage({ me }: { me: PortalUser }) {
     },
     onSuccess: row => { qc.invalidateQueries({ queryKey: ISSUE_KEY }); navigate(`/issues/${row.id}`); },
   });
-  const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setChanges({ id, values: { ...values, [key]: value } });
+  const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setChanges({ id, version: changes.version ?? row?.version, values: { ...values, [key]: value } });
   const selected = (products.data ?? []).find((p: Product) => p.id === draft.product);
   if (!hasRole(me, 'ISSUE_OFFICER')) return <p className="alert error">Issue Officer role required.</p>;
   if (editing && issue.isPending) return <p>Loading draft…</p>;
@@ -115,7 +120,7 @@ export function IssueDraftPage({ me }: { me: PortalUser }) {
       <label>Description<textarea value={draft.description ?? ''} onChange={e => set('description', e.target.value)} /></label>
       <label>Type<select value={draft.request_type ?? ''} onChange={e => set('request_type', e.target.value as Draft['request_type'])}>{['BUG', 'CHANGE', 'FEATURE', 'SUPPORT'].map(x => <option key={x} value={x}>{x}</option>)}</select></label>
       <label>Priority<select value={draft.priority ?? ''} onChange={e => set('priority', e.target.value as Draft['priority'])}>{['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map(x => <option key={x} value={x}>{x}</option>)}</select></label>
-      <label>Product<select value={draft.product ?? ''} onChange={e => { setChanges({ id, values: { ...values, product: e.target.value ? Number(e.target.value) : null, module: null } }); }}><option value="">Select product</option>{(products.data ?? []).map((p: Product) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+      <label>Product<select value={draft.product ?? ''} onChange={e => { setChanges({ id, version: changes.version ?? row?.version, values: { ...values, product: e.target.value ? Number(e.target.value) : null, module: null } }); }}><option value="">Select product</option>{(products.data ?? []).map((p: Product) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
       <label>Module<select value={draft.module ?? ''} onChange={e => set('module', e.target.value ? Number(e.target.value) : null)}><option value="">No module</option>{selected?.modules.filter(m => m.is_active).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
       <label>Related request<select value={draft.related_request ?? ''} onChange={e => set('related_request', e.target.value ? Number(e.target.value) : null)}><option value="">None</option>{(related.data ?? []).filter((r: Issue) => r.id !== id).map((r: Issue) => <option key={r.id} value={r.id}>{r.reference} — {r.title}</option>)}</select></label>
       {draft.request_type === 'BUG' && <>
@@ -159,7 +164,11 @@ export function IssueDetailPage({ me }: { me: PortalUser }) {
   return <section className="stack"><div className="page-head"><div><p className="eyebrow">{row.reference}</p><h1>{row.title || 'Untitled draft'}</h1><p className="muted">{row.status} · {row.request_type || 'Type pending'} · {row.priority || 'Priority pending'}</p></div>
     {canEdit && <div className="actions"><Link className="btn" to={`/issues/${id}/edit`}>Edit draft</Link><button className="btn primary" disabled={submit.isPending} onClick={() => submit.mutate()}>Submit request</button><button className="btn danger" disabled={remove.isPending} onClick={() => remove.mutate()}>Delete draft</button></div>}</div>
     {(submit.isError || remove.isError) && <p className="alert error">{submit.error?.message ?? remove.error?.message}</p>}
-    <div className="card"><h3>Details</h3><p>{row.description || 'No description yet.'}</p>{row.request_type === 'BUG' && <dl><dt>Environment</dt><dd>{row.environment}</dd><dt>Steps to reproduce</dt><dd>{row.steps_to_reproduce}</dd><dt>Expected result</dt><dd>{row.expected_result}</dd><dt>Actual result</dt><dd>{row.actual_result}</dd></dl>}{row.related_request && <p>Related request: <Link to={`/issues/${row.related_request}`}>#{row.related_request}</Link></p>}</div>
-    <div className="card"><h3>Timeline</h3>{row.events.length === 0 && <p className="muted">No events yet.</p>}<ol>{row.events.map(event => <li key={event.id}><strong>{event.kind}</strong> · {new Date(event.created_at).toLocaleString()} · actor #{event.actor}</li>)}</ol></div>
+    <div className="card"><h3>Details</h3><p>{row.description || 'No description yet.'}</p>{row.request_type === 'BUG' && <dl><dt>Environment</dt><dd>{row.environment}</dd><dt>Steps to reproduce</dt><dd>{row.steps_to_reproduce}</dd><dt>Expected result</dt><dd>{row.expected_result}</dd><dt>Actual result</dt><dd>{row.actual_result}</dd></dl>}{row.related_request && <p>Related request: <Link to={`/issues/${row.related_request}`}>#{row.related_request}</Link></p>}
+      <dl><dt>Tentative delivery</dt><dd>{row.tentative_delivery_date ?? (row.tentative_delivery_later ? 'To be provided later' : 'Not set')}</dd><dt>Actual delivery</dt><dd>{row.actual_delivery_at ? new Date(row.actual_delivery_at).toLocaleString() : 'Not delivered'}</dd><dt>Last status update</dt><dd>{row.last_status_at ? new Date(row.last_status_at).toLocaleString() : 'Not yet'}</dd>{row.assignee && <><dt>Assigned user</dt><dd>#{row.assignee}</dd></>}</dl>
+      {row.delivery_note && <><h4>Latest delivery</h4><p>{row.delivery_note}</p><p className="muted">{row.deployment_details}</p></>}
+    </div>
+    <WorkflowActions issue={row} me={me} />
+    <div className="card"><h3>Timeline</h3>{row.events.length === 0 && <p className="muted">No events yet.</p>}<ol>{row.events.map(event => { const details = event.details as Record<string, unknown>; return <li key={event.id}><strong>{event.kind.replaceAll('_', ' ')}</strong> · {event.from_status} → {event.to_status} · {new Date(event.created_at).toLocaleString()} · actor #{event.actor}{event.reason && <p>Reason: {event.reason}</p>}{Boolean(details.tentative_delivery_date) && <p>Tentative delivery: {String(details.tentative_delivery_date)}</p>}{details.tentative_delivery_later === true && <p>Tentative delivery: to be provided later</p>}{Boolean(details.to_date) && <p>Tentative delivery revised: {String(details.from_date ?? 'later')} → {String(details.to_date)}</p>}{details.to_later === true && <p>Tentative delivery revised: {String(details.from_date ?? 'later')} → to be provided later</p>}{Boolean(details.actual_delivery_at) && <p>Actual delivery: {new Date(String(details.actual_delivery_at)).toLocaleString()}</p>}{Boolean(details.delivery_note) && <p>Delivery: {String(details.delivery_note)}</p>}{Boolean(details.deployment_details) && <p>Version/deployment: {String(details.deployment_details)}</p>}{Boolean(details.to_assignee) && <p>Assigned user: #{String(details.to_assignee)}</p>}</li>; })}</ol></div>
   </section>;
 }

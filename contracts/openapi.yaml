@@ -500,13 +500,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedIssueWriteRequest'
+              $ref: '#/components/schemas/PatchedIssueDraftEditRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedIssueWriteRequest'
+              $ref: '#/components/schemas/PatchedIssueDraftEditRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedIssueWriteRequest'
+              $ref: '#/components/schemas/PatchedIssueDraftEditRequest'
       security:
       - cookieAuth: []
       responses:
@@ -531,6 +531,319 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/issues/{id}/accept/:
+    post:
+      operationId: issues_accept_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AcceptRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AcceptRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+          description: ''
+  /api/issues/{id}/assign/:
+    post:
+      operationId: issues_assign_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssignRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssignRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+          description: ''
+  /api/issues/{id}/close/:
+    post:
+      operationId: issues_close_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionVersionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TransitionVersionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TransitionVersionRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+          description: ''
+  /api/issues/{id}/deliver/:
+    post:
+      operationId: issues_deliver_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeliveryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DeliveryRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+          description: ''
+  /api/issues/{id}/events/{event_id}/:
+    get:
+      operationId: issues_events_retrieve
+      parameters:
+      - in: path
+        name: event_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - workflow
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueEvent'
+          description: ''
+  /api/issues/{id}/fail-verification/:
+    post:
+      operationId: issues_fail_verification_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+          description: ''
+  /api/issues/{id}/reject/:
+    post:
+      operationId: issues_reject_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+          description: ''
+  /api/issues/{id}/reopen/:
+    post:
+      operationId: issues_reopen_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+          description: ''
+  /api/issues/{id}/revise-date/:
+    post:
+      operationId: issues_revise_date_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DateRevisionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DateRevisionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DateRevisionRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+          description: ''
+  /api/issues/{id}/start/:
+    post:
+      operationId: issues_start_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionVersionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TransitionVersionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TransitionVersionRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+          description: ''
   /api/issues/{id}/submit/:
     post:
       operationId: issues_submit_create
@@ -551,6 +864,92 @@ paths:
               schema:
                 $ref: '#/components/schemas/Issue'
           description: ''
+  /api/issues/{id}/verify/:
+    post:
+      operationId: issues_verify_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionVersionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TransitionVersionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TransitionVersionRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+          description: ''
+  /api/issues/assignees/:
+    get:
+      operationId: issues_assignees_list
+      tags:
+      - workflow
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkflowAssignee'
+          description: ''
+  /api/issues/workflow-settings/:
+    get:
+      operationId: issues_workflow_settings_retrieve
+      tags:
+      - workflow
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowSettings'
+          description: ''
+    patch:
+      operationId: issues_workflow_settings_partial_update
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWorkflowSettingsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedWorkflowSettingsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWorkflowSettingsRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowSettings'
+          description: ''
   /api/products/:
     get:
       operationId: products_list
@@ -569,6 +968,32 @@ paths:
           description: ''
 components:
   schemas:
+    AcceptRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        tentative_delivery_date:
+          type: string
+          format: date
+          nullable: true
+        tentative_delivery_later:
+          type: boolean
+          default: false
+      required:
+      - version
+    AssignRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        assignee:
+          type: integer
+      required:
+      - assignee
+      - version
     BlankEnum:
       enum:
       - ''
@@ -597,6 +1022,37 @@ components:
       required:
       - current_password
       - username
+    DateRevisionRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        tentative_delivery_date:
+          type: string
+          format: date
+          nullable: true
+        tentative_delivery_later:
+          type: boolean
+          default: false
+      required:
+      - version
+    DeliveryRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        delivery_note:
+          type: string
+          minLength: 1
+        deployment_details:
+          type: string
+          minLength: 1
+      required:
+      - delivery_note
+      - deployment_details
+      - version
     Error:
       type: object
       properties:
@@ -665,6 +1121,31 @@ components:
           type: integer
           maximum: 2147483647
           minimum: 0
+        assignee:
+          type: integer
+          nullable: true
+        tentative_delivery_date:
+          type: string
+          format: date
+          nullable: true
+        tentative_delivery_later:
+          type: boolean
+        actual_delivery_at:
+          type: string
+          format: date-time
+          nullable: true
+        delivery_note:
+          type: string
+        deployment_details:
+          type: string
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_status_at:
+          type: string
+          format: date-time
+          nullable: true
         created_by:
           type: integer
         submitted_by:
@@ -701,21 +1182,28 @@ components:
           readOnly: true
         actor:
           type: integer
+        actor_name:
+          type: string
+          readOnly: true
         kind:
           type: string
           maxLength: 40
         from_status:
           type: string
-          maxLength: 20
+          maxLength: 24
         to_status:
           type: string
-          maxLength: 20
+          maxLength: 24
+        reason:
+          type: string
+        details: {}
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
       - actor
+      - actor_name
       - created_at
       - from_status
       - id
@@ -861,7 +1349,7 @@ components:
       - id
       - kind
       - name
-    PatchedIssueWriteRequest:
+    PatchedIssueDraftEditRequest:
       type: object
       properties:
         title:
@@ -891,6 +1379,9 @@ components:
           type: integer
           minimum: 1
           nullable: true
+        version:
+          type: integer
+          minimum: 1
     PatchedProfileUpdateRequest:
       type: object
       properties:
@@ -903,6 +1394,13 @@ components:
           format: email
           minLength: 1
           maxLength: 254
+    PatchedWorkflowSettingsRequest:
+      type: object
+      properties:
+        reopen_days:
+          type: integer
+          maximum: 365
+          minimum: 1
     PortalUser:
       type: object
       properties:
@@ -997,6 +1495,18 @@ components:
           maxLength: 160
       required:
       - name
+    ReasonRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          minLength: 1
+      required:
+      - reason
+      - version
     RequestTypeEnum:
       enum:
       - BUG
@@ -1034,10 +1544,24 @@ components:
       enum:
       - DRAFT
       - SUBMITTED
+      - ACCEPTED
+      - REJECTED
+      - PENDING
+      - IN_PROGRESS
+      - AWAITING_VERIFICATION
+      - VERIFIED
+      - CLOSED
       type: string
       description: |-
         * `DRAFT` - Draft
         * `SUBMITTED` - Submitted
+        * `ACCEPTED` - Accepted
+        * `REJECTED` - Rejected
+        * `PENDING` - Pending
+        * `IN_PROGRESS` - In progress
+        * `AWAITING_VERIFICATION` - Awaiting client verification
+        * `VERIFIED` - Verified
+        * `CLOSED` - Closed
     TemporaryCredential:
       type: object
       properties:
@@ -1049,6 +1573,14 @@ components:
       required:
       - temporary_password
       - user
+    TransitionVersionRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+      required:
+      - version
     UserCreateRequest:
       type: object
       properties:
@@ -1076,6 +1608,27 @@ components:
       - organization
       - roles
       - username
+    WorkflowAssignee:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        full_name:
+          type: string
+          readOnly: true
+      required:
+      - full_name
+      - id
+    WorkflowSettings:
+      type: object
+      properties:
+        reopen_days:
+          type: integer
+          maximum: 365
+          minimum: 1
+      required:
+      - reopen_days
   securitySchemes:
     cookieAuth:
       type: apiKey

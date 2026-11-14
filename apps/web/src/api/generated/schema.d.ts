@@ -284,6 +284,166 @@ export interface paths {
         patch: operations["issues_partial_update"];
         trace?: never;
     };
+    "/api/issues/{id}/accept/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issues_accept_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/issues/{id}/assign/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issues_assign_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/issues/{id}/close/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issues_close_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/issues/{id}/deliver/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issues_deliver_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/issues/{id}/events/{event_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["issues_events_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/issues/{id}/fail-verification/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issues_fail_verification_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/issues/{id}/reject/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issues_reject_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/issues/{id}/reopen/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issues_reopen_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/issues/{id}/revise-date/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issues_revise_date_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/issues/{id}/start/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issues_start_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/issues/{id}/submit/": {
         parameters: {
             query?: never;
@@ -298,6 +458,54 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/issues/{id}/verify/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issues_verify_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/issues/assignees/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["issues_assignees_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/issues/workflow-settings/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["issues_workflow_settings_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["issues_workflow_settings_partial_update"];
         trace?: never;
     };
     "/api/products/": {
@@ -320,6 +528,17 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AcceptRequest: {
+            version: number;
+            /** Format: date */
+            tentative_delivery_date?: string | null;
+            /** @default false */
+            tentative_delivery_later: boolean;
+        };
+        AssignRequest: {
+            version: number;
+            assignee: number;
+        };
         /** @enum {unknown} */
         BlankEnum: "";
         ChangePasswordRequest: {
@@ -329,6 +548,18 @@ export interface components {
         ChangeUsernameRequest: {
             username: string;
             current_password: string;
+        };
+        DateRevisionRequest: {
+            version: number;
+            /** Format: date */
+            tentative_delivery_date?: string | null;
+            /** @default false */
+            tentative_delivery_later: boolean;
+        };
+        DeliveryRequest: {
+            version: number;
+            delivery_note: string;
+            deployment_details: string;
         };
         Error: {
             detail: string;
@@ -355,6 +586,18 @@ export interface components {
             related_request?: number | null;
             status?: components["schemas"]["StatusEnum"];
             version?: number;
+            assignee?: number | null;
+            /** Format: date */
+            tentative_delivery_date?: string | null;
+            tentative_delivery_later?: boolean;
+            /** Format: date-time */
+            actual_delivery_at?: string | null;
+            delivery_note?: string;
+            deployment_details?: string;
+            /** Format: date-time */
+            closed_at?: string | null;
+            /** Format: date-time */
+            last_status_at?: string | null;
             created_by: number;
             submitted_by?: number | null;
             /** Format: date-time */
@@ -368,9 +611,12 @@ export interface components {
         IssueEvent: {
             readonly id: number;
             actor: number;
+            readonly actor_name: string;
             kind: string;
             from_status: string;
             to_status: string;
+            reason?: string;
+            details?: unknown;
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -425,7 +671,7 @@ export interface components {
             code: string;
             kind: components["schemas"]["KindEnum"];
         };
-        PatchedIssueWriteRequest: {
+        PatchedIssueDraftEditRequest: {
             title?: string;
             description?: string;
             request_type?: components["schemas"]["RequestTypeEnum"];
@@ -437,11 +683,15 @@ export interface components {
             expected_result?: string;
             actual_result?: string;
             related_request?: number | null;
+            version?: number;
         };
         PatchedProfileUpdateRequest: {
             full_name?: string;
             /** Format: email */
             email?: string;
+        };
+        PatchedWorkflowSettingsRequest: {
+            reopen_days?: number;
         };
         PortalUser: {
             readonly id: number;
@@ -483,6 +733,10 @@ export interface components {
         ProductWriteRequest: {
             name: string;
         };
+        ReasonRequest: {
+            version: number;
+            reason: string;
+        };
         /**
          * @description * `BUG` - Bug
          *     * `CHANGE` - Change
@@ -505,13 +759,23 @@ export interface components {
         /**
          * @description * `DRAFT` - Draft
          *     * `SUBMITTED` - Submitted
+         *     * `ACCEPTED` - Accepted
+         *     * `REJECTED` - Rejected
+         *     * `PENDING` - Pending
+         *     * `IN_PROGRESS` - In progress
+         *     * `AWAITING_VERIFICATION` - Awaiting client verification
+         *     * `VERIFIED` - Verified
+         *     * `CLOSED` - Closed
          * @enum {string}
          */
-        StatusEnum: "DRAFT" | "SUBMITTED";
+        StatusEnum: "DRAFT" | "SUBMITTED" | "ACCEPTED" | "REJECTED" | "PENDING" | "IN_PROGRESS" | "AWAITING_VERIFICATION" | "VERIFIED" | "CLOSED";
         TemporaryCredential: {
             user: components["schemas"]["PortalUser"];
             /** @description Shown once. Never logged or stored in plaintext. */
             temporary_password: string;
+        };
+        TransitionVersionRequest: {
+            version: number;
         };
         UserCreateRequest: {
             username: string;
@@ -520,6 +784,13 @@ export interface components {
             full_name: string;
             organization: number;
             roles: components["schemas"]["RolesEnum"][];
+        };
+        WorkflowAssignee: {
+            readonly id: number;
+            readonly full_name: string;
+        };
+        WorkflowSettings: {
+            reopen_days: number;
         };
     };
     responses: never;
@@ -1049,9 +1320,274 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchedIssueWriteRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedIssueWriteRequest"];
-                "multipart/form-data": components["schemas"]["PatchedIssueWriteRequest"];
+                "application/json": components["schemas"]["PatchedIssueDraftEditRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedIssueDraftEditRequest"];
+                "multipart/form-data": components["schemas"]["PatchedIssueDraftEditRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_accept_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AcceptRequest"];
+                "multipart/form-data": components["schemas"]["AcceptRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_assign_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AssignRequest"];
+                "multipart/form-data": components["schemas"]["AssignRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_close_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransitionVersionRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TransitionVersionRequest"];
+                "multipart/form-data": components["schemas"]["TransitionVersionRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_deliver_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliveryRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DeliveryRequest"];
+                "multipart/form-data": components["schemas"]["DeliveryRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_events_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: number;
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueEvent"];
+                };
+            };
+        };
+    };
+    issues_fail_verification_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ReasonRequest"];
+                "multipart/form-data": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_reject_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ReasonRequest"];
+                "multipart/form-data": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_reopen_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ReasonRequest"];
+                "multipart/form-data": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_revise_date_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DateRevisionRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DateRevisionRequest"];
+                "multipart/form-data": components["schemas"]["DateRevisionRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_start_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransitionVersionRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TransitionVersionRequest"];
+                "multipart/form-data": components["schemas"]["TransitionVersionRequest"];
             };
         };
         responses: {
@@ -1082,6 +1618,96 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_verify_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransitionVersionRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TransitionVersionRequest"];
+                "multipart/form-data": components["schemas"]["TransitionVersionRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_assignees_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowAssignee"][];
+                };
+            };
+        };
+    };
+    issues_workflow_settings_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowSettings"];
+                };
+            };
+        };
+    };
+    issues_workflow_settings_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedWorkflowSettingsRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedWorkflowSettingsRequest"];
+                "multipart/form-data": components["schemas"]["PatchedWorkflowSettingsRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowSettings"];
                 };
             };
         };

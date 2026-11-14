@@ -1,13 +1,17 @@
+from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Q
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from domains.accounts.models import Membership
+from domains.accounts.roles import DATASOFT_ROLES
+from domains.accounts.services import is_datasoft_admin
 from domains.tenants.models import OrganizationKind
 from domains.tenants.selectors import (
     authorized_rows,
@@ -15,14 +19,27 @@ from domains.tenants.selectors import (
     portal_organization,
 )
 
-from . import services
-from .models import Issue, IssueStatus, Priority, RequestType
-from .serializers import IssueSerializer, IssueWriteSerializer
+from . import services, workflow
+from .models import Issue, IssueEvent, IssueStatus, Priority, RequestType, WorkflowSettings
+from .serializers import (
+    AcceptSerializer,
+    AssignSerializer,
+    DateRevisionSerializer,
+    DeliverySerializer,
+    IssueDraftEditSerializer,
+    IssueEventSerializer,
+    IssueSerializer,
+    IssueWriteSerializer,
+    ReasonSerializer,
+    TransitionVersionSerializer,
+    WorkflowAssigneeSerializer,
+    WorkflowSettingsSerializer,
+)
 
 
 def visible_rows(user):
     rows = Issue.objects.select_related("product", "module", "organization").prefetch_related(
-        "events"
+        "events__actor__account"
     )
     organization = portal_organization(user)
     if organization is None:
@@ -30,7 +47,7 @@ def visible_rows(user):
     scoped = authorized_rows(user, rows, allow_datasoft=True)
     if organization.kind == OrganizationKind.DATASOFT:
         return scoped.exclude(status=IssueStatus.DRAFT)
-    return scoped.filter(Q(status=IssueStatus.SUBMITTED) | Q(created_by=user))
+    return scoped.filter(~Q(status=IssueStatus.DRAFT) | Q(created_by=user))
 
 
 def writable_rows(user):
@@ -93,13 +110,17 @@ class IssueDetailView(APIView):
         )
         return Response(IssueSerializer(issue).data)
 
-    @extend_schema(request=IssueWriteSerializer, responses=IssueSerializer, tags=["issues"])
+    @extend_schema(request=IssueDraftEditSerializer, responses=IssueSerializer, tags=["issues"])
     def patch(self, request: Request, id: int) -> Response:
         issue = get_authorized_object_or_404(request.user, writable_rows(request.user), id)
-        data = IssueWriteSerializer(data=request.data, context={"request": request, "issue": issue})
+        data = IssueDraftEditSerializer(
+            data=request.data, context={"request": request, "issue": issue}
+        )
         data.is_valid(raise_exception=True)
         try:
             updated = services.edit_draft(request.user, issue, data.validated_data)
+        except workflow.VersionConflict as exc:
+            raise Conflict(str(exc)) from exc
         except (DjangoPermissionDenied, DjangoValidationError) as exc:
             raise translate(exc) from exc
         return Response(IssueSerializer(updated).data)
@@ -123,3 +144,150 @@ class IssueSubmitView(APIView):
         except (DjangoPermissionDenied, DjangoValidationError) as exc:
             raise translate(exc) from exc
         return Response(IssueSerializer(submitted).data)
+
+
+class Conflict(APIException):
+    status_code = status.HTTP_409_CONFLICT
+    default_detail = "This request was changed by someone else — reload."
+    default_code = "version_conflict"
+
+
+def transition(request: Request, id: int, serializer_type, service) -> Response:
+    # Resolve tenant scope before input validation so another bank's ID always stays a 404.
+    get_authorized_object_or_404(request.user, visible_rows(request.user), id, allow_datasoft=True)
+    data = serializer_type(data=request.data)
+    data.is_valid(raise_exception=True)
+    try:
+        issue = service(request.user, id, **data.validated_data)
+    except workflow.VersionConflict as exc:
+        raise Conflict(str(exc)) from exc
+    except (DjangoPermissionDenied, DjangoValidationError) as exc:
+        raise translate(exc) from exc
+    return Response(IssueSerializer(issue).data)
+
+
+class IssueAcceptView(APIView):
+    @extend_schema(request=AcceptSerializer, responses=IssueSerializer, tags=["workflow"])
+    def post(self, request: Request, id: int) -> Response:
+        return transition(request, id, AcceptSerializer, workflow.accept)
+
+
+class IssueRejectView(APIView):
+    @extend_schema(request=ReasonSerializer, responses=IssueSerializer, tags=["workflow"])
+    def post(self, request: Request, id: int) -> Response:
+        return transition(request, id, ReasonSerializer, workflow.reject)
+
+
+class IssueDateRevisionView(APIView):
+    @extend_schema(request=DateRevisionSerializer, responses=IssueSerializer, tags=["workflow"])
+    def post(self, request: Request, id: int) -> Response:
+        return transition(request, id, DateRevisionSerializer, workflow.revise_date)
+
+
+class IssueAssignView(APIView):
+    @extend_schema(request=AssignSerializer, responses=IssueSerializer, tags=["workflow"])
+    def post(self, request: Request, id: int) -> Response:
+        return transition(request, id, AssignSerializer, workflow.assign)
+
+
+class IssueStartView(APIView):
+    @extend_schema(
+        request=TransitionVersionSerializer, responses=IssueSerializer, tags=["workflow"]
+    )
+    def post(self, request: Request, id: int) -> Response:
+        return transition(request, id, TransitionVersionSerializer, workflow.start)
+
+
+class IssueDeliverView(APIView):
+    @extend_schema(request=DeliverySerializer, responses=IssueSerializer, tags=["workflow"])
+    def post(self, request: Request, id: int) -> Response:
+        return transition(request, id, DeliverySerializer, workflow.deliver)
+
+
+class IssueVerifyView(APIView):
+    @extend_schema(
+        request=TransitionVersionSerializer, responses=IssueSerializer, tags=["workflow"]
+    )
+    def post(self, request: Request, id: int) -> Response:
+        return transition(request, id, TransitionVersionSerializer, workflow.verify)
+
+
+class IssueFailVerificationView(APIView):
+    @extend_schema(request=ReasonSerializer, responses=IssueSerializer, tags=["workflow"])
+    def post(self, request: Request, id: int) -> Response:
+        return transition(request, id, ReasonSerializer, workflow.fail_verification)
+
+
+class IssueCloseView(APIView):
+    @extend_schema(
+        request=TransitionVersionSerializer, responses=IssueSerializer, tags=["workflow"]
+    )
+    def post(self, request: Request, id: int) -> Response:
+        return transition(request, id, TransitionVersionSerializer, workflow.close)
+
+
+class IssueReopenView(APIView):
+    @extend_schema(request=ReasonSerializer, responses=IssueSerializer, tags=["workflow"])
+    def post(self, request: Request, id: int) -> Response:
+        return transition(request, id, ReasonSerializer, workflow.reopen)
+
+
+class IssueEventDetailView(APIView):
+    @extend_schema(responses=IssueEventSerializer, tags=["workflow"])
+    def get(self, request: Request, id: int, event_id: int) -> Response:
+        issue = get_authorized_object_or_404(
+            request.user, visible_rows(request.user), id, allow_datasoft=True
+        )
+        event = get_authorized_object_or_404(
+            request.user,
+            IssueEvent.objects.filter(issue=issue),
+            event_id,
+            organization_field="issue__organization",
+            allow_datasoft=True,
+        )
+        return Response(IssueEventSerializer(event).data)
+
+
+class WorkflowSettingsView(APIView):
+    @extend_schema(responses=WorkflowSettingsSerializer, tags=["workflow"])
+    def get(self, request: Request) -> Response:
+        setting, _ = WorkflowSettings.objects.get_or_create(pk=1)
+        return Response(WorkflowSettingsSerializer(setting).data)
+
+    @extend_schema(
+        request=WorkflowSettingsSerializer, responses=WorkflowSettingsSerializer, tags=["workflow"]
+    )
+    def patch(self, request: Request) -> Response:
+        if not is_datasoft_admin(request.user):
+            raise PermissionDenied("Only a DataSoft Administrator may change workflow settings.")
+        data = WorkflowSettingsSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        setting, _ = WorkflowSettings.objects.get_or_create(pk=1)
+        setting.reopen_days = data.validated_data["reopen_days"]
+        setting.save(update_fields=["reopen_days"])
+        return Response(WorkflowSettingsSerializer(setting).data)
+
+
+class WorkflowAssigneesView(APIView):
+    @extend_schema(responses=WorkflowAssigneeSerializer(many=True), tags=["workflow"])
+    def get(self, request: Request) -> Response:
+        organization = portal_organization(request.user)
+        if (
+            organization is None
+            or organization.kind != OrganizationKind.DATASOFT
+            or not Membership.objects.filter(
+                user=request.user, organization=organization, role__in=DATASOFT_ROLES
+            ).exists()
+        ):
+            raise PermissionDenied("DataSoft staff role required.")
+        users = (
+            User.objects.filter(
+                is_active=True,
+                account__organization=organization,
+                memberships__organization=organization,
+                memberships__role__in=DATASOFT_ROLES,
+            )
+            .distinct()
+            .order_by("account__full_name", "id")
+        )
+        return Response(WorkflowAssigneeSerializer(users, many=True).data)
