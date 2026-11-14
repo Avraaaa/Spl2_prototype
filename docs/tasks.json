@@ -156,7 +156,8 @@
       "allow": [
         "services/api/",
         "apps/web/src/features/issues/",
-        "contracts/"
+        "contracts/",
+        "apps/web/src/app/"
       ],
       "gates": [
         "node scripts/validate-repo.mjs",
@@ -189,7 +190,8 @@
         "services/api/",
         "apps/web/src/features/workflow/",
         "apps/web/src/features/issues/",
-        "contracts/"
+        "contracts/",
+        "apps/web/src/app/"
       ],
       "gates": [
         "node scripts/validate-repo.mjs",
@@ -218,7 +220,8 @@
         "services/api/",
         "apps/web/src/features/tasks/",
         "apps/web/src/features/issues/",
-        "contracts/"
+        "contracts/",
+        "apps/web/src/app/"
       ],
       "gates": [
         "node scripts/validate-repo.mjs",
@@ -243,7 +246,8 @@
       "allow": [
         "services/api/",
         "apps/web/src/features/notifications/",
-        "contracts/"
+        "contracts/",
+        "apps/web/src/app/"
       ],
       "gates": [
         "node scripts/validate-repo.mjs",
@@ -297,7 +301,8 @@
         "services/api/",
         "apps/web/src/features/reports/",
         "contracts/",
-        "seed/"
+        "seed/",
+        "apps/web/src/app/"
       ],
       "gates": [
         "node scripts/validate-repo.mjs",
