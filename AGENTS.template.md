@@ -9,7 +9,8 @@
 - Every command in docs, CI, scripts and Docker must follow this policy. Any non-compliant command is a BLOCKER, not a shortcut.
 
 ## Read order
-1. One selected entry in `docs/tasks.json` and the corresponding section in `implementation.md`.
+0. `learning.md` — findings from earlier tasks (environment quirks, bugs already hit). Follow it.
+1. One selected entry in `docs/tasks.json`, the corresponding section in `implementation.md`, and its requirement text in `docs/requirements/qfd.md`.
 2. Its requirement rows in `docs/traceability.csv`, `docs/security-invariants.md` and the relevant ADR.
 3. Only task-allowed source paths. Prefer `rg`, filenames and code maps to reading whole trees.
 

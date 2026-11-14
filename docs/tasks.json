@@ -3,7 +3,8 @@
     "max_review_retries": 2,
     "no_network": true,
     "max_tasks_per_run": 12,
-    "timeout_seconds": 2400
+    "timeout_seconds": 2400,
+    "gate_mode": "native-windows (Docker gates retired for local runs; compose files kept for later integration)"
   },
   "tasks": [
     {
@@ -102,6 +103,7 @@
         "contracts/"
       ],
       "gates": [
+        "node scripts/validate-repo.mjs",
         "node scripts/dev.mjs manage makemigrations --check --dry-run",
         "node scripts/check-contract.mjs",
         "node scripts/dev.mjs lint",
@@ -127,8 +129,11 @@
         "contracts/"
       ],
       "gates": [
-        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
-        "npm run --prefix apps/web check"
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
       ]
     },
     {
@@ -151,9 +156,11 @@
         "contracts/"
       ],
       "gates": [
-        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api python services/api/manage.py makemigrations --check --dry-run",
-        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
-        "npm run --prefix apps/web check"
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
       ]
     },
     {
@@ -182,8 +189,11 @@
         "contracts/"
       ],
       "gates": [
-        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
-        "npm run --prefix apps/web check"
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
       ]
     },
     {
@@ -208,8 +218,11 @@
         "contracts/"
       ],
       "gates": [
-        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
-        "npm run --prefix apps/web check"
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
       ]
     },
     {
@@ -230,7 +243,11 @@
         "contracts/"
       ],
       "gates": [
-        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests"
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
       ]
     },
     {
@@ -253,6 +270,7 @@
         "contracts/"
       ],
       "gates": [
+        "node scripts/validate-repo.mjs",
         "node scripts/dev.mjs manage makemigrations --check --dry-run",
         "node scripts/check-contract.mjs",
         "node scripts/dev.mjs lint",
@@ -279,8 +297,11 @@
         "seed/"
       ],
       "gates": [
-        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
-        "npm run --prefix apps/web check"
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
       ]
     },
     {
@@ -314,8 +335,11 @@
         "seed/"
       ],
       "gates": [
-        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
-        "docker compose -f compose.yaml exec -T ml uv run --no-sync --package datasoft-ml pytest -q services/ml/tests"
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
       ]
     },
     {
@@ -336,8 +360,11 @@
         "seed/"
       ],
       "gates": [
-        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
-        "docker compose -f compose.yaml exec -T ml uv run --no-sync --package datasoft-ml pytest -q services/ml/tests"
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
       ]
     },
     {
@@ -361,8 +388,11 @@
         "scripts/"
       ],
       "gates": [
-        "docker compose -f compose.yaml exec -T api uv run --no-sync --package datasoft-api pytest -q services/api/tests",
-        "node scripts/validate-repo.mjs"
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
       ]
     }
   ]

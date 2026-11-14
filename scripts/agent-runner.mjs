@@ -21,11 +21,19 @@ const frozen = ['AGENTS.template.md', 'CLAUDE.md', 'implementation.md', 'docs/ta
   'docs/traceability.csv', 'docs/security-invariants.md', 'docs/progress.json',
   '.github/', '.claude/', '.codex/', 'scripts/agent-runner.mjs',
   'scripts/bootstrap-agents.mjs', 'scripts/validate-repo.mjs', 'uv.lock',
-  'apps/web/package-lock.json', 'package.json', 'pyproject.toml'];
+  'apps/web/package-lock.json', 'package.json', 'pyproject.toml', 'learning.md',
+  'docs/requirements/', 'scripts/dev.mjs', 'scripts/check-contract.mjs'];
+const quoteArg = a => (/^[\w@%+=:,./\\-]+$/.test(a) ? a : `"${String(a).replaceAll('"', '\\"')}"`);
 function run(command, argv, cwd = root, options = {}) {
-  const result = spawnSync(command, argv, {
+  // options.shell: needed on Windows for npm/codex .cmd shims (Node refuses them otherwise).
+  // Only fixed arguments and tracked docs/tasks.json gate strings are passed through the shell.
+  const spawnArgs = options.shell
+    ? [[command, ...argv.map(quoteArg)].join(' '), { shell: true }]
+    : [command, argv, {}];
+  const result = spawnSync(spawnArgs[0], ...(options.shell ? [] : [spawnArgs[1]]), {
+    ...(options.shell ? spawnArgs[1] : {}),
     cwd, encoding: 'utf8', input: options.input, timeout: options.timeout ?? 60_000,
-    maxBuffer: 8 * 1024 * 1024,
+    maxBuffer: 32 * 1024 * 1024,
     env: { ...process.env, DO_NOT_TRACK: '1', ...options.env },
   });
   const output = [result.stdout, result.stderr].filter(Boolean).join('\n').slice(-MAX_LOG);
@@ -61,12 +69,12 @@ function checkChanges(wd, base, task) {
 }
 function codex(worktree, prompt, evidence, name, model, effort, review = false) {
   const file = join(evidence, `${name}.txt`);
-  const commands = ['exec', '--model', model, '--sandbox', review ? 'read-only' : 'workspace-write',
-    '-c', 'approval_policy=never', '-c', `model_reasoning_effort=${effort}`,
+  const commands = ['exec', ...(model ? ['--model', model] : []), '--sandbox', review ? 'read-only' : 'workspace-write',
+    '--skip-git-repo-check', '-c', 'approval_policy=never', '-c', `model_reasoning_effort=${effort}`,
     '--output-last-message', file];
   if (review) commands.push('--output-schema', join(evidence, 'review-schema.json'));
   commands.push('-');
-  run('codex', commands, worktree, { input: prompt, timeout: data.policy.timeout_seconds * 1000, log: join(evidence, `${name}.log`) });
+  run('codex', commands, worktree, { shell: true, input: prompt, timeout: data.policy.timeout_seconds * 1000, log: join(evidence, `${name}.log`) });
   return readFileSync(file, 'utf8');
 }
 function checkPrerequisites() {
@@ -96,20 +104,33 @@ function doTask(task) {
   mkdirSync(logs, { recursive: true });
   let attached = false;
   let gateEnv = null;
+  let merged = false;
   try {
     run('git', ['worktree', 'add', '-b', branch, wd, base], root, { timeout: 60_000 });
     attached = true;
     run('node', ['scripts/bootstrap-agents.mjs'], wd);
-    cpSync(join(wd, '.env.example'), join(wd, '.env'));
-    const project = `datasoft_${task.id.toLowerCase().replace('-', '')}_${base.slice(0, 6)}`;
-    const ports = 19000 + data.tasks.findIndex(t => t.id === task.id) * 10;
-    gateEnv = { COMPOSE_PROJECT_NAME: project, API_PUBLISHED_PORT: String(ports), ML_PUBLISHED_PORT: String(ports + 1), WEB_PUBLISHED_PORT: String(ports + 2) };
+    const usesDocker = task.gates.some(g => /\bdocker\b/.test(g));
+    if (usesDocker) {
+      cpSync(join(wd, '.env.example'), join(wd, '.env'));
+      const project = `datasoft_${task.id.toLowerCase().replace('-', '')}_${base.slice(0, 6)}`;
+      const ports = 19000 + data.tasks.findIndex(t => t.id === task.id) * 10;
+      gateEnv = { COMPOSE_PROJECT_NAME: project, API_PUBLISHED_PORT: String(ports), ML_PUBLISHED_PORT: String(ports + 1), WEB_PUBLISHED_PORT: String(ports + 2) };
+    }
+    // Native setup: a fresh worktree has no .venv or node_modules (both gitignored).
+    run('uv', ['sync', '--locked'], wd, { timeout: 600_000, log: join(logs, 'setup-uv.log') });
+    run('npm', ['ci', '--prefix', 'apps/web', '--no-audit', '--no-fund', '--prefer-offline'], wd,
+      { shell: true, timeout: 600_000, log: join(logs, 'setup-npm.log') });
     const promptBase = `Implement ONLY ${task.id}: ${task.title}. Requirement IDs: ${task.req.join(', ')}.\n` +
-      `Read AGENTS.md, one task from implementation.md, docs/security-invariants.md, traceability rows and minimal relevant code.\n` +
-      `Paths allowed: ${task.allow.join(', ')}.\nAcceptance commands: ${task.gates.join(' ; ')}.\n` +
-      `Do not change old tests, protected files, dependency locks, task definition or policies. ` +
-      `Prefer TypeScript/JavaScript outside Django/FastAPI; use uv for all Python. ` +
-      `Add meaningful tests, don't commit, never push or access real data. Output BLOCKED on uncertainty.\n`;
+      `Read in order: AGENTS.md, learning.md (hard-won findings; follow them), the ${task.id} section of implementation.md, ` +
+      `the matching requirement text in docs/requirements/qfd.md, docs/security-invariants.md, then only the code you need.\n` +
+      `Paths allowed: ${task.allow.join(', ')}.\nAcceptance commands (run by the harness afterwards): ${task.gates.join(' ; ')}.\n` +
+      `Environment: native Windows, no Docker. Run Django tests with \`node scripts/dev.mjs pytest -q services/api/tests\`, ` +
+      `web checks with \`npm run --prefix apps/web check\`, lint with \`node scripts/dev.mjs lint\`, and after any API change ` +
+      `regenerate the contract with \`node scripts/check-contract.mjs --write\` (never hand-edit contracts/ or generated/). ` +
+      `If a command cannot run inside your sandbox (e.g. database access), still write the code and tests carefully; the harness runs the gates.\n` +
+      `Write tests first, then implementation. Do not change existing tests, protected files, dependency locks, task definitions or policies. ` +
+      `Do not add dependencies. Prefer TypeScript outside Django/FastAPI; use uv for all Python. ` +
+      `Every UI action must call a real endpoint. Synthetic data only. Don't commit, never push. Output BLOCKED on uncertainty.\n`;
     let architecture = '';
     if (planOnly) {
       architecture = run('claude', ['-p', `Evaluate only ${task.id}: ${task.title}; read architecture/security docs, return concise advisory plan with no writes.`,
@@ -121,35 +142,52 @@ function doTask(task) {
     }, required: ['verdict','findings'], additionalProperties: false };
     writeFileSync(join(logs, 'review-schema.json'), JSON.stringify(schema));
     let findings = [];
+    let lastEvidence = [];
+    let attemptsUsed = 0;
     let success = false;
     for (let attempt = 0; attempt <= data.policy.max_review_retries; attempt++) {
       const prompt = promptBase + `\nArchitecture guidance:\n${architecture}\n` +
-        (attempt ? `\nFix ONLY these earlier review findings:\n${findings.join('\n')}` : '');
-      codex(wd, prompt, logs, `coder-${attempt}`, process.env.DATASOFT_CODER_MODEL || 'gpt-6-luna', 'high');
+        (attempt ? `\nThe previous attempt is still in the working tree. Fix ONLY these findings (do not weaken or delete tests):\n${findings.join('\n')}` : '');
+      console.log(`CODER ${task.id} attempt ${attempt}`);
+      codex(wd, prompt, logs, `coder-${attempt}`, process.env.DATASOFT_CODER_MODEL || null, 'high');
       const changed = checkChanges(wd, base, task);
       if (!changed.length) throw new Error('No source changes; cannot mark task implemented');
       const evidence = [];
+      let gateFailure = null;
       for (let idx = 0; idx < task.gates.length; idx++) {
         const command = task.gates[idx];
         // Commands are from tracked docs/tasks.json, not agent-generated input.
-        const env = gateEnv;
         try {
-          const output = run('bash', ['-lc', command], wd, {
-            timeout: data.policy.timeout_seconds * 1000, log: join(logs, `gate-${attempt}-${idx}.log`), env,
+          run(command, [], wd, {
+            shell: true, timeout: data.policy.timeout_seconds * 1000, log: join(logs, `gate-${attempt}-${idx}.log`), env: gateEnv ?? {},
           });
           evidence.push(`${command}: EXIT 0`);
           console.log(`PASS ${task.id} ${command}`);
         } catch (error) {
-          // Gate failure stops immediately: no potentially unbounded self-fixing loops.
-          throw new Error(`Gate ${idx} failed: ${String(error)}`);
+          gateFailure = `Gate failed: ${command}\n${String(error.message).slice(-3000)}`;
+          console.log(`FAIL ${task.id} ${command}`);
+          break;
         }
       }
+      if (gateFailure) {
+        // Bounded: gate failures share the max_review_retries budget; then the task is BLOCKED.
+        findings = [gateFailure];
+        if (attempt === data.policy.max_review_retries) throw new Error(`Gate retry limit reached: ${gateFailure.slice(0, 1500)}`);
+        continue;
+      }
+      checkChanges(wd, base, task);
+      lastEvidence = evidence;
+      attemptsUsed = attempt + 1;
       // Supply evidence and require reviewer to inspect actual Git diff itself.
       const reviewText = codex(wd, `Read-only review of ${task.id}. Base ${base}. Inspect git diff, changed files, new tests, security invariants and acceptance criteria.\nGates: ${evidence.join('\n')}\n` +
-        `Look for tenant boundary leaks, invalid state changes, weak tests, privilege escalation, secrets and scope creep.\n` +
+        `Check the requirement text in docs/requirements/qfd.md, the task section of implementation.md and the pitfalls in learning.md.\n` +
+        `Look for tenant boundary leaks, invalid state changes, weak tests, privilege escalation, secrets, UI buttons not backed by real endpoints, and scope creep.\n` +
+        `Only FAIL for real defects (correctness, security, missing acceptance criteria or tests); list minor suggestions as findings with a PASS verdict.\n` +
         `Return JSON verdict and findings only, FAIL when uncertain.`, logs, `review-${attempt}`,
-        process.env.DATASOFT_REVIEWER_MODEL || 'gpt-6.1-sol', task.phase === 1 || task.phase === 2 || task.phase >= 5 ? 'medium' : 'low', true);
+        process.env.DATASOFT_REVIEWER_MODEL || null, task.phase === 1 || task.phase === 2 || task.phase >= 5 ? 'medium' : 'low', true);
       const review = JSON.parse(reviewText);
+      writeFileSync(join(logs, `review-${attempt}.json`), JSON.stringify(review, null, 2));
+      console.log(`REVIEW ${task.id} attempt ${attempt}: ${review.verdict}${review.findings?.length ? ` (${review.findings.length} findings)` : ''}`);
       if (review.verdict === 'PASS') { success = true; break; }
       findings = review.findings ?? [];
       if (attempt === data.policy.max_review_retries) throw new Error(`Reviewer retry limit reached: ${findings.join('; ')}`);
@@ -159,11 +197,15 @@ function doTask(task) {
     const state = currentState();
     state.completed.push(task.id);
     state.latest_review = 'PASS';
-    state.last_updated = 'runner';
+    state.evidence = state.evidence ?? {};
+    state.evidence[task.id] = { mode: 'native-windows', implemented_by: 'codex (agent-runner)', gates: lastEvidence, review: 'codex read-only PASS', attempts: attemptsUsed, base };
+    state.last_updated = new Date().toISOString().slice(0, 10);
     writeFileSync(join(wd, 'docs/progress.json'), JSON.stringify(state, null, 2) + '\n');
     git(wd, 'add', '-A');
+    // Owner is the sole author: local git identity, no Co-Authored-By or tool attribution.
     git(wd, 'commit', '-m', `feat(${task.id.toLowerCase()}): ${task.title.toLowerCase()}`);
     git(root, 'merge', '--ff-only', branch);
+    merged = true;
     console.log(`PASS ${task.id}: locally merged. GitHub CI remains an independent gate.`);
   } finally {
     if (attached && gateEnv) {
@@ -171,8 +213,11 @@ function doTask(task) {
       catch (e) { console.error(`Could not clean disposable containers: ${e.message.slice(0, 300)}`); }
     }
     if (attached) {
-      try { run('git', ['worktree', 'remove', '--force', wd], root); }
+      try { run('git', ['worktree', 'remove', '--force', wd], root, { timeout: 300_000 }); }
       catch (e) { console.error(`Could not remove temporary worktree: ${e}`); }
+      if (merged) {
+        try { git(root, 'branch', '-d', branch); } catch { /* keep branch if not fully merged */ }
+      }
     }
     // Keep evidence for debugging; no external log upload.
     console.log(`Evidence stored locally under ${logs}`);

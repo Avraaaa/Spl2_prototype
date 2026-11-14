@@ -12,6 +12,7 @@ This plan is intentionally detailed for P0–P2 and skeletal beyond. Only `docs/
 - Coder reads its one selected task and only relevant docs/files; no unapproved dependency or requirement changes.
 - Reviewer runs in a read-only Codex sandbox and judges the code diff plus test evidence. Reviewer verdict is advisory; gates are independently executed by runner.
 - Retry failed review at most twice. If tests fail, runner does not auto-patch tests; stop and record BLOCKED or FAIL.
+- Native Windows mode (owner decision 2026-11-14): gates in `docs/tasks.json` run natively via `scripts/dev.mjs` (no Docker). A failing gate's log is returned to the coder for a fix attempt that shares the same `max_review_retries` budget (bounded; existing tests stay protected); when the budget is exhausted the task is BLOCKED. Coder agents read `learning.md` first; the orchestrator updates it after each task.
 - Verify no tracked preexisting test is edited/deleted and no CI/AGENTS/security-policy file changed. Match files to allowed paths. Stronger production CI must check against protected branch outside AI control.
 - All gates must report actual exit status 0; otherwise STOP without merge. Commits are created by runner only; branch merge must be fast-forward. No auto-push, real email, cloud provisioning or deployment.
 - Stop on run limit, model quota, nonzero exit, unsafe request, conflicting specs, dependency download failure, unreadable source, reviewer repeated rejection, tool inability, or unstable tests. Don't loop forever.
