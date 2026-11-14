@@ -80,7 +80,22 @@ function codex(worktree, prompt, evidence, name, model, effort, review = false) 
     '--output-last-message', file];
   if (review) commands.push('--output-schema', join(evidence, 'review-schema.json'));
   commands.push('-');
-  run('codex', commands, worktree, { shell: true, input: prompt, timeout: data.policy.timeout_seconds * 1000, log: join(evidence, `${name}.log`) });
+  const timeout = (data.policy.coder_timeout_seconds ?? data.policy.timeout_seconds) * 1000;
+  try {
+    run('codex', commands, worktree, { shell: true, input: prompt, timeout, log: join(evidence, `${name}.log`) });
+  } catch (error) {
+    // On timeout only the cmd.exe wrapper dies; the codex node/exe children keep running and lock the
+    // worktree. Kill exactly the processes of THIS invocation (matched by its unique output file path),
+    // never the user's own Codex app.
+    if (/ETIMEDOUT/.test(String(error.message)) && process.platform === 'win32') {
+      const needle = file.replaceAll("'", "''");
+      spawnSync('powershell', ['-NoProfile', '-Command',
+        `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine.Contains('${needle}') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`],
+        { encoding: 'utf8', timeout: 60_000 });
+      console.log(`KILLED timed-out coder processes for ${name}`);
+    }
+    throw error;
+  }
   return readFileSync(file, 'utf8');
 }
 function checkPrerequisites() {

@@ -7,7 +7,8 @@
     "gate_mode": "native-windows (Docker gates retired for local runs; compose files kept for later integration)",
     "retry_note": "3 retries (was 2): the coder sandbox cannot run Python, so gate logs are its only test feedback (2026-11-14).",
     "max_parallel": 2,
-    "parallel_note": "Up to 2 runner processes at once (memory). Independent after their deps: P1-T1b||P1-T2; P3-T1||P3-T2||P4-T1 after P2-T2. Merges are serialized by a lock with rebase + regenerate + re-gate."
+    "parallel_note": "Up to 2 runner processes at once (memory). Independent after their deps: P1-T1b||P1-T2; P3-T1||P3-T2||P4-T1 after P2-T2. Merges are serialized by a lock with rebase + regenerate + re-gate.",
+    "coder_timeout_seconds": 5400
   },
   "tasks": [
     {
