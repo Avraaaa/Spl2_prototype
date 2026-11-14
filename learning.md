@@ -67,3 +67,9 @@ Requirements source: `docs/requirements/qfd.md`. Plan: `implementation.md`. Task
 - A fresh worktree has no `.venv` or `node_modules`. The runner runs `uv sync --locked` and `npm ci --prefix apps/web` there before the coder starts.
 - **`CLAUDE.md` is intentionally untracked** (in `.gitignore`, owner decision; never commit it). A fresh worktree therefore lacks it and `validate-repo.mjs` fails with `Missing CLAUDE.md`. The runner copies the local `CLAUDE.md` into the worktree. Versioned agent policy (e.g. sole authorship) lives in `AGENTS.template.md`.
 - Check that every gate passes on an untouched worktree of HEAD before blaming the coder for a gate failure.
+- **The Codex `workspace-write` sandbox on Windows cannot run Python.** `uv run` fails with `Failed to initialize cache ... os error 183`, and even `.venv\Scripts\python.exe` fails with `did not find executable at ...\AppData\Roaming\uv\python\...\python.exe: Access is denied`. Widening the sandbox (extra writable roots) is not acceptable. So:
+  - coder agents write Python code, hand-written migrations and pytest tests without running them;
+  - the harness runs `node scripts/check-contract.mjs --write` after each coder attempt (the generated files are always allowed), then the gates, and sends the failure log back (retry budget 3);
+  - Node works in the sandbox (`npm run --prefix apps/web check`), but new endpoint types exist only after the harness regenerates the schema.
+- An interrupted run can be resumed: save the worktree diff (`git add -N <new files>; git diff --binary > .agent_runs/seeds/<task>.patch`) and run `node scripts/agent-runner.mjs --task <id> --seed-patch <file>`.
+- Stopping the runner mid-task (TaskStop) skips its cleanup. Remove the leftover worktree with `git worktree remove --force <path>` and delete the `agent/<task>-<sha>` branch.

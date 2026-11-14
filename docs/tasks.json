@@ -1,10 +1,11 @@
 {
   "policy": {
-    "max_review_retries": 2,
+    "max_review_retries": 3,
     "no_network": true,
     "max_tasks_per_run": 12,
     "timeout_seconds": 2400,
-    "gate_mode": "native-windows (Docker gates retired for local runs; compose files kept for later integration)"
+    "gate_mode": "native-windows (Docker gates retired for local runs; compose files kept for later integration)",
+    "retry_note": "3 retries (was 2): the coder sandbox cannot run Python, so gate logs are its only test feedback (2026-11-14)."
   },
   "tasks": [
     {
