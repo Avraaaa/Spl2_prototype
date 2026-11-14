@@ -35,3 +35,11 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] `dashboard_counts` builds `by_bank` by looping over every issue row in Python. Replace it with a `values().annotate(Count())` aggregate. It only runs for DataSoft staff.
 - [ ] [follow-up] `redirectFor` is UX-only. Django still enforces permissions, which is correct. Extend its unit tests to cover mixed-role edge cases, such as a user who is both Support Agent and Issue Officer.
 - [ ] [follow-up] The `WorkflowActions.tsx` handlers are long single lines, which goes against the readability bar in the task. Reformat them.
+
+## P4-T2b — 2026-11-14
+- [ ] resetSession now calls setQueryData(ME_KEY, user) and then removeQueries for every key whose first element isn't 'auth'. A mounted ME observer therefore receives the new user, and logout sets null. This fixes defect 1.
+- [ ] hasErrors now counts only truthy messages, and set() deletes the key instead of writing undefined. Together these fix the premature banner (defect 2).
+- [ ] The new tests are real: session.observers.test.ts subscribes a QueryObserver before the reset and checks the cache is pruned. draftForm.errors.test.ts checks that `{ title: undefined }` is not an error. Both are in new files, and no existing tests were edited.
+- [ ] I did not re-run the gates. The prompt reports validate-repo, makemigrations, check-contract, lint and test all exit 0.
+- [ ] [follow-up] removeQueries keeps every query under the 'auth' key prefix, not just ME_KEY. If other auth-scoped queries are added later, they will survive a user switch. Match the full ME_KEY instead.
+- [ ] [follow-up] I did not confirm in the diff that the banner is hidden until a save/submit attempt. Only hasErrors and set() changed; whether the banner is gated on an attempt flag is unverified.

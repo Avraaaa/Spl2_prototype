@@ -86,7 +86,12 @@ function DraftForm({ existing }: { existing?: Issue }) {
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => {
     setDraft(current => ({ ...current, [key]: value }));
-    setErrors(current => ({ ...current, [key]: undefined }));
+    setErrors(current => {
+      if (!(key in current)) return current;
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
   };
 
   const persist = async (): Promise<Stored> => {

@@ -63,7 +63,7 @@ export function validateDraft(draft: Draft, mode: 'save' | 'submit'): DraftError
   return errors;
 }
 
-export const hasErrors = (errors: DraftErrors) => Object.keys(errors).length > 0;
+export const hasErrors = (errors: DraftErrors) => Object.values(errors).some(Boolean);
 
 /** Error carrying DRF field messages so the form can show them next to the inputs. */
 export class FieldError extends Error {
