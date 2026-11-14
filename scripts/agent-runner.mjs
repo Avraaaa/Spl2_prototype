@@ -221,7 +221,7 @@ function doTask(task) {
       `the matching requirement text in docs/requirements/qfd.md, docs/security-invariants.md, then only the code you need.\n` +
       `Paths allowed: ${task.allow.join(', ')}.\nAcceptance commands (run by the harness afterwards): ${task.gates.join(' ; ')}.\n` +
       `Environment: native Windows, no Docker. IMPORTANT: your sandbox CANNOT run Python (uv's interpreter is outside it: ` +
-      `"Access is denied"), so NEVER run uv, python, pytest, manage.py, `node scripts/dev.mjs` or check-contract: a failed attempt deletes files inside .venv and breaks the harness environment. Write Python code, Django migrations (by hand, matching ` +
+      `"Access is denied"), so NEVER run uv, python, pytest, manage.py, node scripts/dev.mjs or check-contract: a failed attempt deletes files inside .venv and breaks the harness environment. Write Python code, Django migrations (by hand, matching ` +
       `Django's makemigrations output) and pytest tests carefully instead. The harness then regenerates contracts/openapi.yaml and ` +
       `apps/web/src/api/generated/schema.d.ts (never hand-edit them), runs all gates, and returns any failure log to you. ` +
       `\`npm run --prefix apps/web check\` does work in the sandbox; new endpoint types only exist after the harness regenerates the ` +
