@@ -8,7 +8,8 @@
     "P2-T1",
     "P2-T2",
     "P3-T2",
-    "P3-T1"
+    "P3-T1",
+    "P4-T1"
   ],
   "last_updated": "2026-11-14",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
@@ -141,6 +142,27 @@
         "node scripts/dev.mjs test: EXIT 0"
       ],
       "integrated_by": "agent-runner --integrate"
+    },
+    "P4-T1": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 1,
+      "base": "f17c1517f349a2000c272232f05702060ac8d834",
+      "follow_ups": [
+        "[follow-up] CSV formula-injection guard only checks = + - @; it should also cover leading tab and carriage-return characters.",
+        "[follow-up] detailed_rows reads issue.created_by.account.full_name directly; a creator with no account profile would raise a 500. This is unlikely for normal data.",
+        "[follow-up] Summary and dashboard counts use per-status queries and Python loops. This is fine for a prototype but won't scale to large datasets.",
+        "[follow-up] Recurring-link validation is duplicated in the serializer and in services._validate_links. Consolidating it would avoid the two copies drifting apart.",
+        "[follow-up] The reports window filters on created_at only. Issues submitted or closed in the window but created earlier are excluded. This is acceptable under the spec's default."
+      ]
     }
   },
   "latest_review": "PASS"

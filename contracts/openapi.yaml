@@ -1207,6 +1207,188 @@ paths:
                 items:
                   $ref: '#/components/schemas/Product'
           description: ''
+  /api/reports/banks/:
+    get:
+      operationId: reports_banks_list
+      tags:
+      - reports
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportBank'
+          description: ''
+  /api/reports/dashboard/:
+    get:
+      operationId: reports_dashboard_retrieve
+      tags:
+      - reports
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardCounts'
+          description: ''
+  /api/reports/detailed/:
+    get:
+      operationId: reports_detailed_list
+      parameters:
+      - in: query
+        name: bank
+        schema:
+          type: integer
+      - in: query
+        name: end
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: overdue
+        schema:
+          type: boolean
+      - in: query
+        name: start
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - reports
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DetailedReportRow'
+          description: ''
+  /api/reports/detailed/csv/:
+    get:
+      operationId: reports_detailed_csv_retrieve
+      parameters:
+      - in: query
+        name: bank
+        schema:
+          type: integer
+      - in: query
+        name: end
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: overdue
+        schema:
+          type: boolean
+      - in: query
+        name: start
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - reports
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/reports/summary/:
+    get:
+      operationId: reports_summary_retrieve
+      parameters:
+      - in: query
+        name: bank
+        schema:
+          type: integer
+      - in: query
+        name: end
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: overdue
+        schema:
+          type: boolean
+      - in: query
+        name: start
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - reports
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SummaryReport'
+          description: ''
+  /api/reports/summary/csv/:
+    get:
+      operationId: reports_summary_csv_retrieve
+      parameters:
+      - in: query
+        name: bank
+        schema:
+          type: integer
+      - in: query
+        name: end
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: overdue
+        schema:
+          type: boolean
+      - in: query
+        name: start
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - reports
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+          description: ''
   /api/tasks/:
     get:
       operationId: tasks_list
@@ -1497,6 +1679,22 @@ components:
           minLength: 1
       required:
       - body
+    DashboardCounts:
+      type: object
+      properties:
+        total:
+          type: integer
+        by_status:
+          type: object
+          additionalProperties:
+            type: integer
+        pending_intake:
+          type: integer
+        recent_deliveries:
+          type: integer
+      required:
+      - by_status
+      - total
     DateRevisionRequest:
       type: object
       properties:
@@ -1528,6 +1726,57 @@ components:
       - delivery_note
       - deployment_details
       - version
+    DetailedReportRow:
+      type: object
+      properties:
+        id:
+          type: integer
+        reference_id:
+          type: string
+        bank:
+          type: string
+        issue_officer:
+          type: string
+        title:
+          type: string
+        issue_detail:
+          type: string
+        status:
+          type: string
+        creation_date:
+          type: string
+        submission_date:
+          type: string
+          nullable: true
+        tentative_delivery_date:
+          type: string
+          nullable: true
+        actual_delivery_date:
+          type: string
+          nullable: true
+        last_status_update_date:
+          type: string
+          nullable: true
+        closure_date:
+          type: string
+          nullable: true
+        is_overdue:
+          type: boolean
+      required:
+      - actual_delivery_date
+      - bank
+      - closure_date
+      - creation_date
+      - id
+      - is_overdue
+      - issue_detail
+      - issue_officer
+      - last_status_update_date
+      - reference_id
+      - status
+      - submission_date
+      - tentative_delivery_date
+      - title
     Error:
       type: object
       properties:
@@ -1600,6 +1849,17 @@ components:
         related_request:
           type: integer
           nullable: true
+        recurring_of:
+          type: integer
+          nullable: true
+        recurring_requests:
+          type: array
+          items:
+            type: integer
+          readOnly: true
+        is_overdue:
+          type: boolean
+          readOnly: true
         status:
           $ref: '#/components/schemas/IssueStatusEnum'
         version:
@@ -1658,6 +1918,8 @@ components:
       - created_by
       - events
       - id
+      - is_overdue
+      - recurring_requests
       - updated_at
     IssueEvent:
       type: object
@@ -1743,6 +2005,10 @@ components:
         actual_result:
           type: string
         related_request:
+          type: integer
+          minimum: 1
+          nullable: true
+        recurring_of:
           type: integer
           minimum: 1
           nullable: true
@@ -1964,6 +2230,10 @@ components:
           type: integer
           minimum: 1
           nullable: true
+        recurring_of:
+          type: integer
+          minimum: 1
+          nullable: true
         version:
           type: integer
           minimum: 1
@@ -2119,6 +2389,16 @@ components:
       required:
       - reason
       - version
+    ReportBank:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+      - id
+      - name
     RequestTypeEnum:
       enum:
       - BUG
@@ -2152,6 +2432,33 @@ components:
             $ref: '#/components/schemas/RolesEnum'
       required:
       - roles
+    SummaryReport:
+      type: object
+      properties:
+        total:
+          type: integer
+        by_status:
+          type: object
+          additionalProperties:
+            type: integer
+        by_month:
+          type: object
+          additionalProperties:
+            type: integer
+        by_bank:
+          type: object
+          additionalProperties:
+            type: integer
+        reopened_count:
+          type: integer
+        recurring_count:
+          type: integer
+      required:
+      - by_month
+      - by_status
+      - recurring_count
+      - reopened_count
+      - total
     Task:
       type: object
       properties:

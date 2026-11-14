@@ -108,7 +108,7 @@ class IssueDetailView(APIView):
         issue = get_authorized_object_or_404(
             request.user, visible_rows(request.user), id, allow_datasoft=True
         )
-        return Response(IssueSerializer(issue).data)
+        return Response(IssueSerializer(issue, context={"request": request}).data)
 
     @extend_schema(request=IssueDraftEditSerializer, responses=IssueSerializer, tags=["issues"])
     def patch(self, request: Request, id: int) -> Response:

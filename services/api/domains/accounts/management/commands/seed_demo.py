@@ -1,14 +1,17 @@
 """Load SYNTHETIC demo organizations and users for local development. DEBUG only."""
 
+from datetime import timedelta
 from typing import Any
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.utils import timezone
 
 from domains.accounts import services
 from domains.accounts.roles import Role
+from domains.issues import workflow
 from domains.issues.models import Issue, IssueStatus
 from domains.issues.services import create_draft, submit
 from domains.products.models import Module, Product
@@ -85,6 +88,57 @@ class Command(BaseCommand):
                 )
                 if submitted and issue.status == IssueStatus.DRAFT:
                     submit(officer, issue)
+            support = User.objects.get(username="ds.support")
+            verifier = User.objects.get(username=f"{code.lower()}.verifier")
+            examples = (
+                ("overdue", "overdue", 30),
+                ("resolved", "closed", 60),
+                ("recurrence", "recurring", 0),
+            )
+            closed = None
+            for suffix, scenario, age in examples:
+                title = f"{code} synthetic {suffix} request"
+                existing = Issue.objects.filter(
+                    organization=officer.account.organization, title=title
+                ).first()
+                if existing:
+                    if scenario == "closed":
+                        closed = existing
+                    continue
+                issue = create_draft(
+                    officer,
+                    {
+                        "title": title,
+                        "description": "Synthetic demonstration request; no customer data.",
+                        "request_type": "SUPPORT",
+                        "product": product,
+                        "priority": "MEDIUM",
+                        **({"recurring_of": closed} if scenario == "recurring" and closed else {}),
+                    },
+                )
+                Issue.objects.filter(pk=issue.pk).update(
+                    created_at=timezone.now() - timedelta(days=age)
+                )
+                issue = submit(officer, issue)
+                if scenario in ("overdue", "closed"):
+                    delivery_date = timezone.localdate() + timedelta(
+                        days=-1 if scenario == "overdue" else 7
+                    )
+                    issue = workflow.accept(
+                        support, issue.pk, issue.version, tentative_delivery_date=delivery_date
+                    )
+                    issue = workflow.assign(support, issue.pk, issue.version, assignee=support)
+                if scenario == "closed":
+                    issue = workflow.start(support, issue.pk, issue.version)
+                    issue = workflow.deliver(
+                        support,
+                        issue.pk,
+                        issue.version,
+                        delivery_note="Synthetic fix delivered.",
+                        deployment_details="Synthetic demo version.",
+                    )
+                    issue = workflow.verify(verifier, issue.pk, issue.version)
+                    closed = workflow.close(support, issue.pk, issue.version)
         self.stdout.write(f"Synthetic demo users ready ({len(USERS)}); password: {DEMO_PASSWORD}")
         for username, code, _, roles in USERS:
             self.stdout.write(f"  {username:14} {code:9} {', '.join(roles)}")

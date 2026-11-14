@@ -652,6 +652,102 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/banks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reports_banks_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/dashboard/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reports_dashboard_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/detailed/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reports_detailed_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/detailed/csv/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reports_detailed_csv_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/summary/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reports_summary_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/summary/csv/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reports_summary_csv_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tasks/": {
         parameters: {
             query?: never;
@@ -754,6 +850,14 @@ export interface components {
         CommentWriteRequest: {
             body: string;
         };
+        DashboardCounts: {
+            total: number;
+            by_status: {
+                [key: string]: number;
+            };
+            pending_intake?: number;
+            recent_deliveries?: number;
+        };
         DateRevisionRequest: {
             version: number;
             /** Format: date */
@@ -765,6 +869,22 @@ export interface components {
             version: number;
             delivery_note: string;
             deployment_details: string;
+        };
+        DetailedReportRow: {
+            id: number;
+            reference_id: string;
+            bank: string;
+            issue_officer: string;
+            title: string;
+            issue_detail: string;
+            status: string;
+            creation_date: string;
+            submission_date: string | null;
+            tentative_delivery_date: string | null;
+            actual_delivery_date: string | null;
+            last_status_update_date: string | null;
+            closure_date: string | null;
+            is_overdue: boolean;
         };
         Error: {
             detail: string;
@@ -796,6 +916,9 @@ export interface components {
             expected_result?: string;
             actual_result?: string;
             related_request?: number | null;
+            recurring_of?: number | null;
+            readonly recurring_requests: number[];
+            readonly is_overdue: boolean;
             status?: components["schemas"]["IssueStatusEnum"];
             version?: number;
             assignee?: number | null;
@@ -857,6 +980,7 @@ export interface components {
             expected_result?: string;
             actual_result?: string;
             related_request?: number | null;
+            recurring_of?: number | null;
         };
         /**
          * @description * `DATASOFT` - DataSoft
@@ -932,6 +1056,7 @@ export interface components {
             expected_result?: string;
             actual_result?: string;
             related_request?: number | null;
+            recurring_of?: number | null;
             version?: number;
         };
         PatchedProfileUpdateRequest: {
@@ -993,6 +1118,10 @@ export interface components {
             version: number;
             reason: string;
         };
+        ReportBank: {
+            id: number;
+            name: string;
+        };
         /**
          * @description * `BUG` - Bug
          *     * `CHANGE` - Change
@@ -1011,6 +1140,20 @@ export interface components {
         RolesEnum: "ISSUE_OFFICER" | "ISSUE_VERIFIER" | "DATASOFT_ADMIN" | "SUPPORT_AGENT";
         RolesRequest: {
             roles: components["schemas"]["RolesEnum"][];
+        };
+        SummaryReport: {
+            total: number;
+            by_status: {
+                [key: string]: number;
+            };
+            by_month: {
+                [key: string]: number;
+            };
+            by_bank?: {
+                [key: string]: number;
+            };
+            reopened_count: number;
+            recurring_count: number;
         };
         Task: {
             readonly id: number;
@@ -2240,6 +2383,144 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Product"][];
+                };
+            };
+        };
+    };
+    reports_banks_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportBank"][];
+                };
+            };
+        };
+    };
+    reports_dashboard_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardCounts"];
+                };
+            };
+        };
+    };
+    reports_detailed_list: {
+        parameters: {
+            query?: {
+                bank?: number;
+                end?: string;
+                overdue?: boolean;
+                start?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetailedReportRow"][];
+                };
+            };
+        };
+    };
+    reports_detailed_csv_retrieve: {
+        parameters: {
+            query?: {
+                bank?: number;
+                end?: string;
+                overdue?: boolean;
+                start?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    reports_summary_retrieve: {
+        parameters: {
+            query?: {
+                bank?: number;
+                end?: string;
+                overdue?: boolean;
+                start?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SummaryReport"];
+                };
+            };
+        };
+    };
+    reports_summary_csv_retrieve: {
+        parameters: {
+            query?: {
+                bank?: number;
+                end?: string;
+                overdue?: boolean;
+                start?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
                 };
             };
         };

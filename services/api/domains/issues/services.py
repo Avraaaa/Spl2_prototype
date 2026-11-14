@@ -96,6 +96,14 @@ def _validate_links(user: User, fields: dict, existing: Issue | None = None) -> 
         allowed = authorized_rows(user, Issue.objects.exclude(status=IssueStatus.DRAFT))
         if not allowed.filter(pk=related.pk).exists() or (existing and related.pk == existing.pk):
             raise ValidationError({"related_request": "Invalid related request."})
+    recurring = fields.get("recurring_of")
+    if recurring:
+        allowed = authorized_rows(user, Issue.objects.filter(status=IssueStatus.CLOSED))
+        if not allowed.filter(pk=recurring.pk).exists() or (
+            existing
+            and (recurring.pk == existing.pk or recurring.created_at >= existing.created_at)
+        ):
+            raise ValidationError({"recurring_of": "Invalid closed request."})
 
 
 def create_draft(user, fields: dict) -> Issue:

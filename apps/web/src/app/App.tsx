@@ -1,4 +1,6 @@
 import { Link, Navigate, NavLink, Route, Routes, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../api/client';
 import { ChangePasswordPage } from '../features/auth/ChangePasswordPage';
 import { LoginPage } from '../features/auth/LoginPage';
 import { useLogout, useMe } from '../features/auth/hooks';
@@ -8,6 +10,7 @@ import { IssueDetailPage, IssueDraftPage, IssuesListPage } from '../features/iss
 import { ProductsPage } from '../features/issues/ProductsPage';
 import { NotificationBell, NotificationsPage } from '../features/notifications/NotificationsPage';
 import { TasksPage } from '../features/tasks/TasksPage';
+import { IssueReportSignals, ReportsPage } from '../features/reports/ReportsPage';
 
 function Shell({ me, children }: { me: PortalUser; children: React.ReactNode }) {
   const logout = useLogout();
@@ -22,6 +25,7 @@ function Shell({ me, children }: { me: PortalUser; children: React.ReactNode }) 
           {(hasRole(me, 'DATASOFT_ADMIN') || hasRole(me, 'SUPPORT_AGENT')) && <NavLink to="/tasks">Tasks</NavLink>}
           {isAdmin && <NavLink to="/admin/users">Users &amp; banks</NavLink>}
           <NavLink to="/issues">Requests</NavLink>
+          <NavLink to="/reports">Reports</NavLink>
           {isAdmin && <NavLink to="/admin/products">Products</NavLink>}
           <NotificationBell />
         </nav>
@@ -39,6 +43,14 @@ function Shell({ me, children }: { me: PortalUser; children: React.ReactNode }) 
 
 function Dashboard({ me }: { me: PortalUser }) {
   const bank = me.organization.kind === 'BANK';
+  const counts = useQuery({
+    queryKey: ['report', 'dashboard'],
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/reports/dashboard/');
+      if (!data) throw new Error(String(error));
+      return data;
+    },
+  });
   return (
     <section className="stack">
       <div className="page-head">
@@ -48,6 +60,8 @@ function Dashboard({ me }: { me: PortalUser }) {
           <p className="muted">{me.organization.name} · {me.roles.map(roleLabel).join(' + ')}</p>
         </div>
       </div>
+      {counts.isError && <p className="alert error" role="alert">Dashboard counts unavailable.</p>}
+      {counts.data && <div className="card"><h2>Request counts</h2><p>Total: {counts.data.total}</p><div className="grid">{Object.entries(counts.data.by_status).map(([status, count]) => <p key={status}>{status.replaceAll('_', ' ')}: {count}</p>)}</div>{counts.data.pending_intake != null && <p>Pending intake: {counts.data.pending_intake}</p>}{counts.data.recent_deliveries != null && <p>Recent deliveries: {counts.data.recent_deliveries}</p>}</div>}
       <div className="grid">
         {hasRole(me, 'ISSUE_OFFICER') && <div className="card"><h3>Issue Officer</h3><p className="muted">Draft, authorize and submit your bank's service requests.</p></div>}
         {hasRole(me, 'ISSUE_VERIFIER') && <div className="card"><h3>Issue Verifier</h3><p className="muted">Verify delivered fixes for your bank or report a failed verification.</p></div>}
@@ -82,8 +96,9 @@ export function App() {
       <Route path="/issues" element={authed(u => <IssuesListPage me={u} />)} />
       <Route path="/issues/new" element={authed(u => <IssueDraftPage me={u} />)} />
       <Route path="/issues/:id/edit" element={authed(u => <IssueDraftPage me={u} />)} />
-      <Route path="/issues/:id" element={authed(u => <IssueDetailPage me={u} />)} />
+      <Route path="/issues/:id" element={authed(u => <><IssueReportSignals /><IssueDetailPage me={u} /></>)} />
       <Route path="/notifications" element={authed(() => <NotificationsPage />)} />
+      <Route path="/reports" element={authed(u => <ReportsPage me={u} />)} />
       <Route path="*" element={<Navigate to={landingFor(user ?? null)} replace />} />
     </Routes>
   );

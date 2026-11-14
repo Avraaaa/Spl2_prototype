@@ -1,8 +1,12 @@
 from django.contrib.auth.models import User
+from django.db.models import Q
+from django.utils import timezone
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from domains.products.models import Module, Product
-from domains.tenants.selectors import authorized_rows
+from domains.tenants.models import OrganizationKind
+from domains.tenants.selectors import authorized_rows, portal_organization
 
 from .models import Issue, IssueEvent, Priority, RequestType, WorkflowSettings
 
@@ -27,6 +31,31 @@ class IssueEventSerializer(serializers.ModelSerializer):
 
 class IssueSerializer(serializers.ModelSerializer):
     events = IssueEventSerializer(many=True, read_only=True)
+    recurring_requests = serializers.SerializerMethodField()
+    is_overdue = serializers.SerializerMethodField()
+
+    @extend_schema_field(serializers.BooleanField)
+    def get_is_overdue(self, obj: Issue) -> bool:
+        return bool(
+            obj.tentative_delivery_date
+            and obj.tentative_delivery_date < timezone.localdate()
+            and obj.actual_delivery_at is None
+        )
+
+    @extend_schema_field(serializers.ListField(child=serializers.IntegerField()))
+    def get_recurring_requests(self, obj: Issue) -> list[int]:
+        rows = Issue.objects.filter(recurring_of=obj, organization=obj.organization)
+        request = self.context.get("request")
+        if request is None:
+            rows = rows.exclude(status="DRAFT")
+        else:
+            rows = authorized_rows(request.user, rows, allow_datasoft=True)
+            organization = portal_organization(request.user)
+            if organization and organization.kind == OrganizationKind.DATASOFT:
+                rows = rows.exclude(status="DRAFT")
+            else:
+                rows = rows.filter(~Q(status="DRAFT") | Q(created_by=request.user))
+        return list(rows.values_list("pk", flat=True))
 
     class Meta:
         model = Issue
@@ -44,6 +73,9 @@ class IssueSerializer(serializers.ModelSerializer):
             "expected_result",
             "actual_result",
             "related_request",
+            "recurring_of",
+            "recurring_requests",
+            "is_overdue",
             "status",
             "version",
             "assignee",
@@ -79,6 +111,7 @@ class IssueWriteSerializer(serializers.Serializer):
     expected_result = serializers.CharField(required=False, allow_blank=True)
     actual_result = serializers.CharField(required=False, allow_blank=True)
     related_request = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    recurring_of = serializers.IntegerField(required=False, allow_null=True, min_value=1)
 
     def to_internal_value(self, data):
         unknown = set(data) - set(self.fields)
@@ -99,6 +132,15 @@ class IssueWriteSerializer(serializers.Serializer):
             if related is None or (issue and related.pk == issue.pk):
                 raise serializers.ValidationError({"related_request": "Invalid related request."})
             attrs["related_request"] = related
+        if "recurring_of" in attrs and attrs["recurring_of"] is not None:
+            user = self.context["request"].user
+            rows = authorized_rows(user, Issue.objects.filter(status="CLOSED"))
+            previous = rows.filter(pk=attrs["recurring_of"]).first()
+            if previous is None or (
+                issue and (previous.pk == issue.pk or previous.created_at >= issue.created_at)
+            ):
+                raise serializers.ValidationError({"recurring_of": "Invalid closed request."})
+            attrs["recurring_of"] = previous
         return attrs
 
 

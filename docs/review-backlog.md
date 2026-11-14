@@ -20,3 +20,10 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] Attachment content checks inspect only the first 8 KB of text files; later binary content can pass validation.
 - [ ] [follow-up] The task board can change status, but it has no controls to edit assignee or Git links after task creation.
 - [ ] [follow-up] New tests cover two-bank access for comments and attachments, but do not directly test cross-bank task creation or every internal-note response path.
+
+## P4-T1 — 2026-11-14
+- [ ] [follow-up] CSV formula-injection guard only checks = + - @; it should also cover leading tab and carriage-return characters.
+- [ ] [follow-up] detailed_rows reads issue.created_by.account.full_name directly; a creator with no account profile would raise a 500. This is unlikely for normal data.
+- [ ] [follow-up] Summary and dashboard counts use per-status queries and Python loops. This is fine for a prototype but won't scale to large datasets.
+- [ ] [follow-up] Recurring-link validation is duplicated in the serializer and in services._validate_links. Consolidating it would avoid the two copies drifting apart.
+- [ ] [follow-up] The reports window filters on created_at only. Issues submitted or closed in the window but created earlier are excluded. This is acceptable under the spec's default.

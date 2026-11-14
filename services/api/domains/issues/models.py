@@ -48,6 +48,9 @@ class Issue(models.Model):
     expected_result = models.TextField(blank=True)
     actual_result = models.TextField(blank=True)
     related_request = models.ForeignKey("self", on_delete=models.PROTECT, null=True, blank=True)
+    recurring_of = models.ForeignKey(
+        "self", on_delete=models.PROTECT, null=True, blank=True, related_name="recurring_requests"
+    )
     status = models.CharField(max_length=24, choices=IssueStatus.choices, default=IssueStatus.DRAFT)
     version = models.PositiveIntegerField(default=1)
     assignee = models.ForeignKey(
