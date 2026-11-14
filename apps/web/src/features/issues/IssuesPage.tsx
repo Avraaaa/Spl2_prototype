@@ -6,6 +6,7 @@ import type { components } from '../../api/generated/schema';
 import { errorMessage } from '../auth/hooks';
 import { hasRole, type PortalUser } from '../auth/roles';
 import { WorkflowActions, WorkflowSettingsPanel } from '../workflow/WorkflowActions';
+import { IssueCollaboration } from './IssueCollaboration';
 
 type Issue = components['schemas']['Issue'];
 type Product = components['schemas']['Product'];
@@ -169,6 +170,7 @@ export function IssueDetailPage({ me }: { me: PortalUser }) {
       {row.delivery_note && <><h4>Latest delivery</h4><p>{row.delivery_note}</p><p className="muted">{row.deployment_details}</p></>}
     </div>
     <WorkflowActions issue={row} me={me} />
+    <IssueCollaboration id={id} me={me} />
     <div className="card"><h3>Timeline</h3>{row.events.length === 0 && <p className="muted">No events yet.</p>}<ol>{row.events.map(event => { const details = event.details as Record<string, unknown>; return <li key={event.id}><strong>{event.kind.replaceAll('_', ' ')}</strong> · {event.from_status} → {event.to_status} · {new Date(event.created_at).toLocaleString()} · actor #{event.actor}{event.reason && <p>Reason: {event.reason}</p>}{Boolean(details.tentative_delivery_date) && <p>Tentative delivery: {String(details.tentative_delivery_date)}</p>}{details.tentative_delivery_later === true && <p>Tentative delivery: to be provided later</p>}{Boolean(details.to_date) && <p>Tentative delivery revised: {String(details.from_date ?? 'later')} → {String(details.to_date)}</p>}{details.to_later === true && <p>Tentative delivery revised: {String(details.from_date ?? 'later')} → to be provided later</p>}{Boolean(details.actual_delivery_at) && <p>Actual delivery: {new Date(String(details.actual_delivery_at)).toLocaleString()}</p>}{Boolean(details.delivery_note) && <p>Delivery: {String(details.delivery_note)}</p>}{Boolean(details.deployment_details) && <p>Version/deployment: {String(details.deployment_details)}</p>}{Boolean(details.to_assignee) && <p>Assigned user: #{String(details.to_assignee)}</p>}</li>; })}</ol></div>
   </section>;
 }

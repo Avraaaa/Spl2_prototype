@@ -7,6 +7,7 @@ import { UsersAdminPage } from '../features/tenants/UsersAdminPage';
 import { IssueDetailPage, IssueDraftPage, IssuesListPage } from '../features/issues/IssuesPage';
 import { ProductsPage } from '../features/issues/ProductsPage';
 import { NotificationBell, NotificationsPage } from '../features/notifications/NotificationsPage';
+import { TasksPage } from '../features/tasks/TasksPage';
 
 function Shell({ me, children }: { me: PortalUser; children: React.ReactNode }) {
   const logout = useLogout();
@@ -18,6 +19,7 @@ function Shell({ me, children }: { me: PortalUser; children: React.ReactNode }) 
         <Link to="/" className="brand"><span className="logo">DS</span><strong>DataSoft</strong><span className="muted">Service Requests</span></Link>
         <nav>
           <NavLink to="/" end>Dashboard</NavLink>
+          {(hasRole(me, 'DATASOFT_ADMIN') || hasRole(me, 'SUPPORT_AGENT')) && <NavLink to="/tasks">Tasks</NavLink>}
           {isAdmin && <NavLink to="/admin/users">Users &amp; banks</NavLink>}
           <NavLink to="/issues">Requests</NavLink>
           {isAdmin && <NavLink to="/admin/products">Products</NavLink>}
@@ -74,6 +76,7 @@ export function App() {
       <Route path="/change-password" element={<ChangePasswordPage />} />
       <Route path="/account/password" element={user ? <ChangePasswordPage /> : <Navigate to="/login" replace />} />
       <Route path="/" element={authed(u => <Dashboard me={u} />)} />
+      <Route path="/tasks" element={authed(u => hasRole(u, 'DATASOFT_ADMIN') || hasRole(u, 'SUPPORT_AGENT') ? <TasksPage me={u} /> : <Navigate to="/" replace />)} />
       <Route path="/admin/users" element={authed(u => <UsersAdminPage me={u} />, 'DATASOFT_ADMIN')} />
       <Route path="/admin/products" element={authed(() => <ProductsPage />, 'DATASOFT_ADMIN')} />
       <Route path="/issues" element={authed(u => <IssuesListPage me={u} />)} />

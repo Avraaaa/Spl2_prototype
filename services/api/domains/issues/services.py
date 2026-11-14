@@ -1,6 +1,7 @@
 """Bank-owned draft writes and the officer's atomic submission action."""
 
 import re
+from functools import partial
 
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -141,6 +142,14 @@ def delete_draft(user, issue: Issue) -> None:
             or locked.status != IssueStatus.DRAFT
         ):
             raise PermissionDenied("Only the creator can delete this draft.")
+        for attachment in locked.attachments.all():
+            stored_name = attachment.file.name
+            if stored_name:
+                transaction.on_commit(
+                    partial(attachment.file.storage.delete, stored_name), robust=True
+                )
+        locked.attachments.all().delete()
+        locked.comments.all().delete()
         locked.delete()
 
 

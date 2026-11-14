@@ -244,6 +244,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/PortalUser'
           description: ''
+  /api/attachments/{id}/download/:
+    get:
+      operationId: attachments_download_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - attachments
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          description: ''
   /api/auth/change-password/:
     post:
       operationId: auth_change_password_create
@@ -595,6 +616,56 @@ paths:
               schema:
                 $ref: '#/components/schemas/Issue'
           description: ''
+  /api/issues/{id}/attachments/:
+    get:
+      operationId: issues_attachments_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - attachments
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Attachment'
+          description: ''
+    post:
+      operationId: issues_attachments_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - attachments
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AttachmentUploadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AttachmentUploadRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attachment'
+          description: ''
   /api/issues/{id}/close/:
     post:
       operationId: issues_close_create
@@ -626,6 +697,59 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Issue'
+          description: ''
+  /api/issues/{id}/comments/:
+    get:
+      operationId: issues_comments_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - comments
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+          description: ''
+    post:
+      operationId: issues_comments_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - comments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CommentWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CommentWriteRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
           description: ''
   /api/issues/{id}/deliver/:
     post:
@@ -715,6 +839,59 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Issue'
+          description: ''
+  /api/issues/{id}/internal-notes/:
+    get:
+      operationId: issues_internal_notes_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - internal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Note'
+          description: ''
+    post:
+      operationId: issues_internal_notes_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - internal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/NoteWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NoteWriteRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
           description: ''
   /api/issues/{id}/reject/:
     post:
@@ -1030,6 +1207,150 @@ paths:
                 items:
                   $ref: '#/components/schemas/Product'
           description: ''
+  /api/tasks/:
+    get:
+      operationId: tasks_list
+      tags:
+      - tasks
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+          description: ''
+    post:
+      operationId: tasks_create
+      tags:
+      - tasks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TaskWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TaskWriteRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
+  /api/tasks/{id}/:
+    get:
+      operationId: tasks_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - tasks
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
+    patch:
+      operationId: tasks_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - tasks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTaskEditRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTaskEditRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTaskEditRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
+  /api/tasks/{id}/notes/:
+    get:
+      operationId: tasks_notes_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - internal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Note'
+          description: ''
+    post:
+      operationId: tasks_notes_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - internal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/NoteWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NoteWriteRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+          description: ''
 components:
   schemas:
     AcceptRequest:
@@ -1058,6 +1379,59 @@ components:
       required:
       - assignee
       - version
+    Attachment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        issue:
+          type: integer
+          readOnly: true
+        comment:
+          type: integer
+          readOnly: true
+          nullable: true
+        original_name:
+          type: string
+          readOnly: true
+        content_type:
+          type: string
+          readOnly: true
+        size:
+          type: integer
+          readOnly: true
+        quarantine_status:
+          type: string
+          readOnly: true
+        uploaded_by:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - comment
+      - content_type
+      - created_at
+      - id
+      - issue
+      - original_name
+      - quarantine_status
+      - size
+      - uploaded_by
+    AttachmentUploadRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        comment:
+          type: integer
+          minimum: 1
+      required:
+      - file
     BlankEnum:
       enum:
       - ''
@@ -1086,6 +1460,43 @@ components:
       required:
       - current_password
       - username
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        issue:
+          type: integer
+          readOnly: true
+        author:
+          type: integer
+          readOnly: true
+        author_name:
+          type: string
+          readOnly: true
+        body:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - author
+      - author_name
+      - body
+      - created_at
+      - id
+      - issue
+    CommentWriteRequest:
+      type: object
+      properties:
+        body:
+          type: string
+          minLength: 1
+      required:
+      - body
     DateRevisionRequest:
       type: object
       properties:
@@ -1139,6 +1550,16 @@ components:
       - service
       - stage
       - status
+    InternalTaskStatusEnum:
+      enum:
+      - todo
+      - in_progress
+      - done
+      type: string
+      description: |-
+        * `todo` - To do
+        * `in_progress` - In progress
+        * `done` - Done
     Issue:
       type: object
       properties:
@@ -1180,7 +1601,7 @@ components:
           type: integer
           nullable: true
         status:
-          $ref: '#/components/schemas/StatusEnum'
+          $ref: '#/components/schemas/IssueStatusEnum'
         version:
           type: integer
           maximum: 2147483647
@@ -1273,6 +1694,28 @@ components:
       - id
       - kind
       - to_status
+    IssueStatusEnum:
+      enum:
+      - DRAFT
+      - SUBMITTED
+      - ACCEPTED
+      - REJECTED
+      - PENDING
+      - IN_PROGRESS
+      - AWAITING_VERIFICATION
+      - VERIFIED
+      - CLOSED
+      type: string
+      description: |-
+        * `DRAFT` - Draft
+        * `SUBMITTED` - Submitted
+        * `ACCEPTED` - Accepted
+        * `REJECTED` - Rejected
+        * `PENDING` - Pending
+        * `IN_PROGRESS` - In progress
+        * `AWAITING_VERIFICATION` - Awaiting client verification
+        * `VERIFIED` - Verified
+        * `CLOSED` - Closed
     IssueWriteRequest:
       type: object
       properties:
@@ -1350,6 +1793,48 @@ components:
           maxLength: 160
       required:
       - name
+    Note:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        issue:
+          type: integer
+          readOnly: true
+        task:
+          type: integer
+          readOnly: true
+          nullable: true
+        body:
+          type: string
+          readOnly: true
+        author:
+          type: integer
+          readOnly: true
+        author_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - author
+      - author_name
+      - body
+      - created_at
+      - id
+      - issue
+      - task
+    NoteWriteRequest:
+      type: object
+      properties:
+        body:
+          type: string
+          minLength: 1
+      required:
+      - body
     Notification:
       type: object
       properties:
@@ -1494,6 +1979,33 @@ components:
           format: email
           minLength: 1
           maxLength: 254
+    PatchedTaskEditRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        assignee:
+          type: integer
+          minimum: 1
+          nullable: true
+        status:
+          $ref: '#/components/schemas/InternalTaskStatusEnum'
+        commit_url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
+        pull_request_url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
     PatchedWorkflowSettingsRequest:
       type: object
       properties:
@@ -1640,28 +2152,94 @@ components:
             $ref: '#/components/schemas/RolesEnum'
       required:
       - roles
-    StatusEnum:
-      enum:
-      - DRAFT
-      - SUBMITTED
-      - ACCEPTED
-      - REJECTED
-      - PENDING
-      - IN_PROGRESS
-      - AWAITING_VERIFICATION
-      - VERIFIED
-      - CLOSED
-      type: string
-      description: |-
-        * `DRAFT` - Draft
-        * `SUBMITTED` - Submitted
-        * `ACCEPTED` - Accepted
-        * `REJECTED` - Rejected
-        * `PENDING` - Pending
-        * `IN_PROGRESS` - In progress
-        * `AWAITING_VERIFICATION` - Awaiting client verification
-        * `VERIFIED` - Verified
-        * `CLOSED` - Closed
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        issue:
+          type: integer
+          readOnly: true
+        issue_reference:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        assignee:
+          type: integer
+          readOnly: true
+          nullable: true
+        assignee_name:
+          type: string
+          readOnly: true
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/InternalTaskStatusEnum'
+          readOnly: true
+        commit_url:
+          type: string
+          format: uri
+          readOnly: true
+        pull_request_url:
+          type: string
+          format: uri
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - assignee
+      - assignee_name
+      - commit_url
+      - created_at
+      - id
+      - issue
+      - issue_reference
+      - pull_request_url
+      - status
+      - title
+      - updated_at
+    TaskWriteRequest:
+      type: object
+      properties:
+        issue:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        assignee:
+          type: integer
+          minimum: 1
+          nullable: true
+        status:
+          $ref: '#/components/schemas/InternalTaskStatusEnum'
+        commit_url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
+        pull_request_url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
+      required:
+      - issue
+      - title
     TemporaryCredential:
       type: object
       properties:

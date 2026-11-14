@@ -132,6 +132,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/attachments/{id}/download/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attachments_download_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/change-password/": {
         parameters: {
             query?: never;
@@ -316,6 +332,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/issues/{id}/attachments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["issues_attachments_list"];
+        put?: never;
+        post: operations["issues_attachments_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/issues/{id}/close/": {
         parameters: {
             query?: never;
@@ -326,6 +358,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["issues_close_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/issues/{id}/comments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["issues_comments_list"];
+        put?: never;
+        post: operations["issues_comments_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -374,6 +422,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["issues_fail_verification_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/issues/{id}/internal-notes/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["issues_internal_notes_list"];
+        put?: never;
+        post: operations["issues_internal_notes_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -588,6 +652,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tasks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tasks_list"];
+        put?: never;
+        post: operations["tasks_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tasks/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tasks_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["tasks_partial_update"];
+        trace?: never;
+    };
+    "/api/tasks/{id}/notes/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tasks_notes_list"];
+        put?: never;
+        post: operations["tasks_notes_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -603,6 +715,23 @@ export interface components {
             version: number;
             assignee: number;
         };
+        Attachment: {
+            readonly id: number;
+            readonly issue: number;
+            readonly comment: number | null;
+            readonly original_name: string;
+            readonly content_type: string;
+            readonly size: number;
+            readonly quarantine_status: string;
+            readonly uploaded_by: number;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        AttachmentUploadRequest: {
+            /** Format: binary */
+            file: string;
+            comment?: number;
+        };
         /** @enum {unknown} */
         BlankEnum: "";
         ChangePasswordRequest: {
@@ -612,6 +741,18 @@ export interface components {
         ChangeUsernameRequest: {
             username: string;
             current_password: string;
+        };
+        Comment: {
+            readonly id: number;
+            readonly issue: number;
+            readonly author: number;
+            readonly author_name: string;
+            readonly body: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        CommentWriteRequest: {
+            body: string;
         };
         DateRevisionRequest: {
             version: number;
@@ -634,6 +775,13 @@ export interface components {
             service: string;
             stage: string;
         };
+        /**
+         * @description * `todo` - To do
+         *     * `in_progress` - In progress
+         *     * `done` - Done
+         * @enum {string}
+         */
+        InternalTaskStatusEnum: "todo" | "in_progress" | "done";
         Issue: {
             readonly id: number;
             reference?: string | null;
@@ -648,7 +796,7 @@ export interface components {
             expected_result?: string;
             actual_result?: string;
             related_request?: number | null;
-            status?: components["schemas"]["StatusEnum"];
+            status?: components["schemas"]["IssueStatusEnum"];
             version?: number;
             assignee?: number | null;
             /** Format: date */
@@ -684,6 +832,19 @@ export interface components {
             /** Format: date-time */
             readonly created_at: string;
         };
+        /**
+         * @description * `DRAFT` - Draft
+         *     * `SUBMITTED` - Submitted
+         *     * `ACCEPTED` - Accepted
+         *     * `REJECTED` - Rejected
+         *     * `PENDING` - Pending
+         *     * `IN_PROGRESS` - In progress
+         *     * `AWAITING_VERIFICATION` - Awaiting client verification
+         *     * `VERIFIED` - Verified
+         *     * `CLOSED` - Closed
+         * @enum {string}
+         */
+        IssueStatusEnum: "DRAFT" | "SUBMITTED" | "ACCEPTED" | "REJECTED" | "PENDING" | "IN_PROGRESS" | "AWAITING_VERIFICATION" | "VERIFIED" | "CLOSED";
         IssueWriteRequest: {
             title?: string;
             description?: string;
@@ -715,6 +876,19 @@ export interface components {
         };
         ModuleWriteRequest: {
             name: string;
+        };
+        Note: {
+            readonly id: number;
+            readonly issue: number;
+            readonly task: number | null;
+            readonly body: string;
+            readonly author: number;
+            readonly author_name: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        NoteWriteRequest: {
+            body: string;
         };
         Notification: {
             readonly id: number;
@@ -764,6 +938,13 @@ export interface components {
             full_name?: string;
             /** Format: email */
             email?: string;
+        };
+        PatchedTaskEditRequest: {
+            title?: string;
+            assignee?: number | null;
+            status?: components["schemas"]["InternalTaskStatusEnum"];
+            commit_url?: string;
+            pull_request_url?: string;
         };
         PatchedWorkflowSettingsRequest: {
             reopen_days?: number;
@@ -831,19 +1012,31 @@ export interface components {
         RolesRequest: {
             roles: components["schemas"]["RolesEnum"][];
         };
-        /**
-         * @description * `DRAFT` - Draft
-         *     * `SUBMITTED` - Submitted
-         *     * `ACCEPTED` - Accepted
-         *     * `REJECTED` - Rejected
-         *     * `PENDING` - Pending
-         *     * `IN_PROGRESS` - In progress
-         *     * `AWAITING_VERIFICATION` - Awaiting client verification
-         *     * `VERIFIED` - Verified
-         *     * `CLOSED` - Closed
-         * @enum {string}
-         */
-        StatusEnum: "DRAFT" | "SUBMITTED" | "ACCEPTED" | "REJECTED" | "PENDING" | "IN_PROGRESS" | "AWAITING_VERIFICATION" | "VERIFIED" | "CLOSED";
+        Task: {
+            readonly id: number;
+            readonly issue: number;
+            readonly issue_reference: string;
+            readonly title: string;
+            readonly assignee: number | null;
+            readonly assignee_name: string | null;
+            readonly status: components["schemas"]["InternalTaskStatusEnum"];
+            /** Format: uri */
+            readonly commit_url: string;
+            /** Format: uri */
+            readonly pull_request_url: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        TaskWriteRequest: {
+            issue: number;
+            title: string;
+            assignee?: number | null;
+            status?: components["schemas"]["InternalTaskStatusEnum"];
+            commit_url?: string;
+            pull_request_url?: string;
+        };
         TemporaryCredential: {
             user: components["schemas"]["PortalUser"];
             /** @description Shown once. Never logged or stored in plaintext. */
@@ -1111,6 +1304,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PortalUser"];
+                };
+            };
+        };
+    };
+    attachments_download_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
                 };
             };
         };
@@ -1468,6 +1682,53 @@ export interface operations {
             };
         };
     };
+    issues_attachments_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Attachment"][];
+                };
+            };
+        };
+    };
+    issues_attachments_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["AttachmentUploadRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AttachmentUploadRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Attachment"];
+                };
+            };
+        };
+    };
     issues_close_create: {
         parameters: {
             query?: never;
@@ -1491,6 +1752,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_comments_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Comment"][];
+                };
+            };
+        };
+    };
+    issues_comments_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommentWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["CommentWriteRequest"];
+                "multipart/form-data": components["schemas"]["CommentWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Comment"];
                 };
             };
         };
@@ -1567,6 +1876,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    issues_internal_notes_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Note"][];
+                };
+            };
+        };
+    };
+    issues_internal_notes_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["NoteWriteRequest"];
+                "multipart/form-data": components["schemas"]["NoteWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Note"];
                 };
             };
         };
@@ -1883,6 +2240,146 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Product"][];
+                };
+            };
+        };
+    };
+    tasks_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Task"][];
+                };
+            };
+        };
+    };
+    tasks_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TaskWriteRequest"];
+                "multipart/form-data": components["schemas"]["TaskWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Task"];
+                };
+            };
+        };
+    };
+    tasks_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Task"];
+                };
+            };
+        };
+    };
+    tasks_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedTaskEditRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedTaskEditRequest"];
+                "multipart/form-data": components["schemas"]["PatchedTaskEditRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Task"];
+                };
+            };
+        };
+    };
+    tasks_notes_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Note"][];
+                };
+            };
+        };
+    };
+    tasks_notes_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["NoteWriteRequest"];
+                "multipart/form-data": components["schemas"]["NoteWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Note"];
                 };
             };
         };

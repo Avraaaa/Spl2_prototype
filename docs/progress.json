@@ -7,7 +7,8 @@
     "P1-T2",
     "P2-T1",
     "P2-T2",
-    "P3-T2"
+    "P3-T2",
+    "P3-T1"
   ],
   "last_updated": "2026-11-14",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
@@ -130,6 +131,16 @@
         "[follow-up] Tests cover delivery, rollback, retries, reminders, and personal API access, but do not directly check notification recipients for the other required workflow events."
       ],
       "rebased_onto": "5ab6c57912cb16d94fdb0637597a6a83c4fdd2a2"
+    },
+    "P3-T1": {
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "integrated_by": "agent-runner --integrate"
     }
   },
   "latest_review": "PASS"

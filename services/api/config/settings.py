@@ -21,6 +21,9 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "core",
     "domains.tenants",
+    "domains.comments",
+    "domains.tasks",
+    "domains.attachments",
     "domains.accounts",
     "domains.products",
     "domains.issues",
@@ -104,6 +107,13 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "SCHEMA_PATH_PREFIX": r"/api/",
+    "ENUM_NAME_OVERRIDES": {
+        "InternalTaskStatusEnum": [
+            ("todo", "To do"),
+            ("in_progress", "In progress"),
+            ("done", "Done"),
+        ],
+    },
 }
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
@@ -112,6 +122,7 @@ SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
+MEDIA_ROOT = BASE_DIR / "media"
 if not DEBUG:
     if SECRET_KEY in {
         "not-for-any-deployment",
