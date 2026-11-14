@@ -1,104 +1,63 @@
-import { Link, Navigate, NavLink, Route, Routes, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '../api/client';
+import type { ReactNode } from 'react';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { ChangePasswordPage } from '../features/auth/ChangePasswordPage';
 import { LoginPage } from '../features/auth/LoginPage';
-import { useLogout, useMe } from '../features/auth/hooks';
-import { hasRole, landingFor, roleLabel, type PortalUser } from '../features/auth/roles';
-import { UsersAdminPage } from '../features/tenants/UsersAdminPage';
-import { IssueDetailPage, IssueDraftPage, IssuesListPage } from '../features/issues/IssuesPage';
+import { useMe } from '../features/auth/hooks';
+import { redirectFor } from '../features/auth/nav';
+import { landingFor, type PortalUser } from '../features/auth/roles';
+import { Dashboard } from '../features/dashboard/Dashboard';
+import { IssueDetailPage } from '../features/issues/IssueDetailPage';
+import { IssueDraftPage } from '../features/issues/IssueDraftPage';
+import { IssueListPage } from '../features/issues/IssueListPage';
 import { ProductsPage } from '../features/issues/ProductsPage';
-import { NotificationBell, NotificationsPage } from '../features/notifications/NotificationsPage';
+import { NotificationsPage } from '../features/notifications/NotificationsPage';
+import { ReportsPage } from '../features/reports/ReportsPage';
 import { TasksPage } from '../features/tasks/TasksPage';
-import { IssueReportSignals, ReportsPage } from '../features/reports/ReportsPage';
+import { AdminFrame, WorkflowSettingsPage } from '../features/tenants/AdminFrame';
+import { UsersAdminPage } from '../features/tenants/UsersAdminPage';
+import { Shell } from './Shell';
 
-function Shell({ me, children }: { me: PortalUser; children: React.ReactNode }) {
-  const logout = useLogout();
-  const navigate = useNavigate();
-  const isAdmin = hasRole(me, 'DATASOFT_ADMIN');
-  return (
-    <div className="app">
-      <header className="topbar">
-        <Link to="/" className="brand"><span className="logo">DS</span><strong>DataSoft</strong><span className="muted">Service Requests</span></Link>
-        <nav>
-          <NavLink to="/" end>Dashboard</NavLink>
-          {(hasRole(me, 'DATASOFT_ADMIN') || hasRole(me, 'SUPPORT_AGENT')) && <NavLink to="/tasks">Tasks</NavLink>}
-          {isAdmin && <NavLink to="/admin/users">Users &amp; banks</NavLink>}
-          <NavLink to="/issues">Requests</NavLink>
-          <NavLink to="/reports">Reports</NavLink>
-          {isAdmin && <NavLink to="/admin/products">Products</NavLink>}
-          <NotificationBell />
-        </nav>
-        <div className="who">
-          <div><strong>{me.full_name}</strong><small>{me.organization.name}</small></div>
-          <Link className="btn small ghost" to="/account/password">Password</Link>
-          <button className="btn small" onClick={() => logout.mutate(undefined, { onSuccess: () => navigate('/login') })}>Sign out</button>
-        </div>
-      </header>
-      {logout.isError && <p className="alert error" role="alert">{logout.error.message}</p>}
-      <main className="content">{children}</main>
-    </div>
-  );
-}
-
-function Dashboard({ me }: { me: PortalUser }) {
-  const bank = me.organization.kind === 'BANK';
-  const counts = useQuery({
-    queryKey: ['report', 'dashboard'],
-    queryFn: async () => {
-      const { data, error } = await api.GET('/api/reports/dashboard/');
-      if (!data) throw new Error(String(error));
-      return data;
-    },
-  });
-  return (
-    <section className="stack">
-      <div className="page-head">
-        <div>
-          <p className="eyebrow">{bank ? 'CLIENT BANK' : 'DATASOFT'}</p>
-          <h1>Welcome, {me.full_name.split(' ')[0]}</h1>
-          <p className="muted">{me.organization.name} · {me.roles.map(roleLabel).join(' + ')}</p>
-        </div>
-      </div>
-      {counts.isError && <p className="alert error" role="alert">Dashboard counts unavailable.</p>}
-      {counts.data && <div className="card"><h2>Request counts</h2><p>Total: {counts.data.total}</p><div className="grid">{Object.entries(counts.data.by_status).map(([status, count]) => <p key={status}>{status.replaceAll('_', ' ')}: {count}</p>)}</div>{counts.data.pending_intake != null && <p>Pending intake: {counts.data.pending_intake}</p>}{counts.data.recent_deliveries != null && <p>Recent deliveries: {counts.data.recent_deliveries}</p>}</div>}
-      <div className="grid">
-        {hasRole(me, 'ISSUE_OFFICER') && <div className="card"><h3>Issue Officer</h3><p className="muted">Draft, authorize and submit your bank's service requests.</p></div>}
-        {hasRole(me, 'ISSUE_VERIFIER') && <div className="card"><h3>Issue Verifier</h3><p className="muted">Verify delivered fixes for your bank or report a failed verification.</p></div>}
-        {hasRole(me, 'SUPPORT_AGENT') && <div className="card"><h3>Support Agent</h3><p className="muted">Review submitted requests, plan delivery dates and deliver fixes.</p></div>}
-        {hasRole(me, 'DATASOFT_ADMIN') && <div className="card"><h3>Administration</h3><p className="muted">Register client banks and manage user accounts and roles.</p><Link className="btn primary" to="/admin/users">Manage users</Link></div>}
-      </div>
-      <Link className="btn primary" to="/issues">View service requests</Link>
-    </section>
-  );
+function Guarded({ user, children }: { user: PortalUser | null | undefined; children: (u: PortalUser) => ReactNode }) {
+  const { pathname } = useLocation();
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.must_change_password) return <Navigate to="/change-password" replace />;
+  const redirect = redirectFor(user, pathname);
+  if (redirect) return <Navigate to={redirect} replace />;
+  return <Shell me={user}>{children(user)}</Shell>;
 }
 
 export function App() {
   const me = useMe();
   if (me.isPending) return <div className="center muted">Loading…</div>;
-  if (me.isError) return <div className="center"><p className="alert error">The API is unreachable. Is Django running on :8000?</p></div>;
+  if (me.isError) {
+    return (
+      <div className="center">
+        <p className="alert error">The API is unreachable. Is Django running on :8000?</p>
+      </div>
+    );
+  }
   const user = me.data;
-  const authed = (el: (u: PortalUser) => React.ReactNode, needs?: 'DATASOFT_ADMIN') => {
-    if (!user) return <Navigate to="/login" replace />;
-    if (user.must_change_password) return <Navigate to="/change-password" replace />;
-    if (needs && !hasRole(user, needs)) return <Navigate to="/" replace />;
-    return <Shell me={user}>{el(user)}</Shell>;
-  };
+  const page = (render: (u: PortalUser) => ReactNode) => <Guarded user={user}>{render}</Guarded>;
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/change-password" element={<ChangePasswordPage />} />
       <Route path="/account/password" element={user ? <ChangePasswordPage /> : <Navigate to="/login" replace />} />
-      <Route path="/" element={authed(u => <Dashboard me={u} />)} />
-      <Route path="/tasks" element={authed(u => hasRole(u, 'DATASOFT_ADMIN') || hasRole(u, 'SUPPORT_AGENT') ? <TasksPage me={u} /> : <Navigate to="/" replace />)} />
-      <Route path="/admin/users" element={authed(u => <UsersAdminPage me={u} />, 'DATASOFT_ADMIN')} />
-      <Route path="/admin/products" element={authed(() => <ProductsPage />, 'DATASOFT_ADMIN')} />
-      <Route path="/issues" element={authed(u => <IssuesListPage me={u} />)} />
-      <Route path="/issues/new" element={authed(u => <IssueDraftPage me={u} />)} />
-      <Route path="/issues/:id/edit" element={authed(u => <IssueDraftPage me={u} />)} />
-      <Route path="/issues/:id" element={authed(u => <><IssueReportSignals /><IssueDetailPage me={u} /></>)} />
-      <Route path="/notifications" element={authed(() => <NotificationsPage />)} />
-      <Route path="/reports" element={authed(u => <ReportsPage me={u} />)} />
+      <Route path="/" element={page(u => <Dashboard me={u} />)} />
+      <Route path="/issues" element={page(u => <IssueListPage me={u} />)} />
+      <Route path="/issues/new" element={page(u => <IssueDraftPage me={u} />)} />
+      <Route path="/issues/:id/edit" element={page(u => <IssueDraftPage me={u} />)} />
+      <Route path="/issues/:id" element={page(u => <IssueDetailPage me={u} />)} />
+      <Route path="/awaiting" element={page(u => <IssueListPage me={u} mode="awaiting" />)} />
+      <Route path="/queue" element={page(u => <IssueListPage me={u} mode="queue" />)} />
+      <Route path="/my-work" element={page(u => <IssueListPage me={u} mode="mine" />)} />
+      <Route path="/tasks" element={page(u => <TasksPage me={u} />)} />
+      <Route path="/reports" element={page(u => <ReportsPage me={u} />)} />
+      <Route path="/notifications" element={page(() => <NotificationsPage />)} />
+      <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
+      <Route path="/admin/users" element={page(u => <AdminFrame><UsersAdminPage me={u} /></AdminFrame>)} />
+      <Route path="/admin/products" element={page(() => <AdminFrame><ProductsPage /></AdminFrame>)} />
+      <Route path="/admin/settings" element={page(() => <AdminFrame><WorkflowSettingsPage /></AdminFrame>)} />
       <Route path="*" element={<Navigate to={landingFor(user ?? null)} replace />} />
     </Routes>
   );

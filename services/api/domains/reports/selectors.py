@@ -135,4 +135,9 @@ def dashboard_counts(user) -> dict:
         result["recent_deliveries"] = issues.filter(
             actual_delivery_at__gte=timezone.now() - timedelta(days=30)
         ).count()
+        result["overdue"] = overdue_rows(issues).count()
+        by_bank: dict[str, int] = {}
+        for name in issues.values_list("organization__name", flat=True):
+            by_bank[name] = by_bank.get(name, 0) + 1
+        result["by_bank"] = by_bank
     return result

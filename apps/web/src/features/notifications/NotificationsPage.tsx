@@ -6,8 +6,8 @@ import { errorMessage } from '../auth/hooks';
 const LIST_KEY = ['notifications', 'list'] as const;
 const COUNT_KEY = ['notifications', 'count'] as const;
 
-export function NotificationBell() {
-  const count = useQuery({
+export function useUnreadCount() {
+  return useQuery({
     queryKey: COUNT_KEY,
     queryFn: async () => {
       const { data, error } = await api.GET('/api/notifications/unread-count/');
@@ -16,6 +16,10 @@ export function NotificationBell() {
     },
     refetchInterval: 30_000,
   });
+}
+
+export function NotificationBell() {
+  const count = useUnreadCount();
   return <Link to="/notifications" aria-label={`Notifications${count.data ? `, ${count.data} unread` : ''}`}>
     🔔 {count.data ? <span>{count.data}</span> : null}
   </Link>;

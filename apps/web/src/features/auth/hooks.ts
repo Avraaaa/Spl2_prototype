@@ -2,8 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../api/client';
 import type { components } from '../../api/generated/schema';
 import type { PortalUser } from './roles';
+import { ME_KEY, resetSession } from './session';
 
-export const ME_KEY = ['auth', 'me'] as const;
+export { ME_KEY };
 
 /** Extract a readable message from a DRF error body. */
 export function errorMessage(error: unknown, fallback = 'Request failed'): string {
@@ -37,7 +38,8 @@ export function useLogin() {
       if (!data) throw new Error(errorMessage(error, 'Login failed'));
       return data;
     },
-    onSuccess: user => qc.setQueryData(ME_KEY, user),
+    // Never let the previous user's cached data leak into the new session.
+    onSuccess: user => resetSession(qc, user),
   });
 }
 
@@ -49,10 +51,7 @@ export function useLogout() {
       // Only a confirmed server-side logout clears local state; otherwise the session may live on.
       if (!response.ok) throw new Error('Sign-out failed. Your session is still active; please retry.');
     },
-    onSuccess: () => {
-      qc.clear();
-      qc.setQueryData(ME_KEY, null);
-    },
+    onSuccess: () => resetSession(qc, null),
     onError: () => qc.invalidateQueries({ queryKey: ME_KEY }),
   });
 }

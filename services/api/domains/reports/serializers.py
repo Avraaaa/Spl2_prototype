@@ -32,6 +32,8 @@ class DashboardCountsSerializer(serializers.Serializer):
     by_status = serializers.DictField(child=serializers.IntegerField())
     pending_intake = serializers.IntegerField(required=False)
     recent_deliveries = serializers.IntegerField(required=False)
+    overdue = serializers.IntegerField(required=False)
+    by_bank = serializers.DictField(child=serializers.IntegerField(), required=False)
 
 
 class ReportBankSerializer(serializers.Serializer):

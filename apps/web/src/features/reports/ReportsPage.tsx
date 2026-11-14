@@ -5,6 +5,8 @@ import { api } from '../../api/client';
 import type { components } from '../../api/generated/schema';
 import { errorMessage } from '../auth/hooks';
 import { hasRole, type PortalUser } from '../auth/roles';
+import { StatusBadge } from '../ui/StatusBadge';
+import { statusLabel } from '../ui/labels';
 
 type DetailedRow = components['schemas']['DetailedReportRow'];
 type Summary = components['schemas']['SummaryReport'];
@@ -190,7 +192,7 @@ export function ReportsPage({ me }: { me: PortalUser }) {
               'CLOSED',
             ].map((status) => (
               <option key={status} value={status}>
-                {status.replaceAll('_', ' ')}
+                {statusLabel(status)}
               </option>
             ))}
           </select>
@@ -277,7 +279,7 @@ export function ReportsPage({ me }: { me: PortalUser }) {
                   <td>{row.title}</td>
                   <td>{row.issue_detail}</td>
                   <td>
-                    {row.status}{' '}
+                    <StatusBadge status={row.status} />{' '}
                     {row.is_overdue && <strong className="alert error">Overdue</strong>}
                   </td>
                   <td>{row.creation_date}</td>
@@ -315,7 +317,7 @@ function SummaryView({ summary }: { summary: Summary }) {
         </div>
       </div>
       <div className="grid">
-        <Breakdown title="By status" values={summary.by_status} />
+        <Breakdown title="By status" values={summary.by_status} asStatus />
         <Breakdown title="By month" values={summary.by_month} />
         {summary.by_bank != null && <Breakdown title="By bank" values={summary.by_bank} />}
       </div>
@@ -323,7 +325,7 @@ function SummaryView({ summary }: { summary: Summary }) {
   );
 }
 
-function Breakdown({ title, values }: { title: string; values: Record<string, number> }) {
+function Breakdown({ title, values, asStatus = false }: { title: string; values: Record<string, number>; asStatus?: boolean }) {
   return (
     <div>
       <h3>{title}</h3>
@@ -331,7 +333,7 @@ function Breakdown({ title, values }: { title: string; values: Record<string, nu
         <tbody>
           {Object.entries(values).map(([label, count]) => (
             <tr key={label}>
-              <th>{label.replaceAll('_', ' ')}</th>
+              <th>{asStatus ? statusLabel(label) : label}</th>
               <td>{count}</td>
             </tr>
           ))}
@@ -362,15 +364,15 @@ export function IssueReportSignals() {
       )}
       {row.recurring_of && (
         <p>
-          Recurring of <Link to={`/issues/${row.recurring_of}`}>request #{row.recurring_of}</Link>
+          Recurring of <Link to={`/issues/${row.recurring_of}`}>{row.recurring_of_reference}</Link>
         </p>
       )}
       {row.recurring_requests.length > 0 && (
         <p>
           Recurring requests:{' '}
-          {row.recurring_requests.map((child) => (
+          {row.recurring_requests.map((child, index) => (
             <span key={child}>
-              <Link to={`/issues/${child}`}>#{child}</Link>{' '}
+              <Link to={`/issues/${child}`}>Recurrence {index + 1}</Link>{' '}
             </span>
           ))}
         </p>

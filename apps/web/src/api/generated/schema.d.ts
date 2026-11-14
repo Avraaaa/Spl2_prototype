@@ -857,6 +857,10 @@ export interface components {
             };
             pending_intake?: number;
             recent_deliveries?: number;
+            overdue?: number;
+            by_bank?: {
+                [key: string]: number;
+            };
         };
         DateRevisionRequest: {
             version: number;
@@ -916,8 +920,17 @@ export interface components {
             expected_result?: string;
             actual_result?: string;
             related_request?: number | null;
+            readonly related_request_reference: string | null;
+            readonly related_request_title: string | null;
             recurring_of?: number | null;
+            readonly recurring_of_reference: string | null;
+            readonly recurring_of_title: string | null;
             readonly recurring_requests: number[];
+            organization: number;
+            readonly organization_name: string;
+            readonly organization_code: string;
+            readonly created_by_name: string;
+            readonly assignee_name: string | null;
             readonly is_overdue: boolean;
             status?: components["schemas"]["IssueStatusEnum"];
             version?: number;
@@ -947,6 +960,7 @@ export interface components {
             readonly id: number;
             actor: number;
             readonly actor_name: string;
+            readonly assignee_name: string | null;
             kind: string;
             from_status: string;
             to_status: string;
@@ -1657,6 +1671,10 @@ export interface operations {
     issues_list: {
         parameters: {
             query?: {
+                assignee?: string;
+                ordering?: string;
+                organization?: number;
+                overdue?: boolean;
                 priority?: string;
                 request_type?: string;
                 search?: string;

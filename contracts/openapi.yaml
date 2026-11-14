@@ -435,6 +435,22 @@ paths:
       operationId: issues_list
       parameters:
       - in: query
+        name: assignee
+        schema:
+          type: string
+      - in: query
+        name: ordering
+        schema:
+          type: string
+      - in: query
+        name: organization
+        schema:
+          type: integer
+      - in: query
+        name: overdue
+        schema:
+          type: boolean
+      - in: query
         name: priority
         schema:
           type: string
@@ -1692,6 +1708,12 @@ components:
           type: integer
         recent_deliveries:
           type: integer
+        overdue:
+          type: integer
+        by_bank:
+          type: object
+          additionalProperties:
+            type: integer
       required:
       - by_status
       - total
@@ -1849,13 +1871,44 @@ components:
         related_request:
           type: integer
           nullable: true
+        related_request_reference:
+          type: string
+          nullable: true
+          readOnly: true
+        related_request_title:
+          type: string
+          nullable: true
+          readOnly: true
         recurring_of:
           type: integer
           nullable: true
+        recurring_of_reference:
+          type: string
+          nullable: true
+          readOnly: true
+        recurring_of_title:
+          type: string
+          nullable: true
+          readOnly: true
         recurring_requests:
           type: array
           items:
             type: integer
+          readOnly: true
+        organization:
+          type: integer
+        organization_name:
+          type: string
+          readOnly: true
+        organization_code:
+          type: string
+          readOnly: true
+        created_by_name:
+          type: string
+          readOnly: true
+        assignee_name:
+          type: string
+          nullable: true
           readOnly: true
         is_overdue:
           type: boolean
@@ -1914,12 +1967,21 @@ components:
             $ref: '#/components/schemas/IssueEvent'
           readOnly: true
       required:
+      - assignee_name
       - created_at
       - created_by
+      - created_by_name
       - events
       - id
       - is_overdue
+      - organization
+      - organization_code
+      - organization_name
+      - recurring_of_reference
+      - recurring_of_title
       - recurring_requests
+      - related_request_reference
+      - related_request_title
       - updated_at
     IssueEvent:
       type: object
@@ -1931,6 +1993,10 @@ components:
           type: integer
         actor_name:
           type: string
+          readOnly: true
+        assignee_name:
+          type: string
+          nullable: true
           readOnly: true
         kind:
           type: string
@@ -1951,6 +2017,7 @@ components:
       required:
       - actor
       - actor_name
+      - assignee_name
       - created_at
       - from_status
       - id

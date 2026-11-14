@@ -13,6 +13,15 @@ from .models import Issue, IssueEvent, Priority, RequestType, WorkflowSettings
 
 class IssueEventSerializer(serializers.ModelSerializer):
     actor_name = serializers.CharField(source="actor.account.full_name", read_only=True)
+    assignee_name = serializers.SerializerMethodField()
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_assignee_name(self, obj: IssueEvent) -> str | None:
+        assignee_id = obj.details.get("to_assignee") if isinstance(obj.details, dict) else None
+        if not isinstance(assignee_id, int):
+            return None
+        user = User.objects.filter(pk=assignee_id).select_related("account").first()
+        return user.account.full_name if user else None
 
     class Meta:
         model = IssueEvent
@@ -20,6 +29,7 @@ class IssueEventSerializer(serializers.ModelSerializer):
             "id",
             "actor",
             "actor_name",
+            "assignee_name",
             "kind",
             "from_status",
             "to_status",
@@ -33,6 +43,34 @@ class IssueSerializer(serializers.ModelSerializer):
     events = IssueEventSerializer(many=True, read_only=True)
     recurring_requests = serializers.SerializerMethodField()
     is_overdue = serializers.SerializerMethodField()
+    organization_name = serializers.CharField(source="organization.name", read_only=True)
+    organization_code = serializers.CharField(source="organization.code", read_only=True)
+    created_by_name = serializers.CharField(source="created_by.account.full_name", read_only=True)
+    assignee_name = serializers.SerializerMethodField()
+    related_request_reference = serializers.SerializerMethodField()
+    related_request_title = serializers.SerializerMethodField()
+    recurring_of_reference = serializers.SerializerMethodField()
+    recurring_of_title = serializers.SerializerMethodField()
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_assignee_name(self, obj: Issue) -> str | None:
+        return obj.assignee.account.full_name if obj.assignee else None
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_related_request_reference(self, obj: Issue) -> str | None:
+        return obj.related_request.reference if obj.related_request else None
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_related_request_title(self, obj: Issue) -> str | None:
+        return obj.related_request.title if obj.related_request else None
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_recurring_of_reference(self, obj: Issue) -> str | None:
+        return obj.recurring_of.reference if obj.recurring_of else None
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_recurring_of_title(self, obj: Issue) -> str | None:
+        return obj.recurring_of.title if obj.recurring_of else None
 
     @extend_schema_field(serializers.BooleanField)
     def get_is_overdue(self, obj: Issue) -> bool:
@@ -73,8 +111,17 @@ class IssueSerializer(serializers.ModelSerializer):
             "expected_result",
             "actual_result",
             "related_request",
+            "related_request_reference",
+            "related_request_title",
             "recurring_of",
+            "recurring_of_reference",
+            "recurring_of_title",
             "recurring_requests",
+            "organization",
+            "organization_name",
+            "organization_code",
+            "created_by_name",
+            "assignee_name",
             "is_overdue",
             "status",
             "version",

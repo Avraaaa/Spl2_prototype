@@ -1,7 +1,8 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db.models import Q
+from django.db.models import F, Q
+from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
@@ -38,9 +39,15 @@ from .serializers import (
 
 
 def visible_rows(user):
-    rows = Issue.objects.select_related("product", "module", "organization").prefetch_related(
-        "events__actor__account"
-    )
+    rows = Issue.objects.select_related(
+        "product",
+        "module",
+        "organization",
+        "assignee__account",
+        "created_by__account",
+        "related_request",
+        "recurring_of",
+    ).prefetch_related("events__actor__account")
     organization = portal_organization(user)
     if organization is None:
         return rows.none()
@@ -70,6 +77,10 @@ class IssueListView(APIView):
             OpenApiParameter("request_type", str),
             OpenApiParameter("priority", str),
             OpenApiParameter("search", str),
+            OpenApiParameter("organization", int),
+            OpenApiParameter("assignee", str),
+            OpenApiParameter("overdue", bool),
+            OpenApiParameter("ordering", str),
         ],
         responses=IssueSerializer(many=True),
         tags=["issues"],
@@ -89,6 +100,27 @@ class IssueListView(APIView):
         search = request.query_params.get("search", "").strip()
         if search:
             rows = rows.filter(Q(title__icontains=search) | Q(reference__icontains=search))
+        # Narrowing filters apply after tenant scoping, so they can never widen access.
+        bank = request.query_params.get("organization")
+        if bank:
+            if not bank.isdigit():
+                raise ValidationError({"organization": "Invalid filter."})
+            rows = rows.filter(organization_id=int(bank))
+        assignee = request.query_params.get("assignee")
+        if assignee:
+            if assignee != "me":
+                raise ValidationError({"assignee": "Invalid filter."})
+            rows = rows.filter(assignee=request.user)
+        if request.query_params.get("overdue", "").lower() in ("1", "true"):
+            rows = rows.filter(
+                tentative_delivery_date__lt=timezone.localdate(),
+                actual_delivery_at__isnull=True,
+            )
+        ordering = request.query_params.get("ordering")
+        if ordering:
+            if ordering != "oldest":
+                raise ValidationError({"ordering": "Invalid ordering."})
+            rows = rows.order_by(F("submitted_at").asc(nulls_last=True), "id")
         return Response(IssueSerializer(rows[:200], many=True).data)
 
     @extend_schema(request=IssueWriteSerializer, responses={201: IssueSerializer}, tags=["issues"])

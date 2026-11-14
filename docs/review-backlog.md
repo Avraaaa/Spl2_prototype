@@ -27,3 +27,11 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] Summary and dashboard counts use per-status queries and Python loops. This is fine for a prototype but won't scale to large datasets.
 - [ ] [follow-up] Recurring-link validation is duplicated in the serializer and in services._validate_links. Consolidating it would avoid the two copies drifting apart.
 - [ ] [follow-up] The reports window filters on created_at only. Issues submitted or closed in the window but created earlier are excluded. This is acceptable under the spec's default.
+
+## P4-T2 — 2026-11-14
+- [ ] [follow-up] I reviewed the diff and key files but did not run the app in a browser or run the test suites. The gate results you supplied are the only test evidence.
+- [ ] [follow-up] The new Issue serializer fields (names, references, organization) sit behind the existing tenant-scoped `visible_rows`. The new `organization`, `assignee` and `overdue` filters are applied after tenant scoping, so they can only narrow results. I found no cross-bank exposure.
+- [ ] [follow-up] `IssueEventSerializer.get_assignee_name` runs a separate `User` query for each assignment event. This is an N+1 query pattern. Prefetch the assignees or cache them in the serializer context.
+- [ ] [follow-up] `dashboard_counts` builds `by_bank` by looping over every issue row in Python. Replace it with a `values().annotate(Count())` aggregate. It only runs for DataSoft staff.
+- [ ] [follow-up] `redirectFor` is UX-only. Django still enforces permissions, which is correct. Extend its unit tests to cover mixed-role edge cases, such as a user who is both Support Agent and Issue Officer.
+- [ ] [follow-up] The `WorkflowActions.tsx` handlers are long single lines, which goes against the readability bar in the task. Reformat them.

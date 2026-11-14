@@ -107,26 +107,90 @@ export function WorkflowActions({ issue, me }: { issue: Issue; me: PortalUser })
     onSuccess: () => {
       setReason(''); setNote(''); setDeployment('');
       qc.invalidateQueries({ queryKey: ['issues'] });
+      qc.invalidateQueries({ queryKey: ['report'] });
     },
   });
-  if (!action) return null;
+  if (!action) return <p className="muted">No action is needed from you right now.</p>;
   const dateAction = action === 'accept' || action === 'revise-date';
   const reasonAction = action === 'reject' || action === 'fail-verification' || action === 'reopen';
-  return <form className="card stack" onSubmit={(event: FormEvent) => { event.preventDefault(); mutation.mutate(action); }}>
-    <h3>Next action</h3>
-    {actions.length > 1 && <label>Action<select value={action} onChange={event => setChoice(event.target.value as Action)}>{actions.map(item => <option key={item} value={item}>{LABEL[item]}</option>)}</select></label>}
-    {dateAction && <>
-      <label>Tentative delivery date<input type="date" value={date} disabled={later} onChange={event => setDate(event.target.value)} required={!later} /></label>
-      <label><input type="checkbox" checked={later} onChange={event => setLater(event.target.checked)} /> To be provided later</label>
-    </>}
-    {reasonAction && <label>Reason<textarea value={reason} onChange={event => setReason(event.target.value)} required /></label>}
-    {action === 'assign' && <label>Responsible DataSoft user<select value={assignee} onChange={event => setAssignee(event.target.value)} required><option value="">Select user</option>{assignees.data?.map(user => <option key={user.id} value={user.id}>{user.full_name}</option>)}</select></label>}
-    {action === 'deliver' && <><label>What changed<textarea value={note} onChange={event => setNote(event.target.value)} required /></label><label>Version or deployment details<textarea value={deployment} onChange={event => setDeployment(event.target.value)} required /></label></>}
-    {assignees.isError && action === 'assign' && <p className="alert error">{assignees.error.message}</p>}
-    {mutation.isError && <p className="alert error" role="alert">{mutation.error.message}</p>}
-    <button className="btn primary" disabled={mutation.isPending}>{mutation.isPending ? 'Saving…' : LABEL[action]}</button>
-  </form>;
+  return (
+    <form
+      className="stack"
+      onSubmit={(event: FormEvent) => {
+        event.preventDefault();
+        mutation.mutate(action);
+      }}
+    >
+      {actions.length > 1 && (
+        <div className="action-choices" role="group" aria-label="Choose an action">
+          {actions.map(item => (
+            <button
+              type="button"
+              key={item}
+              className={item === action ? 'btn small primary' : 'btn small'}
+              aria-pressed={item === action}
+              onClick={() => setChoice(item)}
+            >
+              {LABEL[item]}
+            </button>
+          ))}
+        </div>
+      )}
+      {dateAction && (
+        <>
+          <label>
+            Tentative delivery date
+            <input type="date" value={date} disabled={later} onChange={event => setDate(event.target.value)} required={!later} />
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={later} onChange={event => setLater(event.target.checked)} /> To be provided later
+          </label>
+        </>
+      )}
+      {reasonAction && (
+        <label>
+          Reason
+          <textarea rows={3} value={reason} onChange={event => setReason(event.target.value)} required />
+        </label>
+      )}
+      {action === 'assign' && (
+        <label>
+          Responsible DataSoft user
+          <select value={assignee} onChange={event => setAssignee(event.target.value)} required>
+            <option value="">Select user</option>
+            {assignees.data?.map(user => (
+              <option key={user.id} value={user.id}>
+                {user.full_name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {action === 'deliver' && (
+        <>
+          <label>
+            What changed
+            <textarea rows={3} value={note} onChange={event => setNote(event.target.value)} required />
+          </label>
+          <label>
+            Version or deployment details
+            <textarea rows={2} value={deployment} onChange={event => setDeployment(event.target.value)} required />
+          </label>
+        </>
+      )}
+      {assignees.isError && action === 'assign' && <p className="alert error">{assignees.error.message}</p>}
+      {mutation.isError && (
+        <p className="alert error" role="alert">
+          {mutation.error.message}
+        </p>
+      )}
+      <button className="btn primary" disabled={mutation.isPending}>
+        {mutation.isPending ? 'Saving…' : LABEL[action]}
+      </button>
+    </form>
+  );
 }
+
 
 export function WorkflowSettingsPanel() {
   const qc = useQueryClient();
