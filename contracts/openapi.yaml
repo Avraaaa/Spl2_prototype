@@ -1,4 +1,37 @@
-# GENERATED CONTRACT PLACEHOLDER. Replace in phase P0-T2 using drf-spectacular.
 openapi: 3.0.3
-info: {title: DataSoft Portal API, version: 0.1.0}
-paths: {}
+info:
+  title: DataSoft Service Request API
+  version: 0.1.0
+paths:
+  /api/health/:
+    get:
+      operationId: health_retrieve
+      description: |-
+        Unauthenticated liveness probe. Intentionally in the contract so the generated
+        TypeScript client can verify frontend-to-Django connectivity; exposes no data.
+      tags:
+      - health
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+          description: ''
+components:
+  schemas:
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+        service:
+          type: string
+        stage:
+          type: string
+      required:
+      - service
+      - stage
+      - status
