@@ -1,6 +1,6 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers, status
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -8,11 +8,11 @@ from domains.accounts.models import Membership
 from domains.accounts.roles import BANK_ROLES, DATASOFT_ROLES
 from domains.issues.api import visible_rows
 from domains.issues.models import IssueStatus
-from domains.issues.services import mask_sensitive
 from domains.tenants.models import OrganizationKind
 from domains.tenants.selectors import get_authorized_object_or_404, portal_organization
 
 from .models import Comment
+from .services import create_comment
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -54,9 +54,9 @@ class CommentListView(APIView):
             raise PermissionDenied("Only the creator may comment on a draft.")
         data = CommentWriteSerializer(data=request.data)
         data.is_valid(raise_exception=True)
-        body = mask_sensitive(data.validated_data["body"])
-        if not body.strip():
-            raise ValidationError({"body": "A comment is required."})
-        comment = Comment.objects.create(issue=issue, author=request.user, body=body)
-        # TODO(P3-T2): enqueue comment notification after the outbox domain is available.
+        comment = create_comment(
+            issue=issue,
+            author=request.user,
+            body=data.validated_data["body"],
+        )
         return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)

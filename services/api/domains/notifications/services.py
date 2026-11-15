@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from domains.accounts.roles import BANK_ROLES, DATASOFT_ROLES, Role
 from domains.issues.models import Issue, IssueEvent, IssueStatus
+from domains.tenants.models import OrganizationKind
 
 from .models import Notification, OutboxMessage
 
@@ -109,6 +110,32 @@ def notify_issue_event(event: IssueEvent) -> None:
             title=title,
             body=body,
             key=f"issue-event:{event.pk}",
+        )
+
+
+def notify_comment(comment) -> None:
+    """Alert the opposite portal audience without exposing drafts or other banks."""
+    issue = comment.issue
+    if issue.status == IssueStatus.DRAFT:
+        return
+
+    author_organization = comment.author.account.organization
+    if author_organization.kind == OrganizationKind.BANK:
+        recipients = _staff_users()
+    elif author_organization.kind == OrganizationKind.DATASOFT:
+        recipients = _bank_users(issue, BANK_ROLES)
+    else:
+        return
+
+    author_name = comment.author.account.full_name or comment.author.username
+    for recipient in recipients.exclude(pk=comment.author_id):
+        notify(
+            issue=issue,
+            recipient=recipient,
+            kind="COMMENT_ADDED",
+            title=f"{issue.reference}: New comment",
+            body=f"{author_name} added a comment to service request {issue.reference}.",
+            key=f"comment:{comment.pk}",
         )
 
 
