@@ -1,6 +1,6 @@
 """Small PostgreSQL outbox worker with reclaimable leases."""
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from hashlib import sha256
 
 from django.conf import settings
@@ -10,6 +10,61 @@ from django.db.models import Q
 from django.utils import timezone
 
 from .models import OutboxMessage
+
+
+def _send_claimed(message_id: int, lease: datetime, *, max_attempts: int) -> bool:
+    """Send a claimed message while its database row remains locked.
+
+    The persistent lease enables recovery after a crashed worker. The row lock
+    prevents a second worker from reclaiming and sending the same message when
+    a slow mail backend outlives that lease.
+    """
+    with transaction.atomic():
+        current = OutboxMessage.objects.select_for_update().get(pk=message_id)
+        if current.locked_until != lease or current.status == OutboxMessage.Status.SENT:
+            return False
+
+        try:
+            fingerprint = sha256(current.idempotency_key.encode()).hexdigest()
+            email = EmailMessage(
+                subject=current.payload["subject"],
+                body=current.payload["body"],
+                from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "notifications@example.test"),
+                to=[current.payload["to"]],
+                headers={"Message-ID": f"<{fingerprint}@datasoft.local>"},
+            )
+            sent = email.send(fail_silently=False)
+            if sent != 1:
+                raise RuntimeError("No email accepted")
+        except Exception as exc:
+            # Provider errors may contain credentials or message data. Store
+            # only the exception type, never its message.
+            current.attempts += 1
+            current.status = (
+                OutboxMessage.Status.DEAD
+                if current.attempts >= max_attempts
+                else OutboxMessage.Status.FAILED
+            )
+            seconds = min(3600, 30 * 2 ** min(current.attempts - 1, 10))
+            current.next_attempt_at = timezone.now() + timedelta(seconds=seconds)
+            current.locked_until = None
+            current.last_error = type(exc).__name__[:200]
+            current.save(
+                update_fields=[
+                    "attempts",
+                    "status",
+                    "next_attempt_at",
+                    "locked_until",
+                    "last_error",
+                ]
+            )
+        else:
+            current.attempts += 1
+            current.status = OutboxMessage.Status.SENT
+            current.locked_until = None
+            current.last_error = ""
+            current.save(update_fields=["attempts", "status", "locked_until", "last_error"])
+        return True
 
 
 def process_due(*, limit: int = 100) -> int:
@@ -36,50 +91,6 @@ def process_due(*, limit: int = 100) -> int:
             lease = now + timedelta(seconds=lease_seconds)
             message.locked_until = lease
             message.save(update_fields=["locked_until"])
-        try:
-            fingerprint = sha256(message.idempotency_key.encode()).hexdigest()
-            email = EmailMessage(
-                subject=message.payload["subject"],
-                body=message.payload["body"],
-                from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "notifications@example.test"),
-                to=[message.payload["to"]],
-                headers={"Message-ID": f"<{fingerprint}@datasoft.local>"},
-            )
-            sent = email.send(fail_silently=False)
-            if sent != 1:
-                raise RuntimeError("No email accepted")
-        except Exception as exc:
-            # Error text from a provider may contain credentials or message data.
-            with transaction.atomic():
-                current = OutboxMessage.objects.select_for_update().get(pk=message.pk)
-                if current.locked_until == lease and current.status != OutboxMessage.Status.SENT:
-                    current.attempts += 1
-                    current.status = (
-                        OutboxMessage.Status.DEAD
-                        if current.attempts >= max_attempts
-                        else OutboxMessage.Status.FAILED
-                    )
-                    seconds = min(3600, 30 * 2 ** min(current.attempts - 1, 10))
-                    current.next_attempt_at = timezone.now() + timedelta(seconds=seconds)
-                    current.locked_until = None
-                    current.last_error = type(exc).__name__[:200]
-                    current.save(
-                        update_fields=[
-                            "attempts",
-                            "status",
-                            "next_attempt_at",
-                            "locked_until",
-                            "last_error",
-                        ]
-                    )
-        else:
-            with transaction.atomic():
-                current = OutboxMessage.objects.select_for_update().get(pk=message.pk)
-                if current.locked_until == lease and current.status != OutboxMessage.Status.SENT:
-                    current.attempts += 1
-                    current.status = OutboxMessage.Status.SENT
-                    current.locked_until = None
-                    current.last_error = ""
-                    current.save(update_fields=["attempts", "status", "locked_until", "last_error"])
-        processed += 1
+        if _send_claimed(message.pk, lease, max_attempts=max_attempts):
+            processed += 1
     return processed

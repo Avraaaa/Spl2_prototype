@@ -140,17 +140,19 @@ def notify_comment(comment) -> None:
 
 
 def send_verification_reminders() -> int:
-    """Queue reminders once per calendar day after the waiting threshold."""
+    """Queue one reminder during each configured waiting period."""
     days = max(1, int(getattr(settings, "VERIFICATION_REMINDER_DAYS", 3)))
     now = timezone.now()
-    cutoff = now - timedelta(days=days)
+    period = timedelta(days=days)
+    cutoff = now - period
     created = 0
     rows = Issue.objects.filter(
         status=IssueStatus.AWAITING_VERIFICATION,
         last_status_at__lte=cutoff,
     ).select_related("organization", "assignee")
     for issue in rows.iterator():
-        key = f"verification-reminder:{issue.pk}:{issue.version}:{now.date().isoformat()}"
+        periods_waited = int((now - issue.last_status_at) // period)
+        key = f"verification-reminder:{issue.pk}:{issue.version}:period-{periods_waited}"
         recipients = list(_bank_users(issue, frozenset({Role.ISSUE_VERIFIER})))
         if issue.assignee_id and issue.assignee and issue.assignee.is_active:
             if _staff_users().filter(pk=issue.assignee_id).exists():
