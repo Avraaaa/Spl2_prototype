@@ -8,13 +8,38 @@ import type { PortalUser } from '../auth/roles';
 
 type Task = components['schemas']['Task'];
 type TaskWrite = components['schemas']['TaskWriteRequest'];
+type TaskEdit = components['schemas']['PatchedTaskEditRequest'];
 const statuses = ['todo', 'in_progress', 'done'] as const;
+
+type EditDraft = {
+  assignee: string;
+  commit_url: string;
+  pull_request_url: string;
+};
+
+export function editDraftFor(task: Task): EditDraft {
+  return {
+    assignee: task.assignee?.toString() ?? '',
+    commit_url: task.commit_url ?? '',
+    pull_request_url: task.pull_request_url ?? '',
+  };
+}
+
+export function editBodyFor(draft: EditDraft): TaskEdit {
+  return {
+    assignee: draft.assignee ? Number(draft.assignee) : null,
+    commit_url: draft.commit_url,
+    pull_request_url: draft.pull_request_url,
+  };
+}
 
 export function TasksPage({ me }: { me: PortalUser }) {
   const qc = useQueryClient();
   const key = ['tasks', me.id] as const;
   const [board, setBoard] = useState(false);
   const [draft, setDraft] = useState({ issue: '', title: '', assignee: '', commit_url: '', pull_request_url: '' });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editDraft, setEditDraft] = useState<EditDraft>({ assignee: '', commit_url: '', pull_request_url: '' });
   const tasks = useQuery({ queryKey: key, queryFn: async () => {
     const { data, error } = await api.GET('/api/tasks/');
     if (!data) throw new Error(errorMessage(error));
@@ -39,12 +64,29 @@ export function TasksPage({ me }: { me: PortalUser }) {
     const { data, error } = await api.PATCH('/api/tasks/{id}/', { params: { path: { id } }, body: { status } });
     if (!data) throw new Error(errorMessage(error));
   }, onSuccess: () => qc.invalidateQueries({ queryKey: key }) });
+  const update = useMutation({ mutationFn: async ({ id, body }: { id: number; body: TaskEdit }) => {
+    const { data, error } = await api.PATCH('/api/tasks/{id}/', { params: { path: { id } }, body });
+    if (!data) throw new Error(errorMessage(error));
+  }, onSuccess: () => {
+    setEditingId(null);
+    qc.invalidateQueries({ queryKey: key });
+  } });
+  const beginEdit = (task: Task) => {
+    setEditingId(task.id);
+    setEditDraft(editDraftFor(task));
+  };
   const renderTask = (task: Task) => <div className="card" key={task.id}>
     <strong>{task.title}</strong> · <Link to={`/issues/${task.issue}`}>{task.issue_reference}</Link>
     <p className="muted">{task.assignee_name ?? 'Unassigned'} · {task.status.replaceAll('_', ' ')}</p>
     {task.commit_url && <p><a href={task.commit_url} target="_blank" rel="noreferrer">Commit</a></p>}
     {task.pull_request_url && <p><a href={task.pull_request_url} target="_blank" rel="noreferrer">Pull request</a></p>}
-    <div className="actions">{statuses.filter(s => s !== task.status).map(s => <button className="btn small" key={s} disabled={move.isPending} onClick={() => move.mutate({ id: task.id, status: s })}>Move to {s.replaceAll('_', ' ')}</button>)}</div>
+    {editingId === task.id ? <form className="task-edit" onSubmit={event => { event.preventDefault(); update.mutate({ id: task.id, body: editBodyFor(editDraft) }); }}>
+      <label>Assignee<select value={editDraft.assignee} onChange={event => setEditDraft({ ...editDraft, assignee: event.target.value })}><option value="">Unassigned</option>{(assignees.data ?? []).map(user => <option value={user.id} key={user.id}>{user.full_name}</option>)}</select></label>
+      <label>Commit URL<input type="url" value={editDraft.commit_url} onChange={event => setEditDraft({ ...editDraft, commit_url: event.target.value })} /></label>
+      <label>Pull request URL<input type="url" value={editDraft.pull_request_url} onChange={event => setEditDraft({ ...editDraft, pull_request_url: event.target.value })} /></label>
+      <div className="actions"><button className="btn small primary" disabled={update.isPending}>Save task</button><button type="button" className="btn small ghost" onClick={() => setEditingId(null)}>Cancel</button></div>
+    </form> : null}
+    <div className="actions"><button className="btn small" onClick={() => beginEdit(task)}>Edit details</button>{statuses.filter(s => s !== task.status).map(s => <button className="btn small" key={s} disabled={move.isPending} onClick={() => move.mutate({ id: task.id, status: s })}>Move to {s.replaceAll('_', ' ')}</button>)}</div>
     <TaskNotes id={task.id} userId={me.id} />
   </div>;
   return <section className="stack"><div className="page-head"><h1>Internal tasks</h1><button className="btn" onClick={() => setBoard(!board)}>{board ? 'List view' : 'Kanban board'}</button></div>
@@ -56,7 +98,7 @@ export function TasksPage({ me }: { me: PortalUser }) {
       <label>Pull request URL<input type="url" value={draft.pull_request_url} onChange={e => setDraft({ ...draft, pull_request_url: e.target.value })} /></label>
       <button className="btn primary" disabled={create.isPending}>Create task</button>
     </form>
-    {(tasks.isError || issues.isError || create.isError || move.isError) && <p className="alert error">{tasks.error?.message ?? issues.error?.message ?? create.error?.message ?? move.error?.message}</p>}
+    {(tasks.isError || issues.isError || create.isError || move.isError || update.isError) && <p className="alert error">{tasks.error?.message ?? issues.error?.message ?? create.error?.message ?? move.error?.message ?? update.error?.message}</p>}
     {board ? <div className="grid">{statuses.map(status => <div key={status} className="stack"><h2>{status.replaceAll('_', ' ')}</h2>{(tasks.data ?? []).filter(t => t.status === status).map(renderTask)}</div>)}</div> : <div className="stack">{(tasks.data ?? []).map(renderTask)}</div>}
   </section>;
 }

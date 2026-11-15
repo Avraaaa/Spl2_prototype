@@ -63,9 +63,12 @@ def checked_file(upload):
         ".zip": header.startswith((b"PK\x03\x04", b"PK\x05\x06")),
     }
     if suffix in (".txt", ".log", ".csv"):
+        upload.seek(0)
+        content = upload.read()
+        upload.seek(0)
         try:
-            header.decode("utf-8")
-            valid = b"\x00" not in header
+            content.decode("utf-8")
+            valid = b"\x00" not in content
         except UnicodeDecodeError:
             valid = False
     elif suffix in OOXML_DIRECTORIES:

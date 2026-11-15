@@ -337,6 +337,8 @@ tbody tr:hover { background: #f8fbff; }
 .notification-card { display: grid; grid-template-columns: 1fr auto; gap: 8px 14px; align-items: center; }
 .notification-card p, .notification-card small { grid-column: 1 / -1; margin: 0; }
 .notification-card .btn { justify-self: start; }
+.task-edit { margin: 14px 0; padding: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; border: 1px solid var(--gray-200); border-radius: var(--radius); background: var(--gray-50); }
+.task-edit .actions { grid-column: 1 / -1; }
 
 .auth-shell { min-height: 100vh; padding: 0; display: grid; grid-template-columns: minmax(360px, .9fr) minmax(420px, 1.1fr); background: #fff; }
 .auth-brand-panel { position: relative; overflow: hidden; padding: clamp(36px, 7vw, 88px); display: flex; flex-direction: column; justify-content: space-between; gap: 48px; background: linear-gradient(145deg, #0b1c39, #173a70); color: #fff; }
@@ -386,6 +388,7 @@ tbody tr:hover { background: #f8fbff; }
   .form-grid { grid-template-columns: 1fr; }
   .form-grid > * { grid-column: 1 !important; }
   .form-row { grid-template-columns: 1fr; }
+  .task-edit { grid-template-columns: 1fr; }
   .facts { grid-template-columns: 1fr; }
   .toolbar { align-items: stretch; }
   .toolbar > * { flex-basis: 100%; }
