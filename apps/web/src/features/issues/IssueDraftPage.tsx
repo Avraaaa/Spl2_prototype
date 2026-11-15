@@ -6,6 +6,7 @@ import type { components } from '../../api/generated/schema';
 import { errorMessage } from '../auth/hooks';
 import { hasRole, type PortalUser } from '../auth/roles';
 import { ErrorState, LoadingState } from '../ui/EmptyState';
+import { Dropzone } from '../ui/Dropzone';
 import { PageHeader } from '../ui/PageHeader';
 import { PRIORITY_CODES, priorityLabel, TYPE_CODES, typeLabel } from '../ui/labels';
 import {
@@ -20,10 +21,24 @@ import {
   type DraftErrors,
 } from './draftForm';
 import { ISSUE_KEY, useIssue, useIssues, useProducts } from './hooks';
+import {
+  ATTACHMENT_ACCEPT,
+  attachmentKind,
+  formatFileSize,
+  uploadAttachment,
+  validateAttachment,
+} from './attachments';
 
 type Issue = components['schemas']['Issue'];
 type Product = components['schemas']['Product'];
 type Stored = { id: number; version: number };
+type QueuedFile = {
+  key: string;
+  file: File;
+  status: 'ready' | 'uploading' | 'uploaded' | 'error';
+  validationError?: string;
+  error?: string;
+};
 
 function serverError(error: unknown): FieldError {
   const { fields, general } = parseServerErrors(error);
@@ -83,6 +98,27 @@ function DraftForm({ existing }: { existing?: Issue }) {
   const [draft, setDraft] = useState<Draft>(() => (existing ? draftFromIssue(existing) : blankDraft()));
   const [stored, setStored] = useState<Stored | null>(existing ? { id: existing.id, version: existing.version ?? 1 } : null);
   const [errors, setErrors] = useState<DraftErrors>({});
+  const [attachments, setAttachments] = useState<QueuedFile[]>([]);
+
+  const addAttachments = (files: File[]) => {
+    setAttachments(current => [
+      ...current,
+      ...files.map((file, index) => {
+        const validationError = validateAttachment(file) ?? undefined;
+        return {
+          key: `${file.name}-${file.size}-${file.lastModified}-${Date.now()}-${index}`,
+          file,
+          status: validationError ? ('error' as const) : ('ready' as const),
+          validationError,
+          error: validationError,
+        };
+      }),
+    ]);
+  };
+
+  const updateAttachment = (key: string, change: Partial<QueuedFile>) => {
+    setAttachments(current => current.map(item => (item.key === key ? { ...item, ...change } : item)));
+  };
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => {
     setDraft(current => ({ ...current, [key]: value }));
@@ -113,6 +149,27 @@ function DraftForm({ existing }: { existing?: Issue }) {
     mutationFn: async (submit: boolean) => {
       const saved = await persist();
       setStored(saved);
+      let uploadFailed = false;
+      for (const item of attachments) {
+        if (item.validationError || item.status === 'uploaded') {
+          if (item.validationError) uploadFailed = true;
+          continue;
+        }
+        updateAttachment(item.key, { status: 'uploading', error: undefined });
+        try {
+          await uploadAttachment(saved.id, item.file);
+          updateAttachment(item.key, { status: 'uploaded' });
+        } catch (error) {
+          uploadFailed = true;
+          updateAttachment(item.key, {
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Upload failed.',
+          });
+        }
+      }
+      if (uploadFailed) {
+        throw new Error('Your draft was saved, but one or more attachments could not be uploaded.');
+      }
       if (!submit) return saved.id;
       const { data, error } = await api.POST('/api/issues/{id}/submit/', { params: { path: { id: saved.id } } });
       if (!data) {
@@ -261,6 +318,39 @@ function DraftForm({ existing }: { existing?: Issue }) {
             <Field {...field('actual_result', 'Actual result')}>{text('actual_result', 2)}</Field>
           </fieldset>
         )}
+        <fieldset className="attachment-section">
+          <legend>Attachments</legend>
+          <Dropzone
+            accept={ATTACHMENT_ACCEPT}
+            disabled={save.isPending}
+            onFiles={addAttachments}
+            helper="PNG, JPG, GIF, PDF, TXT, LOG, CSV, ZIP, DOCX, XLSX or PPTX. Maximum 10 MB per file."
+          />
+          {attachments.length > 0 && (
+            <ul className="upload-queue" aria-label="Files selected for upload">
+              {attachments.map(item => (
+                <li key={item.key} className={item.status === 'error' ? 'has-error' : ''}>
+                  <span className={`file-icon kind-${attachmentKind(item.file.name)}`} aria-hidden="true" />
+                  <span className="file-summary">
+                    <strong>{item.file.name}</strong>
+                    <span className="muted">
+                      {formatFileSize(item.file.size)} · {item.status}
+                    </span>
+                    {item.error && <span className="field-error">{item.error}</span>}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn small ghost"
+                    disabled={save.isPending}
+                    onClick={() => setAttachments(current => current.filter(file => file.key !== item.key))}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </fieldset>
         {products.isError && <ErrorState error={products.error} />}
         {save.isError && <ErrorState error={save.error} />}
         {hasErrors(errors) && !save.isError && (

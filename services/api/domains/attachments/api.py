@@ -1,4 +1,5 @@
 from pathlib import Path
+from zipfile import BadZipFile, ZipFile
 
 from django.http import FileResponse
 from drf_spectacular.types import OpenApiTypes
@@ -25,7 +26,24 @@ MIME_TYPES = {
     ".log": "text/plain",
     ".csv": "text/csv",
     ".zip": "application/zip",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 }
+OOXML_DIRECTORIES = {".docx": "word/", ".xlsx": "xl/", ".pptx": "ppt/"}
+
+
+def valid_ooxml(upload, suffix: str) -> bool:
+    try:
+        with ZipFile(upload) as archive:
+            names = archive.namelist()
+            return "[Content_Types].xml" in names and any(
+                name.startswith(OOXML_DIRECTORIES[suffix]) for name in names
+            )
+    except (BadZipFile, OSError, ValueError):
+        return False
+    finally:
+        upload.seek(0)
 
 
 def checked_file(upload):
@@ -50,6 +68,8 @@ def checked_file(upload):
             valid = b"\x00" not in header
         except UnicodeDecodeError:
             valid = False
+    elif suffix in OOXML_DIRECTORIES:
+        valid = header.startswith(b"PK\x03\x04") and valid_ooxml(upload, suffix)
     else:
         valid = signatures[suffix]
     if not valid:
@@ -75,7 +95,7 @@ class AttachmentSerializer(serializers.ModelSerializer):
 
 
 class AttachmentUploadSerializer(serializers.Serializer):
-    file = serializers.FileField()
+    file = serializers.FileField(allow_empty_file=True)
     comment = serializers.IntegerField(min_value=1, required=False)
 
 
@@ -139,7 +159,7 @@ class AttachmentDownloadView(APIView):
         )
         response = FileResponse(
             attachment.file.open("rb"),
-            as_attachment=True,
+            as_attachment=not attachment.content_type.startswith("image/"),
             filename=attachment.original_name,
             content_type=attachment.content_type,
         )

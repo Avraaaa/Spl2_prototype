@@ -160,3 +160,76 @@ input, select { max-width: 100%; }
   .card { padding: 14px; }
   .who { flex-wrap: wrap; }
 }
+
+/* ---- P4-T3: attachment experience ---- */
+.attachment-section { display: grid; gap: 12px; }
+.dropzone-wrap { display: grid; gap: 6px; width: 100%; }
+.dropzone {
+  min-height: 116px;
+  border: 2px dashed #aebbd0;
+  border-radius: 10px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 18px;
+  text-align: center;
+  transition: border-color .15s ease, background .15s ease;
+}
+.dropzone.is-dragging { border-color: var(--primary); background: #eaf3fc; }
+.dropzone.is-disabled { opacity: .65; }
+.helper-text { margin: 0; color: var(--muted); font-size: .8rem; }
+.upload-queue { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.upload-queue li, .attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 10px;
+  background: var(--surface);
+}
+.upload-queue li.has-error { border-color: #efb4ad; background: #fff9f8; }
+.file-summary { min-width: 0; flex: 1; display: grid; gap: 2px; }
+.file-summary > strong, .file-summary > a { overflow-wrap: anywhere; }
+.file-summary .muted { font-size: .8rem; }
+.file-icon {
+  width: 34px;
+  height: 38px;
+  flex: 0 0 auto;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  background: #e7edf5;
+  color: #40536b;
+  font-size: .62rem;
+  font-weight: 800;
+}
+.file-icon.large { width: 46px; height: 52px; }
+.file-icon::before { content: 'FILE'; }
+.file-icon.kind-image::before { content: 'IMG'; }
+.file-icon.kind-pdf::before { content: 'PDF'; }
+.file-icon.kind-document::before { content: 'DOC'; }
+.file-icon.kind-sheet::before { content: 'XLS'; }
+.file-icon.kind-slides::before { content: 'PPT'; }
+.file-icon.kind-text::before { content: 'TXT'; }
+.file-icon.kind-archive::before { content: 'ZIP'; }
+.file-icon.kind-pdf { background: #fde8e6; color: #a92d21; }
+.file-icon.kind-document { background: #e3effb; color: #185d91; }
+.file-icon.kind-sheet { background: #e4f4ea; color: #176b41; }
+.file-icon.kind-slides { background: #fff0df; color: #9a4b11; }
+.attachment-list { display: grid; gap: 10px; }
+.attachment-thumb { width: 72px; height: 56px; flex: 0 0 auto; border-radius: 7px; object-fit: cover; border: 1px solid var(--border); }
+.attachment-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
+.attachment-upload { border-top: 1px solid var(--border); padding-top: 16px; }
+
+@media (max-width: 520px) {
+  .dropzone { align-items: stretch; flex-direction: column; }
+  .attachment-item { align-items: flex-start; }
+  .attachment-thumb { width: 56px; height: 48px; }
+  .upload-queue li { align-items: flex-start; flex-wrap: wrap; }
+  .upload-queue li .btn { margin-left: 44px; }
+}
