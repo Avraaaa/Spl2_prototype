@@ -14,6 +14,7 @@ import { priorityLabel, typeLabel } from '../ui/labels';
 import { WorkflowActions } from '../workflow/WorkflowActions';
 import { AttachmentsPanel, CommentsPanel } from './IssueCollaboration';
 import { InternalSection } from './InternalSection';
+import { deliverySummary } from './delivery';
 import { ISSUE_KEY, useIssue } from './hooks';
 import { eventLines, eventTitle } from './timeline';
 
@@ -72,7 +73,7 @@ function Delivery({ row }: { row: Issue }) {
       <h3>Delivery info</h3>
       <Facts>
         <Fact label="Tentative delivery">{tentative}</Fact>
-        <Fact label="Actual delivery">{row.actual_delivery_at ? formatDateTime(row.actual_delivery_at) : 'Not delivered'}</Fact>
+        <Fact label="Actual delivery">{deliverySummary(row)}</Fact>
         <Fact label="Assigned to">{row.assignee_name ?? 'Not assigned'}</Fact>
         <Fact label="Last status update">{row.last_status_at ? formatDateTime(row.last_status_at) : 'Not yet'}</Fact>
       </Facts>
