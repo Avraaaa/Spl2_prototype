@@ -148,6 +148,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/audit/anchor/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["audit_anchor_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/audit/verify/": {
         parameters: {
             query?: never;
@@ -887,6 +903,11 @@ export interface components {
             /** @default false */
             tentative_delivery_later: boolean;
         };
+        AnchorResponse: {
+            anchors: {
+                [key: string]: unknown;
+            }[];
+        };
         AssignRequest: {
             version: number;
             assignee: number;
@@ -1613,6 +1634,25 @@ export interface operations {
                 };
                 content: {
                     "application/octet-stream": string;
+                };
+            };
+        };
+    };
+    audit_anchor_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnchorResponse"];
                 };
             };
         };

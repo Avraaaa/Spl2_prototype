@@ -265,6 +265,20 @@ paths:
                 type: string
                 format: binary
           description: ''
+  /api/audit/anchor/:
+    post:
+      operationId: audit_anchor_create
+      tags:
+      - audit
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnchorResponse'
+          description: ''
   /api/audit/verify/:
     get:
       operationId: audit_verify_retrieve
@@ -1695,6 +1709,16 @@ components:
           default: false
       required:
       - version
+    AnchorResponse:
+      type: object
+      properties:
+        anchors:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+      required:
+      - anchors
     AssignRequest:
       type: object
       properties:

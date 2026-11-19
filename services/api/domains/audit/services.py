@@ -4,7 +4,7 @@ import json
 from django.db import transaction
 from django.utils import timezone
 
-from .models import AuditRecord
+from .models import AuditAnchor, AuditRecord
 
 
 def _canonical(
@@ -69,8 +69,9 @@ def append_record(*, organization, actor, action: str, payload: dict) -> AuditRe
 
 def verify_chain(organization) -> dict:
     expected_previous = ""
+    expected_sequence = 1
     for record in AuditRecord.objects.filter(organization=organization).order_by("sequence"):
-        if record.sequence < 1 or record.previous_hash != expected_previous:
+        if record.sequence != expected_sequence or record.previous_hash != expected_previous:
             return {"valid": False, "first_invalid_sequence": record.sequence}
         calculated = hashlib.sha256(
             _canonical(
@@ -86,4 +87,23 @@ def verify_chain(organization) -> dict:
         if calculated != record.record_hash:
             return {"valid": False, "first_invalid_sequence": record.sequence}
         expected_previous = record.record_hash
+        expected_sequence += 1
+    for anchor in AuditAnchor.objects.filter(organization=organization).order_by("sequence"):
+        record = AuditRecord.objects.filter(
+            organization=organization, sequence=anchor.sequence, record_hash=anchor.record_hash
+        ).first()
+        if record is None:
+            return {"valid": False, "first_invalid_sequence": anchor.sequence}
     return {"valid": True, "first_invalid_sequence": None}
+
+
+@transaction.atomic
+def anchor_head(*, organization, actor) -> AuditAnchor:
+    head = AuditRecord.objects.filter(organization=organization).order_by("-sequence").first()
+    if head is None:
+        raise ValueError("Cannot anchor an empty audit chain")
+    return AuditAnchor.objects.create(
+        organization=organization,
+        sequence=head.sequence,
+        record_hash=head.record_hash,
+    )
