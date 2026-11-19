@@ -13,6 +13,7 @@ urlpatterns = [
     path("api/", include("domains.attachments.urls")),
     path("api/", include("domains.products.urls")),
     path("api/", include("domains.issues.urls")),
+    path("api/", include("domains.audit.urls")),
     path("api/", include("domains.notifications.urls")),
     path("api/", include("domains.reports.urls")),
     path("api/", include("domains.search.urls")),

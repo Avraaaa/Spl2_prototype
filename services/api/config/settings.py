@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "domains.accounts",
     "domains.products",
     "domains.issues",
+    "domains.audit",
     "domains.notifications",
     "domains.reports",
     "domains.search",

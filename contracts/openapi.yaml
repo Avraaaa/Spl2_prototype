@@ -265,6 +265,21 @@ paths:
                 type: string
                 format: binary
           description: ''
+  /api/audit/verify/:
+    get:
+      operationId: audit_verify_retrieve
+      tags:
+      - audit
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/auth/change-password/:
     post:
       operationId: auth_change_password_create
