@@ -151,6 +151,8 @@ def send_verification_reminders() -> int:
         last_status_at__lte=cutoff,
     ).select_related("organization", "assignee")
     for issue in rows.iterator():
+        if issue.last_status_at is None:
+            continue
         periods_waited = int((now - issue.last_status_at) // period)
         key = f"verification-reminder:{issue.pk}:{issue.version}:period-{periods_waited}"
         recipients = list(_bank_users(issue, frozenset({Role.ISSUE_VERIFIER})))

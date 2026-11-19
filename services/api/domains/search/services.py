@@ -2,6 +2,7 @@
 
 import re
 from collections.abc import Iterable
+from typing import cast
 
 from django.db.models import QuerySet
 
@@ -52,10 +53,13 @@ def candidate_suggestions(rows: QuerySet[Issue], *, title: str, description: str
 
 def label_suggestions(*, title: str, description: str, labels: Iterable[Label]) -> list[dict]:
     tokens = _tokens(f"{title} {description}")
-    suggestions = []
+    suggestions: list[dict[str, object]] = []
     for label in labels:
         keywords = {str(value).casefold() for value in label.keywords if isinstance(value, str)}
         score = _score(tokens, keywords)
         if score >= label.confidence_threshold:
             suggestions.append({"id": label.pk, "name": label.name, "score": round(score, 4)})
-    return sorted(suggestions, key=lambda item: (-item["score"], item["id"]))[:5]
+    return sorted(
+        suggestions,
+        key=lambda item: (-cast(float, item["score"]), cast(int, item["id"])),
+    )[:5]
