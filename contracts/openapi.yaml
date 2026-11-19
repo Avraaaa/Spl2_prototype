@@ -1405,6 +1405,58 @@ paths:
                 type: string
                 format: binary
           description: ''
+  /api/search/feedback/:
+    post:
+      operationId: search_feedback_create
+      tags:
+      - search
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+          description: ''
+  /api/search/suggestions/:
+    post:
+      operationId: search_suggestions_create
+      tags:
+      - search
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuggestionRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SuggestionRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SuggestionRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuggestionResponse'
+          description: ''
   /api/tasks/:
     get:
       operationId: tasks_list
@@ -1808,6 +1860,40 @@ components:
           type: string
       required:
       - detail
+    FeedbackRequestRequest:
+      type: object
+      properties:
+        kind:
+          type: string
+          minLength: 1
+        accepted:
+          type: boolean
+        issue:
+          type: integer
+          minimum: 1
+          nullable: true
+        candidate_issue:
+          type: integer
+          minimum: 1
+          nullable: true
+        label:
+          type: integer
+          minimum: 1
+          nullable: true
+        score:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - accepted
+      - kind
+    FeedbackResponse:
+      type: object
+      properties:
+        recorded:
+          type: boolean
+      required:
+      - recorded
     Health:
       type: object
       properties:
@@ -2499,6 +2585,37 @@ components:
             $ref: '#/components/schemas/RolesEnum'
       required:
       - roles
+    SuggestionRequestRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 20000
+      required:
+      - description
+      - title
+    SuggestionResponse:
+      type: object
+      properties:
+        duplicates:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        labels:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        available:
+          type: boolean
+      required:
+      - available
+      - duplicates
+      - labels
     SummaryReport:
       type: object
       properties:

@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "domains.issues",
     "domains.notifications",
     "domains.reports",
+    "domains.search",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

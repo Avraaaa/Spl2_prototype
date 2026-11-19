@@ -748,6 +748,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/search/feedback/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["search_feedback_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/search/suggestions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["search_suggestions_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tasks/": {
         parameters: {
             query?: never;
@@ -893,6 +925,18 @@ export interface components {
         Error: {
             detail: string;
             code?: string;
+        };
+        FeedbackRequestRequest: {
+            kind: string;
+            accepted: boolean;
+            issue?: number | null;
+            candidate_issue?: number | null;
+            label?: number | null;
+            /** Format: double */
+            score?: number | null;
+        };
+        FeedbackResponse: {
+            recorded: boolean;
         };
         Health: {
             status: string;
@@ -1154,6 +1198,19 @@ export interface components {
         RolesEnum: "ISSUE_OFFICER" | "ISSUE_VERIFIER" | "DATASOFT_ADMIN" | "SUPPORT_AGENT";
         RolesRequest: {
             roles: components["schemas"]["RolesEnum"][];
+        };
+        SuggestionRequestRequest: {
+            title: string;
+            description: string;
+        };
+        SuggestionResponse: {
+            duplicates: {
+                [key: string]: unknown;
+            }[];
+            labels: {
+                [key: string]: unknown;
+            }[];
+            available: boolean;
         };
         SummaryReport: {
             total: number;
@@ -2539,6 +2596,56 @@ export interface operations {
                 };
                 content: {
                     "text/csv": string;
+                };
+            };
+        };
+    };
+    search_feedback_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedbackRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["FeedbackRequestRequest"];
+                "multipart/form-data": components["schemas"]["FeedbackRequestRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackResponse"];
+                };
+            };
+        };
+    };
+    search_suggestions_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuggestionRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SuggestionRequestRequest"];
+                "multipart/form-data": components["schemas"]["SuggestionRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionResponse"];
                 };
             };
         };
