@@ -796,6 +796,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/search/topics/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["search_topics_list"];
+        put?: never;
+        post: operations["search_topics_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/search/topics/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["search_topics_partial_update"];
+        trace?: never;
+    };
     "/api/tasks/": {
         parameters: {
             query?: never;
@@ -1145,6 +1177,9 @@ export interface components {
             commit_url?: string;
             pull_request_url?: string;
         };
+        PatchedTopicReviewRequestRequest: {
+            status?: components["schemas"]["TopicReviewRequestStatusEnum"];
+        };
         PatchedWorkflowSettingsRequest: {
             reopen_days?: number;
         };
@@ -1271,6 +1306,29 @@ export interface components {
             user: components["schemas"]["PortalUser"];
             /** @description Shown once. Never logged or stored in plaintext. */
             temporary_password: string;
+        };
+        TopicProposal: {
+            id: number;
+            organization: number;
+            title: string;
+            keywords: string[];
+            issue_ids: number[];
+            status: string;
+        };
+        TopicProposalCreated: {
+            id: number;
+            title: string;
+        };
+        /**
+         * @description * `proposed` - proposed
+         *     * `accepted` - accepted
+         *     * `rejected` - rejected
+         * @enum {string}
+         */
+        TopicReviewRequestStatusEnum: "proposed" | "accepted" | "rejected";
+        TopicReviewResponse: {
+            id: number;
+            status: string;
         };
         TransitionVersionRequest: {
             version: number;
@@ -2683,6 +2741,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SuggestionResponse"];
+                };
+            };
+        };
+    };
+    search_topics_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicProposal"][];
+                };
+            };
+        };
+    };
+    search_topics_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicProposalCreated"][];
+                };
+            };
+        };
+    };
+    search_topics_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedTopicReviewRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedTopicReviewRequestRequest"];
+                "multipart/form-data": components["schemas"]["PatchedTopicReviewRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicReviewResponse"];
                 };
             };
         };

@@ -1472,6 +1472,68 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuggestionResponse'
           description: ''
+  /api/search/topics/:
+    get:
+      operationId: search_topics_list
+      tags:
+      - search
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TopicProposal'
+          description: ''
+    post:
+      operationId: search_topics_create
+      tags:
+      - search
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TopicProposalCreated'
+          description: ''
+  /api/search/topics/{id}/:
+    patch:
+      operationId: search_topics_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - search
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTopicReviewRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTopicReviewRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTopicReviewRequestRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicReviewResponse'
+          description: ''
   /api/tasks/:
     get:
       operationId: tasks_list
@@ -2444,6 +2506,11 @@ components:
             maxLength: 500
           - type: string
             maxLength: 0
+    PatchedTopicReviewRequestRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/TopicReviewRequestStatusEnum'
     PatchedWorkflowSettingsRequest:
       type: object
       properties:
@@ -2757,6 +2824,62 @@ components:
       required:
       - temporary_password
       - user
+    TopicProposal:
+      type: object
+      properties:
+        id:
+          type: integer
+        organization:
+          type: integer
+        title:
+          type: string
+        keywords:
+          type: array
+          items:
+            type: string
+        issue_ids:
+          type: array
+          items:
+            type: integer
+        status:
+          type: string
+      required:
+      - id
+      - issue_ids
+      - keywords
+      - organization
+      - status
+      - title
+    TopicProposalCreated:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+      required:
+      - id
+      - title
+    TopicReviewRequestStatusEnum:
+      enum:
+      - proposed
+      - accepted
+      - rejected
+      type: string
+      description: |-
+        * `proposed` - proposed
+        * `accepted` - accepted
+        * `rejected` - rejected
+    TopicReviewResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+      required:
+      - id
+      - status
     TransitionVersionRequest:
       type: object
       properties:

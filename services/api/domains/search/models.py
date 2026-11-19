@@ -33,3 +33,17 @@ class SuggestionFeedback(models.Model):
     accepted = models.BooleanField()
     score = models.FloatField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class TopicProposal(models.Model):
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, related_name="topic_proposals"
+    )
+    title = models.CharField(max_length=160)
+    keywords = models.JSONField(default=list)
+    issue_ids = models.JSONField(default=list)
+    status = models.CharField(max_length=20, default="proposed")
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT
+    )
+    created_at = models.DateTimeField(auto_now_add=True)

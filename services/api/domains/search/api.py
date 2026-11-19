@@ -1,14 +1,16 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers, status
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from domains.accounts.services import is_datasoft_admin
 from domains.issues.api import visible_rows
+from domains.tenants.models import Organization
 from domains.tenants.selectors import get_authorized_object_or_404, portal_organization
 
-from .models import Label, SuggestionFeedback
-from .services import candidate_suggestions, label_suggestions
+from .models import Label, SuggestionFeedback, TopicProposal
+from .services import candidate_suggestions, create_topic_proposals, label_suggestions
 
 
 class SuggestionRequest(serializers.Serializer):
@@ -38,6 +40,29 @@ class SuggestionResponse(serializers.Serializer):
 
 class FeedbackResponse(serializers.Serializer):
     recorded = serializers.BooleanField()
+
+
+class TopicProposalSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    organization = serializers.IntegerField()
+    title = serializers.CharField()
+    keywords = serializers.ListField(child=serializers.CharField())
+    issue_ids = serializers.ListField(child=serializers.IntegerField())
+    status = serializers.CharField()
+
+
+class TopicProposalCreatedSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+
+
+class TopicReviewRequest(serializers.Serializer):
+    status = serializers.ChoiceField(choices=("proposed", "accepted", "rejected"))
+
+
+class TopicReviewResponse(serializers.Serializer):
+    id = serializers.IntegerField()
+    status = serializers.CharField()
 
 
 class SuggestionsView(APIView):
@@ -79,3 +104,59 @@ class SuggestionFeedbackView(APIView):
                 raise ValidationError({"label": "Unknown label."})
         SuggestionFeedback.objects.create(actor=request.user, organization=organization, **fields)
         return Response({"recorded": True}, status=status.HTTP_201_CREATED)
+
+
+class TopicProposalView(APIView):
+    @extend_schema(responses=TopicProposalSerializer(many=True), tags=["search"])
+    def get(self, request):
+        if not is_datasoft_admin(request.user):
+            raise PermissionDenied("DataSoft administrator role required.")
+        rows = TopicProposal.objects.select_related("organization").order_by("-created_at")[:100]
+        return Response(
+            [
+                {
+                    "id": row.id,
+                    "organization": row.organization_id,
+                    "title": row.title,
+                    "keywords": row.keywords,
+                    "issue_ids": row.issue_ids,
+                    "status": row.status,
+                }
+                for row in rows
+            ]
+        )
+
+    @extend_schema(
+        request=None, responses=TopicProposalCreatedSerializer(many=True), tags=["search"]
+    )
+    def post(self, request):
+        if not is_datasoft_admin(request.user):
+            raise PermissionDenied("DataSoft administrator role required.")
+        staff_rows = visible_rows(request.user)
+        proposals = []
+        for organization_id in staff_rows.values_list("organization_id", flat=True).distinct():
+            scoped = staff_rows.filter(organization_id=organization_id)
+            if scoped.exists():
+                bank = Organization.objects.get(pk=organization_id)
+                proposals.extend(create_topic_proposals(organization=bank, rows=scoped))
+        return Response(
+            [{"id": proposal.id, "title": proposal.title} for proposal in proposals],
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class TopicProposalReviewView(APIView):
+    @extend_schema(request=TopicReviewRequest, responses=TopicReviewResponse, tags=["search"])
+    def patch(self, request, id):
+        if not is_datasoft_admin(request.user):
+            raise PermissionDenied("DataSoft administrator role required.")
+        data = TopicReviewRequest(data=request.data)
+        data.is_valid(raise_exception=True)
+        status_value = data.validated_data["status"]
+        proposal = TopicProposal.objects.filter(pk=id).first()
+        if proposal is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        proposal.status = status_value
+        proposal.reviewed_by = request.user
+        proposal.save(update_fields=["status", "reviewed_by"])
+        return Response({"id": proposal.id, "status": proposal.status})
