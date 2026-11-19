@@ -6,6 +6,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from app.masking import mask_text
+from app.ranking import semantic_scores
 
 app = FastAPI(title="DataSoft private NLP service", docs_url=None, redoc_url=None)
 
@@ -22,6 +23,15 @@ class MaskResponse(BaseModel):
 class EmbedResponse(BaseModel):
     enabled: bool
     reason: str | None = None
+
+
+class RankRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=20000)
+    candidates: list[str] = Field(min_length=1, max_length=50)
+
+
+class RankResponse(BaseModel):
+    scores: list[float]
 
 
 def service_auth(x_service_token: str | None = Header(default=None)) -> None:
@@ -56,4 +66,23 @@ def embedding_readiness() -> EmbedResponse:
             enabled=False,
             reason="Model deliberately disabled until approved local checkpoint is pinned",
         )
-    return EmbedResponse(enabled=False, reason="Inference implementation scheduled in later phase")
+    try:
+        from app.embedding import load_local_sentence_transformer
+
+        load_local_sentence_transformer()
+    except Exception as exc:
+        return EmbedResponse(enabled=False, reason=type(exc).__name__)
+    return EmbedResponse(enabled=True)
+
+
+@app.post("/internal/rank", response_model=RankResponse, dependencies=[Depends(service_auth)])
+def rank(payload: RankRequest) -> RankResponse:
+    try:
+        scores = semantic_scores(
+            mask_text(payload.query), [mask_text(item) for item in payload.candidates]
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503, detail=f"Local model unavailable: {type(exc).__name__}"
+        ) from exc
+    return RankResponse(scores=scores)
