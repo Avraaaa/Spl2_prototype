@@ -87,7 +87,7 @@ def _rows(request: Request):
 
 def _safe(value: object) -> str:
     text = "" if value is None else str(value)
-    return "'" + text if text.startswith(("=", "+", "-", "@")) else text
+    return "'" + text if text.startswith(("=", "+", "-", "@", "\t", "\r")) else text
 
 
 def _csv(filename: str, headings: list[str], rows: list[list[object]]) -> HttpResponse:

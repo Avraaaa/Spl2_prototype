@@ -2,7 +2,8 @@
 
 from datetime import date, timedelta
 
-from django.db.models import Q, QuerySet
+from django.db.models import Count, Q, QuerySet
+from django.db.models.functions import TruncMonth
 from django.utils import timezone
 
 from domains.issues.models import Issue, IssueStatus
@@ -58,12 +59,16 @@ def report_rows(
 
 
 def detailed_rows(rows: QuerySet[Issue]) -> list[dict]:
+    def officer_name(issue: Issue) -> str:
+        account = getattr(issue.created_by, "account", None)
+        return (account.full_name if account else "") or issue.created_by.username
+
     return [
         {
             "id": issue.pk,
             "reference_id": issue.reference or "",
             "bank": issue.organization.name,
-            "issue_officer": issue.created_by.account.full_name,
+            "issue_officer": officer_name(issue),
             "title": issue.title,
             "issue_detail": issue.description,
             "status": issue.status,
@@ -100,24 +105,31 @@ def detailed_rows(rows: QuerySet[Issue]) -> list[dict]:
 
 
 def summary_rows(rows: QuerySet[Issue], *, staff: bool) -> dict:
-    issues = list(rows)
-    by_status: dict[str, int] = {}
-    by_month: dict[str, int] = {}
-    by_bank: dict[str, int] = {}
-    for issue in issues:
-        by_status[issue.status] = by_status.get(issue.status, 0) + 1
-        month = timezone.localtime(issue.created_at).strftime("%Y-%m")
-        by_month[month] = by_month.get(month, 0) + 1
-        if staff:
-            by_bank[issue.organization.name] = by_bank.get(issue.organization.name, 0) + 1
-    ids = [issue.pk for issue in issues]
-    reopened = Issue.objects.filter(pk__in=ids, events__kind="REOPENED").distinct().count()
+    by_status = {
+        row["status"]: row["count"]
+        for row in rows.order_by().values("status").annotate(count=Count("pk"))
+    }
+    by_month = {
+        timezone.localtime(row["month"]).strftime("%Y-%m"): row["count"]
+        for row in rows.order_by()
+        .annotate(month=TruncMonth("created_at"))
+        .values("month")
+        .annotate(count=Count("pk"))
+    }
+    by_bank = (
+        {
+            row["organization__name"]: row["count"]
+            for row in rows.order_by().values("organization__name").annotate(count=Count("pk"))
+        }
+        if staff
+        else {}
+    )
     result = {
-        "total": len(issues),
+        "total": rows.count(),
         "by_status": by_status,
         "by_month": by_month,
-        "reopened_count": reopened,
-        "recurring_count": sum(issue.recurring_of_id is not None for issue in issues),
+        "reopened_count": rows.filter(events__kind="REOPENED").distinct().count(),
+        "recurring_count": rows.filter(recurring_of__isnull=False).count(),
     }
     if staff:
         result["by_bank"] = by_bank
@@ -128,7 +140,13 @@ def dashboard_counts(user) -> dict:
     organization = portal_organization(user)
     staff = bool(organization and organization.kind == OrganizationKind.DATASOFT)
     issues = scoped_issues(user, include_drafts=True)
-    counts = {status: issues.filter(status=status).count() for status in IssueStatus.values}
+    counts = {status: 0 for status in IssueStatus.values}
+    counts.update(
+        {
+            row["status"]: row["count"]
+            for row in issues.order_by().values("status").annotate(count=Count("pk"))
+        }
+    )
     result = {"total": sum(counts.values()), "by_status": counts}
     if staff:
         result["pending_intake"] = counts[IssueStatus.SUBMITTED]
@@ -136,8 +154,8 @@ def dashboard_counts(user) -> dict:
             actual_delivery_at__gte=timezone.now() - timedelta(days=30)
         ).count()
         result["overdue"] = overdue_rows(issues).count()
-        by_bank: dict[str, int] = {}
-        for name in issues.values_list("organization__name", flat=True):
-            by_bank[name] = by_bank.get(name, 0) + 1
-        result["by_bank"] = by_bank
+        result["by_bank"] = {
+            row["organization__name"]: row["count"]
+            for row in issues.order_by().values("organization__name").annotate(count=Count("pk"))
+        }
     return result
