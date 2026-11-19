@@ -796,6 +796,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/search/labels/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["search_labels_list"];
+        put?: never;
+        post: operations["search_labels_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/search/labels/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["search_labels_partial_update"];
+        trace?: never;
+    };
     "/api/search/suggestions/": {
         parameters: {
             query?: never;
@@ -1115,6 +1147,23 @@ export interface components {
          * @enum {string}
          */
         KindEnum: "DATASOFT" | "BANK";
+        LabelResponse: {
+            id: number;
+            name: string;
+            description: string;
+            keywords: string[];
+            /** Format: double */
+            confidence_threshold: number;
+            is_active: boolean;
+        };
+        LabelWriteRequest: {
+            name: string;
+            description?: string;
+            keywords: string[];
+            /** Format: double */
+            confidence_threshold?: number;
+            is_active?: boolean;
+        };
         LoginRequest: {
             username: string;
             password: string;
@@ -1185,6 +1234,14 @@ export interface components {
             related_request?: number | null;
             recurring_of?: number | null;
             version?: number;
+        };
+        PatchedLabelWriteRequest: {
+            name?: string;
+            description?: string;
+            keywords?: string[];
+            /** Format: double */
+            confidence_threshold?: number;
+            is_active?: boolean;
         };
         PatchedProfileUpdateRequest: {
             full_name?: string;
@@ -2756,6 +2813,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FeedbackResponse"];
+                };
+            };
+        };
+    };
+    search_labels_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabelResponse"][];
+                };
+            };
+        };
+    };
+    search_labels_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LabelWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["LabelWriteRequest"];
+                "multipart/form-data": components["schemas"]["LabelWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabelResponse"];
+                };
+            };
+        };
+    };
+    search_labels_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedLabelWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedLabelWriteRequest"];
+                "multipart/form-data": components["schemas"]["PatchedLabelWriteRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabelResponse"];
                 };
             };
         };

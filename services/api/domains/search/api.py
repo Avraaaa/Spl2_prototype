@@ -65,6 +65,23 @@ class TopicReviewResponse(serializers.Serializer):
     status = serializers.CharField()
 
 
+class LabelWrite(serializers.Serializer):
+    name = serializers.CharField(max_length=80)
+    description = serializers.CharField(max_length=300, allow_blank=True, required=False)
+    keywords = serializers.ListField(child=serializers.CharField(max_length=80), allow_empty=True)
+    confidence_threshold = serializers.FloatField(min_value=0, max_value=1, required=False)
+    is_active = serializers.BooleanField(required=False)
+
+
+class LabelResponse(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    description = serializers.CharField()
+    keywords = serializers.ListField(child=serializers.CharField())
+    confidence_threshold = serializers.FloatField()
+    is_active = serializers.BooleanField()
+
+
 class SuggestionsView(APIView):
     @extend_schema(request=SuggestionRequest, responses=SuggestionResponse, tags=["search"])
     def post(self, request):
@@ -160,3 +177,47 @@ class TopicProposalReviewView(APIView):
         proposal.reviewed_by = request.user
         proposal.save(update_fields=["status", "reviewed_by"])
         return Response({"id": proposal.id, "status": proposal.status})
+
+
+def _label_payload(label: Label) -> dict:
+    return {
+        "id": label.id,
+        "name": label.name,
+        "description": label.description,
+        "keywords": label.keywords,
+        "confidence_threshold": label.confidence_threshold,
+        "is_active": label.is_active,
+    }
+
+
+class LabelAdminView(APIView):
+    @extend_schema(responses=LabelResponse(many=True), tags=["search"])
+    def get(self, request):
+        if not is_datasoft_admin(request.user):
+            raise PermissionDenied("DataSoft administrator role required.")
+        return Response([_label_payload(label) for label in Label.objects.all()])
+
+    @extend_schema(request=LabelWrite, responses={201: LabelResponse}, tags=["search"])
+    def post(self, request):
+        if not is_datasoft_admin(request.user):
+            raise PermissionDenied("DataSoft administrator role required.")
+        data = LabelWrite(data=request.data)
+        data.is_valid(raise_exception=True)
+        label = Label.objects.create(**data.validated_data)
+        return Response(_label_payload(label), status=status.HTTP_201_CREATED)
+
+
+class LabelAdminDetailView(APIView):
+    @extend_schema(request=LabelWrite, responses=LabelResponse, tags=["search"])
+    def patch(self, request, id):
+        if not is_datasoft_admin(request.user):
+            raise PermissionDenied("DataSoft administrator role required.")
+        label = Label.objects.filter(pk=id).first()
+        if label is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        data = LabelWrite(data=request.data, partial=True)
+        data.is_valid(raise_exception=True)
+        for key, value in data.validated_data.items():
+            setattr(label, key, value)
+        label.save()
+        return Response(_label_payload(label))

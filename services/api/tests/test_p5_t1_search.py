@@ -52,3 +52,26 @@ def test_feedback_cannot_reference_another_bank(officer_a, officer_b):
 
     assert response.status_code == 404
     assert not SuggestionFeedback.objects.exists()
+
+
+def test_only_datasoft_admin_can_refine_labels(officer_a, admin):
+    forbidden = client_for(officer_a).post(
+        "/api/search/labels/",
+        {"name": "Authentication", "keywords": ["login"]},
+        format="json",
+    )
+    assert forbidden.status_code == 403
+
+    created = client_for(admin).post(
+        "/api/search/labels/",
+        {"name": "Authentication", "keywords": ["login"], "confidence_threshold": 0.4},
+        format="json",
+    )
+    assert created.status_code == 201
+    edited = client_for(admin).patch(
+        f"/api/search/labels/{created.data['id']}/",
+        {"keywords": ["login", "signin"], "is_active": True},
+        format="json",
+    )
+    assert edited.status_code == 200
+    assert edited.data["keywords"] == ["login", "signin"]
