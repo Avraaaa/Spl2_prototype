@@ -337,6 +337,12 @@ tbody tr:hover { background: #f8fbff; }
 .notification-card { display: grid; grid-template-columns: 1fr auto; gap: 8px 14px; align-items: center; }
 .notification-card p, .notification-card small { grid-column: 1 / -1; margin: 0; }
 .notification-card .btn { justify-self: start; }
+.suggestion-panel { grid-column: 1 / -1; display: grid; gap: 10px; padding: 14px 16px; border: 1px solid #bfdbfe; border-radius: var(--radius); background: #eff6ff; }
+.suggestion-panel > div:first-child { display: grid; gap: 3px; }
+.suggestion-panel p { margin: 0; }
+.suggestion-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 9px; border-top: 1px solid #dbeafe; }
+.suggestion-row span { display: grid; gap: 2px; }
+.suggestion-row small { font-size: .75rem; }
 .task-edit { margin: 14px 0; padding: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; border: 1px solid var(--gray-200); border-radius: var(--radius); background: var(--gray-50); }
 .task-edit .actions { grid-column: 1 / -1; }
 

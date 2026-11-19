@@ -1,6 +1,6 @@
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../api/client';
 import type { components } from '../../api/generated/schema';
 import { errorMessage } from '../auth/hooks';
@@ -8,7 +8,7 @@ import { hasRole, type PortalUser } from '../auth/roles';
 import { ErrorState, LoadingState } from '../ui/EmptyState';
 import { Dropzone } from '../ui/Dropzone';
 import { PageHeader } from '../ui/PageHeader';
-import { PRIORITY_CODES, priorityLabel, TYPE_CODES, typeLabel } from '../ui/labels';
+import { PRIORITY_CODES, priorityLabel, statusLabel, TYPE_CODES, typeLabel } from '../ui/labels';
 import {
   blankDraft,
   draftFromIssue,
@@ -99,6 +99,31 @@ function DraftForm({ existing }: { existing?: Issue }) {
   const [stored, setStored] = useState<Stored | null>(existing ? { id: existing.id, version: existing.version ?? 1 } : null);
   const [errors, setErrors] = useState<DraftErrors>({});
   const [attachments, setAttachments] = useState<QueuedFile[]>([]);
+  const [suggestionInput, setSuggestionInput] = useState({ title: '', description: '' });
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSuggestionInput({ title: draft.title ?? '', description: draft.description ?? '' }), 500);
+    return () => window.clearTimeout(timer);
+  }, [draft.title, draft.description]);
+
+  const suggestions = useQuery({
+    queryKey: ['search-suggestions', suggestionInput.title, suggestionInput.description],
+    enabled: suggestionInput.title.trim().length > 2 || suggestionInput.description.trim().length > 8,
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await api.POST('/api/search/suggestions/', { body: suggestionInput });
+      if (!data) throw new Error(errorMessage(error));
+      return data;
+    },
+  });
+  const feedback = useMutation({
+    mutationFn: async (candidateIssue: number) => {
+      const { data, error } = await api.POST('/api/search/feedback/', {
+        body: { kind: 'duplicate', accepted: false, candidate_issue: candidateIssue },
+      });
+      if (!data) throw new Error(errorMessage(error));
+    },
+  });
 
   const addAttachments = (files: File[]) => {
     setAttachments(current => [
@@ -230,6 +255,27 @@ function DraftForm({ existing }: { existing?: Issue }) {
           />
         </Field>
         <Field {...field('description', 'Description')}>{text('description', 4)}</Field>
+        {suggestions.data?.available && (
+          <aside className="suggestion-panel" aria-label="Possible duplicate requests">
+            <div>
+              <strong>Helpful matches</strong>
+              <p className="muted small">These are private, tenant-scoped suggestions. Your request still saves normally if suggestions are unavailable.</p>
+            </div>
+            {(suggestions.data.duplicates ?? []).map((row, index) => {
+              const candidateId = row?.id;
+              if (row == null || typeof candidateId !== 'number' || typeof row.title !== 'string') return null;
+              const status = typeof row.status === 'string' ? row.status : '';
+              return (
+                <div className="suggestion-row" key={candidateId}>
+                  <span><strong>{typeof row.reference === 'string' ? row.reference : `Match ${index + 1}`}</strong> · {row.title}<small className="muted">{statusLabel(status)}</small></span>
+                  <button type="button" className="btn small ghost" onClick={() => feedback.mutate(candidateId)} disabled={feedback.isPending}>Not a match</button>
+                </div>
+              );
+            })}
+            {(suggestions.data.labels ?? []).length > 0 && <p className="muted small">Suggested labels: {(suggestions.data.labels ?? []).map(row => typeof row.name === 'string' ? row.name : '').filter(Boolean).join(', ')}</p>}
+          </aside>
+        )}
+        {suggestions.isError && <p className="muted small">Suggestions are temporarily unavailable; you can continue.</p>}
         <div className="form-row">
           <Field {...field('request_type', 'Type')}>
             <select
