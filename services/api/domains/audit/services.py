@@ -89,10 +89,10 @@ def verify_chain(organization) -> dict:
         expected_previous = record.record_hash
         expected_sequence += 1
     for anchor in AuditAnchor.objects.filter(organization=organization).order_by("sequence"):
-        record = AuditRecord.objects.filter(
+        anchor_record = AuditRecord.objects.filter(
             organization=organization, sequence=anchor.sequence, record_hash=anchor.record_hash
         ).first()
-        if record is None:
+        if anchor_record is None:
             return {"valid": False, "first_invalid_sequence": anchor.sequence}
     return {"valid": True, "first_invalid_sequence": None}
 
