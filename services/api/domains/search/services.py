@@ -99,7 +99,10 @@ def candidate_suggestions(
     semantic_rank: dict[int, int] = {}
     vectors = _ml_embeddings(
         [f"{mask_sensitive(title)} {mask_sensitive(description)}"]
-        + [f"{mask_sensitive(issue.title)} {mask_sensitive(issue.description)}" for issue in candidates]
+        + [
+            f"{mask_sensitive(issue.title)} {mask_sensitive(issue.description)}"
+            for issue in candidates
+        ]
     )
     if vectors:
         query_vector, candidate_vectors = vectors[0], vectors[1:]
@@ -112,9 +115,7 @@ def candidate_suggestions(
                 .annotate(distance=CosineDistance("embedding", query_vector))
                 .order_by("distance", "-id")[:50]
             )
-            semantic_rank = {
-                issue.pk: rank for rank, issue in enumerate(semantic_rows, start=1)
-            }
+            semantic_rank = {issue.pk: rank for rank, issue in enumerate(semantic_rows, start=1)}
         except Exception:
             semantic_rank = {}
 

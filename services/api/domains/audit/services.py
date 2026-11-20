@@ -10,9 +10,7 @@ from .models import AuditAnchor, AuditRecord
 
 
 def _external_anchor_token(*, organization_id: int, sequence: int, record_hash: str) -> str:
-    return hashlib.sha256(
-        f"{organization_id}:{sequence}:{record_hash}".encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(f"{organization_id}:{sequence}:{record_hash}".encode()).hexdigest()
 
 
 def _external_anchor_file() -> Path | None:
@@ -29,11 +27,16 @@ def _write_external_anchor(*, organization_id: int, sequence: int, record_hash: 
     )
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps({"organization": organization_id, "sequence": sequence, "token": token}) + "\n")
+        handle.write(
+            json.dumps({"organization": organization_id, "sequence": sequence, "token": token})
+            + "\n"
+        )
     return token
 
 
-def _external_anchor_exists(*, organization_id: int, sequence: int, record_hash: str, token: str) -> bool:
+def _external_anchor_exists(
+    *, organization_id: int, sequence: int, record_hash: str, token: str
+) -> bool:
     path = _external_anchor_file()
     if path is None or not path.exists():
         return False

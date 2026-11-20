@@ -1134,6 +1134,32 @@ paths:
                 items:
                   $ref: '#/components/schemas/WorkflowAssignee'
           description: ''
+  /api/issues/masking-preview/:
+    post:
+      operationId: issues_masking_preview_create
+      tags:
+      - privacy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaskPreviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MaskPreviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MaskPreviewRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaskPreviewResponse'
+          description: ''
   /api/issues/workflow-settings/:
     get:
       operationId: issues_workflow_settings_retrieve
@@ -1433,6 +1459,20 @@ paths:
               schema:
                 type: string
                 format: binary
+          description: ''
+  /api/search/evaluation/:
+    get:
+      operationId: search_evaluation_retrieve
+      tags:
+      - search
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationResponse'
           description: ''
   /api/search/feedback/:
     post:
@@ -2033,6 +2073,18 @@ components:
           type: string
       required:
       - detail
+    EvaluationResponse:
+      type: object
+      properties:
+        duplicate_feedback:
+          type: object
+          additionalProperties: {}
+        label_feedback:
+          type: object
+          additionalProperties: {}
+      required:
+      - duplicate_feedback
+      - label_feedback
     FeedbackRequestRequest:
       type: object
       properties:
@@ -2409,6 +2461,30 @@ components:
       required:
       - password
       - username
+    MaskPreviewRequest:
+      type: object
+      properties:
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+            maxLength: 20000
+      required:
+      - fields
+    MaskPreviewResponse:
+      type: object
+      properties:
+        masked_fields:
+          type: object
+          additionalProperties:
+            type: string
+        detected_types:
+          type: array
+          items:
+            type: string
+      required:
+      - detected_types
+      - masked_fields
     Module:
       type: object
       properties:
@@ -2846,6 +2922,14 @@ components:
         description:
           type: string
           maxLength: 20000
+        product:
+          type: integer
+          minimum: 1
+          nullable: true
+        module:
+          type: integer
+          minimum: 1
+          nullable: true
       required:
       - description
       - title

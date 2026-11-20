@@ -38,9 +38,7 @@ class SuggestionFeedback(models.Model):
 class IssueLabelSelection(models.Model):
     """The latest human-confirmed label for a request."""
 
-    issue = models.OneToOneField(
-        Issue, on_delete=models.PROTECT, related_name="label_selection"
-    )
+    issue = models.OneToOneField(Issue, on_delete=models.PROTECT, related_name="label_selection")
     label = models.ForeignKey(Label, on_delete=models.PROTECT, related_name="issue_selections")
     actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     selected_at = models.DateTimeField(auto_now=True)

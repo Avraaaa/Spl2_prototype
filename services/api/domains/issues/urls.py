@@ -10,12 +10,12 @@ from .api import (
     IssueEventDetailView,
     IssueFailVerificationView,
     IssueListView,
-    MaskPreviewView,
     IssueRejectView,
     IssueReopenView,
     IssueStartView,
     IssueSubmitView,
     IssueVerifyView,
+    MaskPreviewView,
     WorkflowAssigneesView,
     WorkflowSettingsView,
 )

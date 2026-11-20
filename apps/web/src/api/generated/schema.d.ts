@@ -588,6 +588,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/issues/masking-preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issues_masking_preview_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/issues/workflow-settings/": {
         parameters: {
             query?: never;
@@ -772,6 +788,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["reports_summary_csv_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/search/evaluation/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["search_evaluation_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1027,6 +1059,14 @@ export interface components {
             detail: string;
             code?: string;
         };
+        EvaluationResponse: {
+            duplicate_feedback: {
+                [key: string]: unknown;
+            };
+            label_feedback: {
+                [key: string]: unknown;
+            };
+        };
         FeedbackRequestRequest: {
             kind: string;
             accepted: boolean;
@@ -1167,6 +1207,17 @@ export interface components {
         LoginRequest: {
             username: string;
             password: string;
+        };
+        MaskPreviewRequest: {
+            fields: {
+                [key: string]: string;
+            };
+        };
+        MaskPreviewResponse: {
+            masked_fields: {
+                [key: string]: string;
+            };
+            detected_types: string[];
         };
         Module: {
             readonly id: number;
@@ -1331,6 +1382,8 @@ export interface components {
         SuggestionRequestRequest: {
             title: string;
             description: string;
+            product?: number | null;
+            module?: number | null;
         };
         SuggestionResponse: {
             duplicates: {
@@ -2513,6 +2566,31 @@ export interface operations {
             };
         };
     };
+    issues_masking_preview_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaskPreviewRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["MaskPreviewRequest"];
+                "multipart/form-data": components["schemas"]["MaskPreviewRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaskPreviewResponse"];
+                };
+            };
+        };
+    };
     issues_workflow_settings_retrieve: {
         parameters: {
             query?: never;
@@ -2788,6 +2866,25 @@ export interface operations {
                 };
                 content: {
                     "text/csv": string;
+                };
+            };
+        };
+    };
+    search_evaluation_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvaluationResponse"];
                 };
             };
         };

@@ -77,6 +77,10 @@ def record_attachment(sender, instance, created, **kwargs):
         instance=instance,
         actor=instance.uploaded_by,
         action="issue.attachment",
-        payload={"issue_id": instance.issue_id, "attachment_id": instance.pk, "size": instance.size},
+        payload={
+            "issue_id": instance.issue_id,
+            "attachment_id": instance.pk,
+            "size": instance.size,
+        },
         created=created,
     )
