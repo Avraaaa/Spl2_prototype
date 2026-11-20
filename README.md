@@ -1,6 +1,6 @@
 # DataSoft Service Request Portal — uv + TypeScript-first agent starter
 
-**Status:** real scaffold and health checks, **not** an implemented banking portal, a production release, or a proven safe fully autonomous deployment.
+**Status:** local synthetic prototype with the core portal, workflow, privacy preview, hybrid suggestion paths and audit verification implemented. It is not a production banking release.
 
 Architecture: React + strict TypeScript/Vite (`apps/web`) → Django + DRF (`services/api`) → PostgreSQL 18 + pgvector; private optional FastAPI service (`services/ml`) using Sentence-Transformers only when a vetted local model is provisioned. Django owns all persistent writes and tenant authorization. React and orchestration are TypeScript/JavaScript-first; Python is necessary for the fixed Django/FastAPI/ML stack.
 
@@ -70,5 +70,5 @@ When approved Phase P5 starts, install optional ML model dependencies with `uv s
 - `.github/workflows/ci.yml`: independent structural, lint, TypeScript and PostgreSQL integration gates **once lockfiles are committed**.
 - `docs/sources.md`: official docs and research links checked in November 2026.
 
-## Explicit gaps
-There is no precomputed lockfile, product authentication, tenant-safe issue CRUD, outbox worker, deployed inference model, complete OpenAPI contract or hardened production rollout yet. Stop your default Docker Compose stack before running the task runner: each task uses distinct published ports and a disposable Compose project, and cleans its database volume after gates. The later-profile `worker` is intentionally **disabled until P3-T2**. Production requires human threat review, secrets management, storage protection, backup restore demonstration and external audit-chain anchoring. See `docs/repository-status.md`.
+## Remaining prototype limitations
+The local semantic model is optional and must be provisioned through `ML_MODEL_PATH`; the portal falls back to masked lexical ranking when it is unavailable. Configure `AUDIT_ANCHOR_FILE` for the separate anchor-file demonstration and run `node scripts/backup-restore-drill.mjs` with disposable database names before claiming recovery evidence. Production still requires security approval, TLS, secret distribution, malware scanning, retention policy, monitoring, real email configuration and a reviewed deployment topology.

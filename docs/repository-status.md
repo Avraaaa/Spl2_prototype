@@ -1,7 +1,6 @@
 # Actual current state
-- Backend: Django skeleton, health endpoint, PostgreSQL + pgvector migration. **No bank isolation or user management yet.**
-- ML: FastAPI health, limited rule masking; Sentence-Transformers dependency deferred into optional `model` extra. No embedding endpoint or validated bilingual similarity yet.
-- Frontend: React/TypeScript health-check page. No authenticated portal yet.
-- Runner: JS prototype harness, not a security boundary. Requires Codex/Claude CLIs authenticated in local environment and independent CI verification.
-- Lockfiles: MUST be generated (`uv lock`, `npm install --prefix apps/web`) on a network-connected development machine, reviewed and committed before first build or agent run.
-- Validation: offline structure and JS syntax can be validated here; no Docker or online registry access at artifact-build time.
+- Backend: Django owns authenticated tenant-scoped requests, workflow transitions, comments, tasks, attachments, reports, notifications, masking preview and suggestion feedback. PostgreSQL + pgvector is used when the local model is configured.
+- ML: FastAPI is a private optional boundary for local embeddings and ranking. It has no database credentials and never receives unmasked request text. The portal continues with masked lexical ranking if the model is unavailable.
+- Frontend: React/TypeScript provides separate client and DataSoft experiences, request drafting, privacy preview, label selection, administrator label controls, workflow actions, reports and responsive layouts.
+- Audit and recovery: append-only workflow/comment/task/attachment records feed a SHA-256 chain. Administrators can verify it; `AUDIT_ANCHOR_FILE` enables a separate anchor-file rehearsal. `scripts/backup-restore-drill.mjs` rehearses PostgreSQL and optional media restoration against disposable targets.
+- Prototype boundary: all data and seed cases are synthetic. Production still requires formal threat review, secret distribution, TLS, malware scanning, retention policy, monitoring, real email configuration, a successful restore drill and an independently operated audit anchor.
