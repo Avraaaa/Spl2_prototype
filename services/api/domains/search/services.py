@@ -167,7 +167,11 @@ def cluster_recent_unidentified(rows: QuerySet[Issue], *, days: int = 90) -> lis
     cutoff = timezone.now() - timedelta(days=max(1, days))
     token_rows: list[tuple[Issue, set[str]]] = []
     frequencies: dict[str, int] = {}
-    for issue in rows.filter(created_at__gte=cutoff).iterator(chunk_size=2000):
+    for issue in rows.filter(
+        created_at__gte=cutoff,
+        status__in=[value for value in IssueStatus.values if value != IssueStatus.DRAFT],
+        label_selection__isnull=True,
+    ).iterator(chunk_size=2000):
         tokens = _tokens(f"{issue.title} {issue.description}")
         if not tokens:
             continue

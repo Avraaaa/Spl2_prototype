@@ -4,6 +4,7 @@ from .api import (
     LabelAdminDetailView,
     LabelAdminView,
     SuggestionFeedbackView,
+    SuggestionEvaluationView,
     SuggestionsView,
     TopicProposalReviewView,
     TopicProposalView,
@@ -12,6 +13,7 @@ from .api import (
 urlpatterns = [
     path("search/suggestions/", SuggestionsView.as_view(), name="search-suggestions"),
     path("search/feedback/", SuggestionFeedbackView.as_view(), name="search-feedback"),
+    path("search/evaluation/", SuggestionEvaluationView.as_view(), name="search-evaluation"),
     path("search/topics/", TopicProposalView.as_view(), name="search-topics"),
     path("search/topics/<int:id>/", TopicProposalReviewView.as_view(), name="search-topic-review"),
     path("search/labels/", LabelAdminView.as_view(), name="search-labels"),

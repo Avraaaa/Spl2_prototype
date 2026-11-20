@@ -44,6 +44,11 @@ class FeedbackResponse(serializers.Serializer):
     recorded = serializers.BooleanField()
 
 
+class EvaluationResponse(serializers.Serializer):
+    duplicate_feedback = serializers.DictField()
+    label_feedback = serializers.DictField()
+
+
 class TopicProposalSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     organization = serializers.IntegerField()
@@ -158,6 +163,31 @@ class TopicProposalView(APIView):
                 }
                 for row in rows
             ]
+        )
+
+
+class SuggestionEvaluationView(APIView):
+    @extend_schema(responses=EvaluationResponse, tags=["search"])
+    def get(self, request):
+        if not is_datasoft_admin(request.user):
+            raise PermissionDenied("DataSoft administrator role required.")
+
+        def summary(kind: str) -> dict[str, float | int]:
+            rows = SuggestionFeedback.objects.filter(kind=kind)
+            total = rows.count()
+            accepted = rows.filter(accepted=True).count()
+            return {
+                "total": total,
+                "accepted": accepted,
+                "rejected": total - accepted,
+                "acceptance_rate": round(accepted / total, 4) if total else 0.0,
+            }
+
+        return Response(
+            {
+                "duplicate_feedback": summary(SuggestionFeedback.Kind.DUPLICATE),
+                "label_feedback": summary(SuggestionFeedback.Kind.LABEL),
+            }
         )
 
     @extend_schema(
