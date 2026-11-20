@@ -243,7 +243,9 @@ class DuplicateCandidatesView(APIView):
         issue = get_authorized_object_or_404(
             request.user, visible_rows(request.user), issue_id, allow_datasoft=True
         )
-        rows = visible_rows(request.user).filter(organization=issue.organization).exclude(pk=issue.pk)
+        rows = (
+            visible_rows(request.user).filter(organization=issue.organization).exclude(pk=issue.pk)
+        )
         return Response(
             {
                 "duplicates": candidate_suggestions(
