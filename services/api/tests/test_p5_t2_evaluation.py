@@ -24,7 +24,7 @@ def test_topic_discovery_excludes_confirmed_label_examples(officer_a, admin):
 
 
 def test_admin_can_read_feedback_evaluation_but_bank_cannot(officer_a, admin):
-    issue = make_issue(officer_a, "Login", "Authentication")
+    issue = make_issue(officer_a, "Login")
     response = client_for(officer_a).post(
         "/api/search/feedback/",
         {"kind": "duplicate", "accepted": True, "issue": issue.pk},

@@ -165,6 +165,24 @@ class TopicProposalView(APIView):
             ]
         )
 
+    @extend_schema(
+        request=None, responses=TopicProposalCreatedSerializer(many=True), tags=["search"]
+    )
+    def post(self, request):
+        if not is_datasoft_admin(request.user):
+            raise PermissionDenied("DataSoft administrator role required.")
+        staff_rows = visible_rows(request.user)
+        proposals = []
+        for organization_id in staff_rows.values_list("organization_id", flat=True).distinct():
+            scoped = staff_rows.filter(organization_id=organization_id)
+            if scoped.exists():
+                bank = Organization.objects.get(pk=organization_id)
+                proposals.extend(create_topic_proposals(organization=bank, rows=scoped))
+        return Response(
+            [{"id": proposal.id, "title": proposal.title} for proposal in proposals],
+            status=status.HTTP_201_CREATED,
+        )
+
 
 class SuggestionEvaluationView(APIView):
     @extend_schema(responses=EvaluationResponse, tags=["search"])
@@ -188,24 +206,6 @@ class SuggestionEvaluationView(APIView):
                 "duplicate_feedback": summary(SuggestionFeedback.Kind.DUPLICATE),
                 "label_feedback": summary(SuggestionFeedback.Kind.LABEL),
             }
-        )
-
-    @extend_schema(
-        request=None, responses=TopicProposalCreatedSerializer(many=True), tags=["search"]
-    )
-    def post(self, request):
-        if not is_datasoft_admin(request.user):
-            raise PermissionDenied("DataSoft administrator role required.")
-        staff_rows = visible_rows(request.user)
-        proposals = []
-        for organization_id in staff_rows.values_list("organization_id", flat=True).distinct():
-            scoped = staff_rows.filter(organization_id=organization_id)
-            if scoped.exists():
-                bank = Organization.objects.get(pk=organization_id)
-                proposals.extend(create_topic_proposals(organization=bank, rows=scoped))
-        return Response(
-            [{"id": proposal.id, "title": proposal.title} for proposal in proposals],
-            status=status.HTTP_201_CREATED,
         )
 
 
