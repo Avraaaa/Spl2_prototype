@@ -102,6 +102,7 @@ function DraftForm({ existing }: { existing?: Issue }) {
   const [suggestionInput, setSuggestionInput] = useState({ title: '', description: '', product: null as number | null, module: null as number | null });
   const [selectedLabel, setSelectedLabel] = useState<{ id: number; name: string } | null>(null);
   const [labelTouched, setLabelTouched] = useState(false);
+  const [maskReviewOpen, setMaskReviewOpen] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setSuggestionInput({ title: draft.title ?? '', description: draft.description ?? '', product: draft.product ?? null, module: draft.module ?? null }), 500);
@@ -132,6 +133,21 @@ function DraftForm({ existing }: { existing?: Issue }) {
         body: { kind: 'label', accepted, issue, label },
       });
       if (!data) throw new Error(errorMessage(error));
+    },
+  });
+  const maskPreview = useMutation({
+    mutationFn: async () => {
+      const fields = {
+        title: draft.title ?? '',
+        description: draft.description ?? '',
+        environment: draft.environment ?? '',
+        steps_to_reproduce: draft.steps_to_reproduce ?? '',
+        expected_result: draft.expected_result ?? '',
+        actual_result: draft.actual_result ?? '',
+      };
+      const { data, error } = await api.POST('/api/issues/masking-preview/', { body: { fields } });
+      if (!data) throw new Error(errorMessage(error));
+      return data;
     },
   });
 
@@ -268,6 +284,34 @@ function DraftForm({ existing }: { existing?: Issue }) {
           />
         </Field>
         <Field {...field('description', 'Description')}>{text('description', 4)}</Field>
+        <div className="privacy-review-actions">
+          <button type="button" className="btn small ghost" onClick={() => { setMaskReviewOpen(true); maskPreview.mutate(); }} disabled={maskPreview.isPending}>
+            {maskPreview.isPending ? 'Checking privacy…' : 'Review privacy masking'}
+          </button>
+          <span className="muted small">Sensitive values are masked before saving or suggestion processing.</span>
+        </div>
+        {maskReviewOpen && maskPreview.data && (
+          <aside className="alert info privacy-review" aria-label="Privacy masking review">
+            <strong>Privacy review</strong>
+            <p className="small">This is the copy that will be retained. Review it, then apply it to the draft if it looks correct.</p>
+            {maskPreview.data.detected_types.length === 0 && <p className="small">No supported sensitive patterns were detected.</p>}
+            {Object.entries(maskPreview.data.masked_fields).map(([key, value]) => (
+              <p className="small" key={key}><strong>{key.replaceAll('_', ' ')}:</strong> {value || '—'}</p>
+            ))}
+            <div className="actions">
+              <button type="button" className="btn small primary" onClick={() => {
+                const next = { ...draft };
+                for (const [key, value] of Object.entries(maskPreview.data.masked_fields)) {
+                  if (key in next) (next as Record<string, unknown>)[key] = value;
+                }
+                setDraft(next);
+                setMaskReviewOpen(false);
+              }}>Use masked copy</button>
+              <button type="button" className="btn small ghost" onClick={() => setMaskReviewOpen(false)}>Keep editing</button>
+            </div>
+          </aside>
+        )}
+        {maskReviewOpen && maskPreview.isError && <p className="alert error small">Privacy preview is unavailable; the server will still mask text before persistence.</p>}
         {suggestions.data?.available && (
           <aside className="suggestion-panel" aria-label="Possible duplicate requests">
             <div>
