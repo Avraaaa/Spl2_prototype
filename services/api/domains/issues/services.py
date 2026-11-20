@@ -41,6 +41,12 @@ OTP_KEYWORDS = re.compile(
 )
 OTP_DIGITS = re.compile(r"(?<![\w\u0980-\u09ff])[0-9\u09e6-\u09ef]{4,8}(?![\w\u0980-\u09ff])")
 SENTENCE_TEXT = re.compile(r"[^.!?\u0964\r\n]+")
+CARD_DIGITS = re.compile(r"(?<!\d)(?:\d[ .-]?){12,18}\d(?!\d)")
+ACCOUNT_NUMBER = re.compile(
+    r"(?i)(?<![\w\u0980-\u09ff])(?:account|a/c|acct|account\s+no(?:\.|\s+number)?)"
+    r"(?:[^0-9\r\n]{0,24})(?:\d[ -]?){7,19}\d(?!\d)"
+)
+PHONE_NUMBER = re.compile(r"(?<!\d)(?:\+?8801|01)[ -]?\d{3}[ -]?\d{3}[ -]?\d{2,3}(?!\d)")
 
 
 def is_officer(user: User) -> bool:
@@ -72,9 +78,39 @@ def _mask_otp_in_sentence(sentence: re.Match[str]) -> str:
 
 
 def mask_sensitive(value: str) -> str:
-    """Mask PANs and nearby OTP/PIN tokens before persistence; human review is still needed."""
-    value = re.sub(r"(?<!\d)(?:\d[ .-]?){12,18}\d(?!\d)", "[CARD REDACTED]", value)
+    """Mask common sensitive values before persistence; human review is still needed."""
+    value = CARD_DIGITS.sub("[CARD REDACTED]", value)
+    value = ACCOUNT_NUMBER.sub("[ACCOUNT_NUMBER]", value)
+    value = PHONE_NUMBER.sub("[PHONE_NUMBER]", value)
     return SENTENCE_TEXT.sub(_mask_otp_in_sentence, value)
+
+
+MASKABLE_FIELDS = frozenset(
+    {
+        "title",
+        "description",
+        "environment",
+        "steps_to_reproduce",
+        "expected_result",
+        "actual_result",
+    }
+)
+
+
+def mask_sensitive_with_detections(value: str) -> tuple[str, list[str]]:
+    """Return a review-safe masked copy and categories, never the original tokens."""
+    masked = mask_sensitive(value)
+    categories: list[str] = []
+    markers = (
+        ("[CARD REDACTED]", "card"),
+        ("[ACCOUNT_NUMBER]", "account"),
+        ("[PHONE_NUMBER]", "phone"),
+        ("[OTP REDACTED]", "otp"),
+    )
+    for marker, category in markers:
+        if marker in masked:
+            categories.append(category)
+    return masked, categories
 
 
 def _clean(fields: dict) -> dict:

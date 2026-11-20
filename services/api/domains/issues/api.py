@@ -31,11 +31,38 @@ from .serializers import (
     IssueEventSerializer,
     IssueSerializer,
     IssueWriteSerializer,
+    MaskPreviewResponseSerializer,
+    MaskPreviewSerializer,
     ReasonSerializer,
     TransitionVersionSerializer,
     WorkflowAssigneeSerializer,
     WorkflowSettingsSerializer,
 )
+
+
+class MaskPreviewView(APIView):
+    @extend_schema(
+        request=MaskPreviewSerializer,
+        responses=MaskPreviewResponseSerializer,
+        tags=["privacy"],
+    )
+    def post(self, request: Request) -> Response:
+        data = MaskPreviewSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        masked_fields: dict[str, str] = {}
+        detected: set[str] = set()
+        for key, value in data.validated_data["fields"].items():
+            if key not in services.MASKABLE_FIELDS:
+                raise ValidationError({"fields": {key: "This field cannot be previewed."}})
+            masked, kinds = services.mask_sensitive_with_detections(value)
+            masked_fields[key] = masked
+            detected.update(kinds)
+        return Response(
+            {
+                "masked_fields": masked_fields,
+                "detected_types": sorted(detected),
+            }
+        )
 
 
 def visible_rows(user):

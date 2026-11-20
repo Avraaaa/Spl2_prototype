@@ -191,6 +191,17 @@ class IssueWriteSerializer(serializers.Serializer):
         return attrs
 
 
+class MaskPreviewSerializer(serializers.Serializer):
+    fields = serializers.DictField(
+        child=serializers.CharField(max_length=20000, allow_blank=True), allow_empty=True
+    )
+
+
+class MaskPreviewResponseSerializer(serializers.Serializer):
+    masked_fields = serializers.DictField(child=serializers.CharField(allow_blank=True))
+    detected_types = serializers.ListField(child=serializers.CharField())
+
+
 class IssueDraftEditSerializer(IssueWriteSerializer):
     version = serializers.IntegerField(min_value=1, required=False)
 

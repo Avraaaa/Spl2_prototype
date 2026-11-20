@@ -10,6 +10,7 @@ from .api import (
     IssueEventDetailView,
     IssueFailVerificationView,
     IssueListView,
+    MaskPreviewView,
     IssueRejectView,
     IssueReopenView,
     IssueStartView,
@@ -21,6 +22,7 @@ from .api import (
 
 urlpatterns = [
     path("issues/", IssueListView.as_view(), name="issue-list"),
+    path("issues/masking-preview/", MaskPreviewView.as_view(), name="issue-masking-preview"),
     path("issues/workflow-settings/", WorkflowSettingsView.as_view(), name="workflow-settings"),
     path("issues/assignees/", WorkflowAssigneesView.as_view(), name="workflow-assignees"),
     path("issues/<int:id>/", IssueDetailView.as_view(), name="issue-detail"),
