@@ -9,7 +9,7 @@ from domains.issues.api import visible_rows
 from domains.tenants.models import Organization
 from domains.tenants.selectors import get_authorized_object_or_404, portal_organization
 
-from .models import Label, SuggestionFeedback, TopicProposal
+from .models import IssueLabelSelection, Label, SuggestionFeedback, TopicProposal
 from .services import candidate_suggestions, create_topic_proposals, label_suggestions
 
 
@@ -101,6 +101,7 @@ class SuggestionsView(APIView):
                     title=data.validated_data["title"],
                     description=data.validated_data["description"],
                     labels=labels,
+                    organization=organization,
                 ),
                 "available": True,
             }
@@ -125,6 +126,16 @@ class SuggestionFeedbackView(APIView):
             fields["label"] = Label.objects.filter(pk=fields["label"], is_active=True).first()
             if fields["label"] is None:
                 raise ValidationError({"label": "Unknown label."})
+        if fields.get("kind") == SuggestionFeedback.Kind.LABEL and fields.get("issue"):
+            issue = fields["issue"]
+            label = fields.get("label")
+            if fields["accepted"] and label is not None:
+                IssueLabelSelection.objects.update_or_create(
+                    issue=issue,
+                    defaults={"label": label, "actor": request.user},
+                )
+            elif not fields["accepted"]:
+                IssueLabelSelection.objects.filter(issue=issue).delete()
         SuggestionFeedback.objects.create(actor=request.user, organization=organization, **fields)
         return Response({"recorded": True}, status=status.HTTP_201_CREATED)
 

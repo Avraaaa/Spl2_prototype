@@ -15,6 +15,7 @@ import { ReportsPage } from '../features/reports/ReportsPage';
 import { TasksPage } from '../features/tasks/TasksPage';
 import { AdminFrame, WorkflowSettingsPage } from '../features/tenants/AdminFrame';
 import { UsersAdminPage } from '../features/tenants/UsersAdminPage';
+import { LabelAdminPage } from '../features/tenants/LabelAdminPage';
 import { Shell } from './Shell';
 
 function Guarded({ user, children }: { user: PortalUser | null | undefined; children: (u: PortalUser) => ReactNode }) {
@@ -57,6 +58,7 @@ export function App() {
       <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
       <Route path="/admin/users" element={page(u => <AdminFrame><UsersAdminPage me={u} /></AdminFrame>)} />
       <Route path="/admin/products" element={page(() => <AdminFrame><ProductsPage /></AdminFrame>)} />
+      <Route path="/admin/labels" element={page(() => <AdminFrame><LabelAdminPage /></AdminFrame>)} />
       <Route path="/admin/settings" element={page(() => <AdminFrame><WorkflowSettingsPage /></AdminFrame>)} />
       <Route path="*" element={<Navigate to={landingFor(user ?? null)} replace />} />
     </Routes>

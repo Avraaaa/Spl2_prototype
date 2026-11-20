@@ -6,6 +6,7 @@ import { WorkflowSettingsPanel } from '../workflow/WorkflowActions';
 const SECTIONS = [
   { to: '/admin/users', label: 'Users & banks' },
   { to: '/admin/products', label: 'Products' },
+  { to: '/admin/labels', label: 'Issue labels' },
   { to: '/admin/settings', label: 'Workflow settings' },
 ];
 

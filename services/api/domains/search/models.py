@@ -35,6 +35,17 @@ class SuggestionFeedback(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
+class IssueLabelSelection(models.Model):
+    """The latest human-confirmed label for a request."""
+
+    issue = models.OneToOneField(
+        Issue, on_delete=models.PROTECT, related_name="label_selection"
+    )
+    label = models.ForeignKey(Label, on_delete=models.PROTECT, related_name="issue_selections")
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    selected_at = models.DateTimeField(auto_now=True)
+
+
 class TopicProposal(models.Model):
     organization = models.ForeignKey(
         Organization, on_delete=models.PROTECT, related_name="topic_proposals"

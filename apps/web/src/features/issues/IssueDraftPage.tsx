@@ -99,12 +99,14 @@ function DraftForm({ existing }: { existing?: Issue }) {
   const [stored, setStored] = useState<Stored | null>(existing ? { id: existing.id, version: existing.version ?? 1 } : null);
   const [errors, setErrors] = useState<DraftErrors>({});
   const [attachments, setAttachments] = useState<QueuedFile[]>([]);
-  const [suggestionInput, setSuggestionInput] = useState({ title: '', description: '' });
+  const [suggestionInput, setSuggestionInput] = useState({ title: '', description: '', product: null as number | null, module: null as number | null });
+  const [selectedLabel, setSelectedLabel] = useState<{ id: number; name: string } | null>(null);
+  const [labelTouched, setLabelTouched] = useState(false);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setSuggestionInput({ title: draft.title ?? '', description: draft.description ?? '' }), 500);
+    const timer = window.setTimeout(() => setSuggestionInput({ title: draft.title ?? '', description: draft.description ?? '', product: draft.product ?? null, module: draft.module ?? null }), 500);
     return () => window.clearTimeout(timer);
-  }, [draft.title, draft.description]);
+  }, [draft.title, draft.description, draft.product, draft.module]);
 
   const suggestions = useQuery({
     queryKey: ['search-suggestions', suggestionInput.title, suggestionInput.description],
@@ -120,6 +122,14 @@ function DraftForm({ existing }: { existing?: Issue }) {
     mutationFn: async (candidateIssue: number) => {
       const { data, error } = await api.POST('/api/search/feedback/', {
         body: { kind: 'duplicate', accepted: false, candidate_issue: candidateIssue },
+      });
+      if (!data) throw new Error(errorMessage(error));
+    },
+  });
+  const labelFeedback = useMutation({
+    mutationFn: async ({ issue, label, accepted }: { issue: number; label: number | null; accepted: boolean }) => {
+      const { data, error } = await api.POST('/api/search/feedback/', {
+        body: { kind: 'label', accepted, issue, label },
       });
       if (!data) throw new Error(errorMessage(error));
     },
@@ -194,6 +204,9 @@ function DraftForm({ existing }: { existing?: Issue }) {
       }
       if (uploadFailed) {
         throw new Error('Your draft was saved, but one or more attachments could not be uploaded.');
+      }
+      if (labelTouched) {
+        await labelFeedback.mutateAsync({ issue: saved.id, label: selectedLabel?.id ?? null, accepted: selectedLabel !== null });
       }
       if (!submit) return saved.id;
       const { data, error } = await api.POST('/api/issues/{id}/submit/', { params: { path: { id: saved.id } } });
@@ -272,7 +285,27 @@ function DraftForm({ existing }: { existing?: Issue }) {
                 </div>
               );
             })}
-            {(suggestions.data.labels ?? []).length > 0 && <p className="muted small">Suggested labels: {(suggestions.data.labels ?? []).map(row => typeof row.name === 'string' ? row.name : '').filter(Boolean).join(', ')}</p>}
+            {(suggestions.data.labels ?? []).length > 0 && (
+              <div className="suggestion-labels">
+                <span className="muted small">Suggested labels:</span>
+                {(suggestions.data.labels ?? []).map(row => {
+                  if (typeof row.id !== 'number' || typeof row.name !== 'string') return null;
+                  const active = selectedLabel?.id === row.id;
+                  return (
+                    <button
+                      type="button"
+                      className={active ? 'chip ok' : 'chip'}
+                      key={row.id}
+                      onClick={() => { setSelectedLabel({ id: row.id as number, name: row.name as string }); setLabelTouched(true); }}
+                    >
+                      {row.name} {active ? '✓' : 'Use'}
+                    </button>
+                  );
+                })}
+                <button type="button" className="btn small ghost" onClick={() => { setSelectedLabel(null); setLabelTouched(true); }}>Remove</button>
+              </div>
+            )}
+            {selectedLabel && <p className="muted small">Selected label: <strong>{selectedLabel.name}</strong></p>}
           </aside>
         )}
         {suggestions.isError && <p className="muted small">Suggestions are temporarily unavailable; you can continue.</p>}

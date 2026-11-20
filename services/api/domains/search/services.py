@@ -16,7 +16,7 @@ from pgvector.django import CosineDistance
 from domains.issues.models import Issue, IssueStatus
 from domains.issues.services import mask_sensitive
 
-from .models import Label, TopicProposal
+from .models import IssueLabelSelection, Label, TopicProposal
 
 TOKEN = re.compile(r"[\w\u0980-\u09ff]{2,}", re.UNICODE)
 
@@ -135,12 +135,25 @@ def candidate_suggestions(
     ]
 
 
-def label_suggestions(*, title: str, description: str, labels: Iterable[Label]) -> list[dict]:
+def label_suggestions(
+    *, title: str, description: str, labels: Iterable[Label], organization=None
+) -> list[dict]:
     tokens = _tokens(f"{title} {description}")
     suggestions: list[dict[str, object]] = []
     for label in labels:
-        keywords = {str(value).casefold() for value in label.keywords if isinstance(value, str)}
-        score = _score(tokens, keywords)
+        label_tokens = _tokens(label.description)
+        label_tokens.update(
+            str(value).casefold() for value in label.keywords if isinstance(value, str)
+        )
+        score = _score(tokens, label_tokens)
+        selections = IssueLabelSelection.objects.filter(label=label).select_related("issue")
+        if organization is not None:
+            selections = selections.filter(issue__organization=organization)
+        for selection in selections[:25]:
+            score = max(
+                score,
+                _score(tokens, _tokens(f"{selection.issue.title} {selection.issue.description}")),
+            )
         if score >= label.confidence_threshold:
             suggestions.append({"id": label.pk, "name": label.name, "score": round(score, 4)})
     return sorted(
