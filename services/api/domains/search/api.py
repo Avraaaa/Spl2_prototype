@@ -16,6 +16,8 @@ from .services import candidate_suggestions, create_topic_proposals, label_sugge
 class SuggestionRequest(serializers.Serializer):
     title = serializers.CharField(max_length=200, allow_blank=True)
     description = serializers.CharField(max_length=20000, allow_blank=True)
+    product = serializers.IntegerField(min_value=1, required=False, allow_null=True)
+    module = serializers.IntegerField(min_value=1, required=False, allow_null=True)
 
 
 class FeedbackRequest(serializers.Serializer):
@@ -95,7 +97,11 @@ class SuggestionsView(APIView):
         return Response(
             {
                 "duplicates": candidate_suggestions(rows, **data.validated_data),
-                "labels": label_suggestions(labels=labels, **data.validated_data),
+                "labels": label_suggestions(
+                    title=data.validated_data["title"],
+                    description=data.validated_data["description"],
+                    labels=labels,
+                ),
                 "available": True,
             }
         )

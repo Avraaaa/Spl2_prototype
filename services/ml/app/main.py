@@ -20,9 +20,17 @@ class MaskResponse(BaseModel):
     review_required: bool = True
 
 
-class EmbedResponse(BaseModel):
+class ReadinessResponse(BaseModel):
     enabled: bool
     reason: str | None = None
+
+
+class EmbeddingRequest(BaseModel):
+    texts: list[str] = Field(min_length=1, max_length=100)
+
+
+class EmbeddingResponse(BaseModel):
+    vectors: list[list[float]]
 
 
 class RankRequest(BaseModel):
@@ -57,12 +65,12 @@ def mask(payload: MaskRequest) -> MaskResponse:
 
 @app.get(
     "/internal/embedding-readiness",
-    response_model=EmbedResponse,
+    response_model=ReadinessResponse,
     dependencies=[Depends(service_auth)],
 )
-def embedding_readiness() -> EmbedResponse:
+def embedding_readiness() -> ReadinessResponse:
     if os.getenv("ML_MODEL_ENABLED", "0") != "1":
-        return EmbedResponse(
+        return ReadinessResponse(
             enabled=False,
             reason="Model deliberately disabled until approved local checkpoint is pinned",
         )
@@ -71,8 +79,24 @@ def embedding_readiness() -> EmbedResponse:
 
         load_local_sentence_transformer()
     except Exception as exc:
-        return EmbedResponse(enabled=False, reason=type(exc).__name__)
-    return EmbedResponse(enabled=True)
+        return ReadinessResponse(enabled=False, reason=type(exc).__name__)
+    return ReadinessResponse(enabled=True)
+
+
+@app.post("/internal/embed", response_model=EmbeddingResponse, dependencies=[Depends(service_auth)])
+def embed(payload: EmbeddingRequest) -> EmbeddingResponse:
+    try:
+        from app.embedding import load_local_sentence_transformer
+
+        model = load_local_sentence_transformer()
+        vectors = model.encode(
+            [mask_text(text) for text in payload.texts], normalize_embeddings=True
+        )
+        return EmbeddingResponse(vectors=[[float(value) for value in vector] for vector in vectors])
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503, detail=f"Local model unavailable: {type(exc).__name__}"
+        ) from exc
 
 
 @app.post("/internal/rank", response_model=RankResponse, dependencies=[Depends(service_auth)])

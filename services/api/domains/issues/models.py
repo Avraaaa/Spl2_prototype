@@ -2,6 +2,7 @@ from typing import Any
 
 from django.conf import settings
 from django.db import models
+from pgvector.django import VectorField
 
 from domains.products.models import Module, Product
 from domains.tenants.models import Organization
@@ -80,6 +81,7 @@ class Issue(models.Model):
     submitted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    embedding = VectorField(dimensions=384, null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at", "-id"]
