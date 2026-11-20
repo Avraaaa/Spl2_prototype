@@ -1,10 +1,55 @@
 import hashlib
 import json
+import os
+from pathlib import Path
 
 from django.db import transaction
 from django.utils import timezone
 
 from .models import AuditAnchor, AuditRecord
+
+
+def _external_anchor_token(*, organization_id: int, sequence: int, record_hash: str) -> str:
+    return hashlib.sha256(
+        f"{organization_id}:{sequence}:{record_hash}".encode("utf-8")
+    ).hexdigest()
+
+
+def _external_anchor_file() -> Path | None:
+    value = os.getenv("AUDIT_ANCHOR_FILE", "").strip()
+    return Path(value) if value else None
+
+
+def _write_external_anchor(*, organization_id: int, sequence: int, record_hash: str) -> str:
+    path = _external_anchor_file()
+    if path is None:
+        return ""
+    token = _external_anchor_token(
+        organization_id=organization_id, sequence=sequence, record_hash=record_hash
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps({"organization": organization_id, "sequence": sequence, "token": token}) + "\n")
+    return token
+
+
+def _external_anchor_exists(*, organization_id: int, sequence: int, record_hash: str, token: str) -> bool:
+    path = _external_anchor_file()
+    if path is None or not path.exists():
+        return False
+    expected = _external_anchor_token(
+        organization_id=organization_id, sequence=sequence, record_hash=record_hash
+    )
+    if expected != token:
+        return False
+    for line in path.read_text(encoding="utf-8").splitlines():
+        try:
+            item = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if item == {"organization": organization_id, "sequence": sequence, "token": token}:
+            return True
+    return False
 
 
 def _canonical(
@@ -94,6 +139,13 @@ def verify_chain(organization) -> dict:
         ).first()
         if anchor_record is None:
             return {"valid": False, "first_invalid_sequence": anchor.sequence}
+        if anchor.external_reference and not _external_anchor_exists(
+            organization_id=organization.pk,
+            sequence=anchor.sequence,
+            record_hash=anchor.record_hash,
+            token=anchor.external_reference,
+        ):
+            return {"valid": False, "first_invalid_sequence": anchor.sequence}
     return {"valid": True, "first_invalid_sequence": None}
 
 
@@ -102,8 +154,14 @@ def anchor_head(*, organization, actor) -> AuditAnchor:
     head = AuditRecord.objects.filter(organization=organization).order_by("-sequence").first()
     if head is None:
         raise ValueError("Cannot anchor an empty audit chain")
+    external_reference = _write_external_anchor(
+        organization_id=organization.pk,
+        sequence=head.sequence,
+        record_hash=head.record_hash,
+    )
     return AuditAnchor.objects.create(
         organization=organization,
         sequence=head.sequence,
         record_hash=head.record_hash,
+        external_reference=external_reference,
     )

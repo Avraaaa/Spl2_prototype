@@ -40,4 +40,5 @@ class AuditAnchor(models.Model):
     )
     sequence = models.PositiveBigIntegerField()
     record_hash = models.CharField(max_length=64)
+    external_reference = models.CharField(max_length=128, blank=True)
     anchored_at = models.DateTimeField(auto_now_add=True)
