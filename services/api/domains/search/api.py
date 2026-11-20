@@ -4,12 +4,14 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from domains.accounts.models import Membership
+from domains.accounts.roles import DATASOFT_ROLES
 from domains.accounts.services import is_datasoft_admin
 from domains.issues.api import visible_rows
 from domains.tenants.models import Organization
 from domains.tenants.selectors import get_authorized_object_or_404, portal_organization
 
-from .models import IssueLabelSelection, Label, SuggestionFeedback, TopicProposal
+from .models import DuplicateReview, IssueLabelSelection, Label, SuggestionFeedback, TopicProposal
 from .services import candidate_suggestions, create_topic_proposals, label_suggestions
 
 
@@ -47,6 +49,19 @@ class FeedbackResponse(serializers.Serializer):
 class EvaluationResponse(serializers.Serializer):
     duplicate_feedback = serializers.DictField()
     label_feedback = serializers.DictField()
+
+
+class DuplicateReviewRequest(serializers.Serializer):
+    issue = serializers.IntegerField(min_value=1)
+    candidate_issue = serializers.IntegerField(min_value=1)
+    decision = serializers.ChoiceField(choices=DuplicateReview.Decision.values)
+
+
+class DuplicateReviewResponse(serializers.Serializer):
+    id = serializers.IntegerField()
+    issue = serializers.IntegerField()
+    candidate_issue = serializers.IntegerField()
+    decision = serializers.CharField()
 
 
 class TopicProposalSerializer(serializers.Serializer):
@@ -206,6 +221,90 @@ class SuggestionEvaluationView(APIView):
                 "duplicate_feedback": summary(SuggestionFeedback.Kind.DUPLICATE),
                 "label_feedback": summary(SuggestionFeedback.Kind.LABEL),
             }
+        )
+
+
+def _is_datasoft_staff(user) -> bool:
+    organization = portal_organization(user)
+    return bool(
+        organization
+        and organization.kind == "DATASOFT"
+        and Membership.objects.filter(
+            user=user, organization=organization, role__in=DATASOFT_ROLES
+        ).exists()
+    )
+
+
+class DuplicateCandidatesView(APIView):
+    @extend_schema(responses=SuggestionResponse, tags=["search"])
+    def get(self, request, issue_id):
+        if not _is_datasoft_staff(request.user):
+            raise PermissionDenied("DataSoft staff role required.")
+        issue = get_authorized_object_or_404(
+            request.user, visible_rows(request.user), issue_id, allow_datasoft=True
+        )
+        rows = visible_rows(request.user).filter(organization=issue.organization)
+        return Response(
+            {
+                "duplicates": candidate_suggestions(
+                    rows,
+                    title=issue.title,
+                    description=issue.description,
+                    product=issue.product_id,
+                    module=issue.module_id,
+                ),
+                "labels": [],
+                "available": True,
+            }
+        )
+
+
+class DuplicateReviewView(APIView):
+    @extend_schema(
+        request=DuplicateReviewRequest,
+        responses=DuplicateReviewResponse,
+        tags=["search"],
+    )
+    def post(self, request):
+        if not _is_datasoft_staff(request.user):
+            raise PermissionDenied("DataSoft staff role required.")
+        data = DuplicateReviewRequest(data=request.data)
+        data.is_valid(raise_exception=True)
+        issue = get_authorized_object_or_404(
+            request.user,
+            visible_rows(request.user),
+            data.validated_data["issue"],
+            allow_datasoft=True,
+        )
+        candidate = get_authorized_object_or_404(
+            request.user,
+            visible_rows(request.user),
+            data.validated_data["candidate_issue"],
+            allow_datasoft=True,
+        )
+        if issue.organization_id != candidate.organization_id or issue.pk == candidate.pk:
+            raise ValidationError("Requests must be distinct and belong to the same organization.")
+        decision = data.validated_data["decision"]
+        if decision == DuplicateReview.Decision.RECURRING:
+            if candidate.status != "CLOSED":
+                raise ValidationError("Only a closed request can be marked as recurring.")
+            issue.recurring_of = candidate
+            issue.version += 1
+            issue.save(update_fields=["recurring_of", "version", "updated_at"])
+        review = DuplicateReview.objects.create(
+            issue=issue,
+            candidate_issue=candidate,
+            actor=request.user,
+            decision=decision,
+        )
+        return Response(
+            {
+                "id": review.pk,
+                "issue": review.issue_id,
+                "candidate_issue": review.candidate_issue_id,
+                "decision": review.decision,
+            },
+            status=status.HTTP_201_CREATED,
         )
 
 

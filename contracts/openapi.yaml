@@ -1460,6 +1460,52 @@ paths:
                 type: string
                 format: binary
           description: ''
+  /api/search/duplicate-candidates/{issue_id}/:
+    get:
+      operationId: search_duplicate_candidates_retrieve
+      parameters:
+      - in: path
+        name: issue_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - search
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuggestionResponse'
+          description: ''
+  /api/search/duplicate-reviews/:
+    post:
+      operationId: search_duplicate_reviews_create
+      tags:
+      - search
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DuplicateReviewRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DuplicateReviewRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DuplicateReviewRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DuplicateReviewResponse'
+          description: ''
   /api/search/evaluation/:
     get:
       operationId: search_evaluation_retrieve
@@ -1997,6 +2043,16 @@ components:
           default: false
       required:
       - version
+    DecisionEnum:
+      enum:
+      - confirmed
+      - recurring
+      - dismissed
+      type: string
+      description: |-
+        * `confirmed` - confirmed
+        * `recurring` - recurring
+        * `dismissed` - dismissed
     DeliveryRequest:
       type: object
       properties:
@@ -2064,6 +2120,37 @@ components:
       - submission_date
       - tentative_delivery_date
       - title
+    DuplicateReviewRequestRequest:
+      type: object
+      properties:
+        issue:
+          type: integer
+          minimum: 1
+        candidate_issue:
+          type: integer
+          minimum: 1
+        decision:
+          $ref: '#/components/schemas/DecisionEnum'
+      required:
+      - candidate_issue
+      - decision
+      - issue
+    DuplicateReviewResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        issue:
+          type: integer
+        candidate_issue:
+          type: integer
+        decision:
+          type: string
+      required:
+      - candidate_issue
+      - decision
+      - id
+      - issue
     Error:
       type: object
       properties:

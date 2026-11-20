@@ -796,6 +796,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/search/duplicate-candidates/{issue_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["search_duplicate_candidates_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/search/duplicate-reviews/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["search_duplicate_reviews_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/search/evaluation/": {
         parameters: {
             query?: never;
@@ -1034,6 +1066,13 @@ export interface components {
             /** @default false */
             tentative_delivery_later: boolean;
         };
+        /**
+         * @description * `confirmed` - confirmed
+         *     * `recurring` - recurring
+         *     * `dismissed` - dismissed
+         * @enum {string}
+         */
+        DecisionEnum: "confirmed" | "recurring" | "dismissed";
         DeliveryRequest: {
             version: number;
             delivery_note: string;
@@ -1054,6 +1093,17 @@ export interface components {
             last_status_update_date: string | null;
             closure_date: string | null;
             is_overdue: boolean;
+        };
+        DuplicateReviewRequestRequest: {
+            issue: number;
+            candidate_issue: number;
+            decision: components["schemas"]["DecisionEnum"];
+        };
+        DuplicateReviewResponse: {
+            id: number;
+            issue: number;
+            candidate_issue: number;
+            decision: string;
         };
         Error: {
             detail: string;
@@ -2866,6 +2916,52 @@ export interface operations {
                 };
                 content: {
                     "text/csv": string;
+                };
+            };
+        };
+    };
+    search_duplicate_candidates_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                issue_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionResponse"];
+                };
+            };
+        };
+    };
+    search_duplicate_reviews_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DuplicateReviewRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DuplicateReviewRequestRequest"];
+                "multipart/form-data": components["schemas"]["DuplicateReviewRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DuplicateReviewResponse"];
                 };
             };
         };

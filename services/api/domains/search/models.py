@@ -44,6 +44,21 @@ class IssueLabelSelection(models.Model):
     selected_at = models.DateTimeField(auto_now=True)
 
 
+class DuplicateReview(models.Model):
+    class Decision(models.TextChoices):
+        CONFIRMED = "confirmed", "Confirmed duplicate"
+        RECURRING = "recurring", "Marked recurring"
+        DISMISSED = "dismissed", "Dismissed"
+
+    issue = models.ForeignKey(Issue, on_delete=models.PROTECT, related_name="duplicate_reviews")
+    candidate_issue = models.ForeignKey(
+        Issue, on_delete=models.PROTECT, related_name="duplicate_candidates"
+    )
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    decision = models.CharField(max_length=20, choices=Decision.choices)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
 class TopicProposal(models.Model):
     organization = models.ForeignKey(
         Organization, on_delete=models.PROTECT, related_name="topic_proposals"
