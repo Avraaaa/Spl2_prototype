@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../api/client';
 import type { components } from '../../api/generated/schema';
 import { errorMessage } from '../auth/hooks';
@@ -113,6 +113,53 @@ function Timeline({ row }: { row: Issue }) {
   );
 }
 
+function DuplicateReview({ row, me }: { row: Issue; me: PortalUser }) {
+  const qc = useQueryClient();
+  const candidates = useQuery({
+    queryKey: ['duplicate-candidates', row.id],
+    enabled: isStaff(me),
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/search/duplicate-candidates/{issue_id}/', { params: { path: { issue_id: row.id } } });
+      if (!data) throw new Error(errorMessage(error));
+      return data;
+    },
+  });
+  const review = useMutation({
+    mutationFn: async ({ candidateIssue, decision }: { candidateIssue: number; decision: 'confirmed' | 'recurring' | 'dismissed' }) => {
+      const { data, error } = await api.POST('/api/search/duplicate-reviews/', {
+        body: { issue: row.id, candidate_issue: candidateIssue, decision },
+      });
+      if (!data) throw new Error(errorMessage(error));
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['duplicate-candidates', row.id] }); qc.invalidateQueries({ queryKey: ISSUE_KEY }); },
+  });
+  if (!isStaff(me)) return null;
+  const duplicates = candidates.data?.duplicates ?? [];
+  return (
+    <section className="card stack" aria-label="Possible duplicate review">
+      <div><h3>Possible duplicates</h3><p className="muted small">Review same-bank matches. Nothing is merged automatically.</p></div>
+      {candidates.isPending && <p className="muted small">Checking similar requests…</p>}
+      {candidates.isError && <p className="alert error small">Duplicate suggestions are unavailable.</p>}
+      {!candidates.isPending && duplicates.length === 0 && <p className="muted small">No likely duplicate found.</p>}
+      {duplicates.map(candidate => {
+        if (typeof candidate.id !== 'number' || typeof candidate.title !== 'string') return null;
+        const closed = candidate.status === 'CLOSED';
+        return (
+          <div className="suggestion-row" key={candidate.id}>
+            <span><strong>{typeof candidate.reference === 'string' ? candidate.reference : `Request ${candidate.id}`}</strong> · {candidate.title}</span>
+            <span className="actions">
+              <button className="btn small" disabled={review.isPending} onClick={() => review.mutate({ candidateIssue: candidate.id as number, decision: 'confirmed' })}>Confirm</button>
+              {closed && <button className="btn small" disabled={review.isPending} onClick={() => review.mutate({ candidateIssue: candidate.id as number, decision: 'recurring' })}>Recurring</button>}
+              <button className="btn small ghost" disabled={review.isPending} onClick={() => review.mutate({ candidateIssue: candidate.id as number, decision: 'dismissed' })}>Dismiss</button>
+            </span>
+          </div>
+        );
+      })}
+      {review.isError && <p className="alert error small">{review.error.message}</p>}
+    </section>
+  );
+}
+
 function DraftActions({ row }: { row: Issue }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -216,6 +263,7 @@ export function IssueDetailPage({ me }: { me: PortalUser }) {
       <div className="detail-layout">
         <div className="stack main-col">
           <Details row={row} />
+          <DuplicateReview row={row} me={me} />
           <Delivery row={row} />
           <Timeline row={row} />
           <Conversation id={id} me={me} />
