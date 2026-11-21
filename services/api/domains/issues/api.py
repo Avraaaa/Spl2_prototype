@@ -1,10 +1,12 @@
+import re
+
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import F, Q
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -13,6 +15,7 @@ from rest_framework.views import APIView
 from domains.accounts.models import Membership
 from domains.accounts.roles import DATASOFT_ROLES
 from domains.accounts.services import is_datasoft_admin
+from domains.audit.services import append_record
 from domains.tenants.models import OrganizationKind
 from domains.tenants.selectors import (
     authorized_rows,
@@ -21,7 +24,16 @@ from domains.tenants.selectors import (
 )
 
 from . import services, workflow
-from .models import Issue, IssueEvent, IssueStatus, Priority, RequestType, WorkflowSettings
+from .models import (
+    Issue,
+    IssueEvent,
+    IssueOriginalText,
+    IssueStatus,
+    MaskingPattern,
+    Priority,
+    RequestType,
+    WorkflowSettings,
+)
 from .serializers import (
     AcceptSerializer,
     AssignSerializer,
@@ -61,6 +73,114 @@ class MaskPreviewView(APIView):
             {
                 "masked_fields": masked_fields,
                 "detected_types": sorted(detected),
+            }
+        )
+
+
+class MaskingPatternSerializer(serializers.ModelSerializer):
+    MAX_ACTIVE_PATTERNS = 20
+    MAX_PATTERN_LENGTH = 200
+
+    class Meta:
+        model = MaskingPattern
+        fields = ("id", "name", "pattern", "replacement", "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+    def validate_pattern(self, value):
+        if len(value) > self.MAX_PATTERN_LENGTH:
+            raise serializers.ValidationError("Pattern must be 200 characters or fewer.")
+        if re.search(r"\([^)]*(?:[+*]|\{\d+(?:,\d*)?\})[^)]*\)[+*{]", value):
+            raise serializers.ValidationError("Nested quantifiers are not allowed.")
+        try:
+            re.compile(value)
+        except re.error as exc:
+            raise serializers.ValidationError(
+                "Pattern must be a valid regular expression."
+            ) from exc
+        return value
+
+    def validate(self, attrs):
+        is_active = attrs.get("is_active", getattr(self.instance, "is_active", True))
+        becoming_active = is_active and (self.instance is None or not self.instance.is_active)
+        if (
+            becoming_active
+            and MaskingPattern.objects.filter(is_active=True).count() >= self.MAX_ACTIVE_PATTERNS
+        ):
+            raise serializers.ValidationError(
+                {"is_active": "At most 20 custom patterns may be active."}
+            )
+        return attrs
+
+
+class MaskingPatternsView(APIView):
+    @extend_schema(responses=MaskingPatternSerializer(many=True), tags=["privacy"])
+    def get(self, request):
+        if not is_datasoft_admin(request.user):
+            raise PermissionDenied("DataSoft Administrator role required.")
+        return Response(MaskingPatternSerializer(MaskingPattern.objects.all(), many=True).data)
+
+    @extend_schema(
+        request=MaskingPatternSerializer,
+        responses={201: MaskingPatternSerializer},
+        tags=["privacy"],
+    )
+    def post(self, request):
+        if not is_datasoft_admin(request.user):
+            raise PermissionDenied("DataSoft Administrator role required.")
+        data = MaskingPatternSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        pattern = data.save()
+        return Response(MaskingPatternSerializer(pattern).data, status=status.HTTP_201_CREATED)
+
+
+class MaskingPatternDetailView(APIView):
+    @extend_schema(
+        request=MaskingPatternSerializer, responses=MaskingPatternSerializer, tags=["privacy"]
+    )
+    def patch(self, request, id):
+        if not is_datasoft_admin(request.user):
+            raise PermissionDenied("DataSoft Administrator role required.")
+        pattern = MaskingPattern.objects.filter(pk=id).first()
+        if pattern is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        data = MaskingPatternSerializer(pattern, data=request.data, partial=True)
+        data.is_valid(raise_exception=True)
+        pattern = data.save()
+        return Response(MaskingPatternSerializer(pattern).data)
+
+
+class IssueOriginalResponse(serializers.Serializer):
+    title = serializers.CharField(allow_blank=True)
+    description = serializers.CharField(allow_blank=True)
+
+
+class IssueOriginalView(APIView):
+    @extend_schema(responses=IssueOriginalResponse, tags=["privacy"])
+    def get(self, request: Request, id: int) -> Response:
+        issue = get_authorized_object_or_404(
+            request.user, visible_rows(request.user), id, allow_datasoft=True
+        )
+        if not (
+            is_datasoft_admin(request.user)
+            or request.user.has_perm("issues.view_unmasked_original")
+        ):
+            raise PermissionDenied("Original text permission required.")
+        append_record(
+            organization=issue.organization,
+            actor=request.user,
+            action="ISSUE_ORIGINAL_VIEWED",
+            payload={
+                "issue_id": issue.pk,
+                "reference": issue.reference,
+                "request_method": request.method,
+                "request_path": request.path,
+            },
+        )
+        original = IssueOriginalText.objects.filter(issue=issue).first()
+        return Response(
+            {
+                "title": original.title if original else issue.title,
+                "description": original.description if original else issue.description,
             }
         )
 

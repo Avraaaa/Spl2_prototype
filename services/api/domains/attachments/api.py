@@ -1,6 +1,7 @@
 from pathlib import Path
 from zipfile import BadZipFile, ZipFile
 
+from django.core.files.base import ContentFile
 from django.http import FileResponse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
@@ -10,7 +11,9 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from domains.accounts.services import is_datasoft_admin
 from domains.issues.api import visible_rows
+from domains.issues.services import mask_extracted_text, safe_original_text
 from domains.tenants.selectors import get_authorized_object_or_404
 
 from .models import Attachment
@@ -126,6 +129,22 @@ class IssueAttachmentListView(APIView):
         data.is_valid(raise_exception=True)
         upload = data.validated_data["file"]
         content_type = checked_file(upload)
+        if Path(upload.name).suffix.lower() in {".txt", ".csv", ".log"}:
+            # Keep the uploaded original private in storage. Only the separate
+            # copy sent to NLP is masked.
+            upload.seek(0)
+            extracted_text = upload.read().decode("utf-8")
+            masked_text = mask_extracted_text(extracted_text)
+            masked_bytes = masked_text.encode("utf-8")
+            # Persist a reviewable copy with only mandatory OTP/card
+            # protections applied; configurable detections stay in the NLP copy.
+            upload = ContentFile(
+                safe_original_text(extracted_text).encode("utf-8"),
+                name=Path(upload.name).name,
+            )
+            from domains.search.services import _ml_embeddings
+
+            _ml_embeddings([masked_bytes[:20_000].decode("utf-8", errors="ignore")])
         comment = None
         if "comment" in data.validated_data:
             comment = get_authorized_object_or_404(
@@ -160,12 +179,40 @@ class AttachmentDownloadView(APIView):
             organization_field="issue__organization",
             allow_datasoft=True,
         )
-        response = FileResponse(
-            attachment.file.open("rb"),
-            as_attachment=not attachment.content_type.startswith("image/"),
-            filename=attachment.original_name,
-            content_type=attachment.content_type,
+        is_text = Path(attachment.original_name).suffix.lower() in {".txt", ".csv", ".log"}
+        may_view_original = is_datasoft_admin(request.user) or request.user.has_perm(
+            "issues.view_unmasked_original"
         )
+        if is_text and not may_view_original:
+            original = attachment.file.open("rb").read().decode("utf-8")
+            masked = mask_extracted_text(original).encode("utf-8")
+            response = FileResponse(
+                ContentFile(masked),
+                as_attachment=True,
+                filename=attachment.original_name,
+                content_type=attachment.content_type,
+            )
+        else:
+            if is_text:
+                from domains.audit.services import append_record
+
+                append_record(
+                    organization=attachment.issue.organization,
+                    actor=request.user,
+                    action="ATTACHMENT_ORIGINAL_VIEWED",
+                    payload={
+                        "attachment_id": attachment.pk,
+                        "issue_id": attachment.issue_id,
+                        "request_method": request.method,
+                        "request_path": request.path,
+                    },
+                )
+            response = FileResponse(
+                attachment.file.open("rb"),
+                as_attachment=not attachment.content_type.startswith("image/"),
+                filename=attachment.original_name,
+                content_type=attachment.content_type,
+            )
         response["Cache-Control"] = "private, no-store"
         response["X-Content-Type-Options"] = "nosniff"
         return response

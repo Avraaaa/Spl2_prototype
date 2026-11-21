@@ -43,3 +43,7 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] I did not re-run the gates. The prompt reports validate-repo, makemigrations, check-contract, lint and test all exit 0.
 - [ ] [follow-up] removeQueries keeps every query under the 'auth' key prefix, not just ME_KEY. If other auth-scoped queries are added later, they will survive a user switch. Match the full ME_KEY instead.
 - [ ] [follow-up] I did not confirm in the diff that the banner is hidden until a save/submit attempt. Only hasErrors and set() changed; whether the banner is gated on an attempt flag is unverified.
+
+## P7-T1 — 2026-11-21
+- [ ] [follow-up] Custom regex validation blocks invalid syntax, long patterns, and one nested-quantifier form, but other potentially expensive expressions may still be accepted. Consider stronger regex restrictions or a timeout.
+- [ ] [follow-up] Tests cover tenant isolation for original issue text and masking before attachment NLP, but do not directly verify cross-tenant attachment downloads or audit-chain verification.

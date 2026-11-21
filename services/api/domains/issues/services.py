@@ -47,6 +47,7 @@ ACCOUNT_NUMBER = re.compile(
     r"(?:[^0-9\r\n]{0,24})(?:\d[ -]?){7,19}\d(?!\d)"
 )
 PHONE_NUMBER = re.compile(r"(?<!\d)(?:\+?8801|01)[ -]?\d{3}[ -]?\d{3}[ -]?\d{2,3}(?!\d)")
+MAX_CUSTOM_PATTERN_SCAN = 20_000
 
 
 def is_officer(user: User) -> bool:
@@ -77,11 +78,44 @@ def _mask_otp_in_sentence(sentence: re.Match[str]) -> str:
     return OTP_DIGITS.sub(replace_digits, text)
 
 
+def _replace_with_configured_value(_match: re.Match[str], *, replacement: str) -> str:
+    return replacement
+
+
 def mask_sensitive(value: str) -> str:
     """Mask common sensitive values before persistence; human review is still needed."""
+    from .models import MaskingPattern
+
+    prefix = value[:MAX_CUSTOM_PATTERN_SCAN]
+    suffix = value[MAX_CUSTOM_PATTERN_SCAN:]
+    for rule in MaskingPattern.objects.filter(is_active=True).only("pattern", "replacement")[:20]:
+        try:
+            replacement = rule.replacement
+            prefix = re.sub(
+                rule.pattern,
+                partial(_replace_with_configured_value, replacement=replacement),
+                prefix,
+            )
+        except re.error:
+            # Invalid persisted patterns fail closed by being ignored.
+            continue
+    value = prefix + suffix
+    # Mandatory detectors run after administrator rules so custom masking can
+    # replace a complete token first, while built-in protections always run.
     value = CARD_DIGITS.sub("[CARD REDACTED]", value)
     value = ACCOUNT_NUMBER.sub("[ACCOUNT_NUMBER]", value)
     value = PHONE_NUMBER.sub("[PHONE_NUMBER]", value)
+    return SENTENCE_TEXT.sub(_mask_otp_in_sentence, value)
+
+
+def mask_extracted_text(value: str) -> str:
+    """Mask text extracted from a text attachment before it can reach NLP."""
+    return mask_sensitive(value)
+
+
+def safe_original_text(value: str) -> str:
+    """Retain reviewable original text while irreversibly removing OTPs and card numbers."""
+    value = CARD_DIGITS.sub("[CARD REDACTED]", value)
     return SENTENCE_TEXT.sub(_mask_otp_in_sentence, value)
 
 
@@ -149,6 +183,13 @@ def create_draft(user, fields: dict) -> Issue:
     with transaction.atomic():
         _validate_links(user, fields)
         issue = Issue.objects.create(organization=organization, created_by=user, **_clean(fields))
+        from .models import IssueOriginalText
+
+        IssueOriginalText.objects.create(
+            issue=issue,
+            title=safe_original_text(fields.get("title", "")),
+            description=safe_original_text(fields.get("description", "")),
+        )
         # BigAutoField uses the database sequence; this reference is immutable thereafter.
         issue.reference = f"SR-{issue.pk + 1023}"
         issue.save(update_fields=["reference", "updated_at"])
@@ -170,8 +211,18 @@ def edit_draft(user, issue: Issue, fields: dict) -> Issue:
             raise VersionConflict("This request was changed by someone else — reload.")
         _validate_links(user, fields, locked)
         changes = {key: value for key, value in fields.items() if key != "version"}
+        original_fields = {
+            key: value for key, value in changes.items() if key in {"title", "description"}
+        }
         for key, value in _clean(changes).items():
             setattr(locked, key, value)
+        if original_fields:
+            from .models import IssueOriginalText
+
+            original, _ = IssueOriginalText.objects.get_or_create(issue=locked)
+            for key, value in original_fields.items():
+                setattr(original, key, safe_original_text(value))
+            original.save(update_fields=[*original_fields, "updated_at"])
         locked.version += 1
         locked.save()
     return locked

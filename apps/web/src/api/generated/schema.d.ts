@@ -476,6 +476,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/issues/{id}/original/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["issues_original_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/issues/{id}/reject/": {
         parameters: {
             query?: never;
@@ -586,6 +602,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/issues/masking-patterns/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["issues_masking_patterns_list"];
+        put?: never;
+        post: operations["issues_masking_patterns_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/issues/masking-patterns/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["issues_masking_patterns_partial_update"];
         trace?: never;
     };
     "/api/issues/masking-preview/": {
@@ -1204,6 +1252,10 @@ export interface components {
             /** Format: date-time */
             readonly created_at: string;
         };
+        IssueOriginalResponse: {
+            title: string;
+            description: string;
+        };
         /**
          * @description * `DRAFT` - Draft
          *     * `SUBMITTED` - Submitted
@@ -1268,6 +1320,21 @@ export interface components {
                 [key: string]: string;
             };
             detected_types: string[];
+        };
+        MaskingPattern: {
+            readonly id: number;
+            name: string;
+            pattern: string;
+            replacement?: string;
+            is_active?: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        MaskingPatternRequest: {
+            name: string;
+            pattern: string;
+            replacement?: string;
+            is_active?: boolean;
         };
         Module: {
             readonly id: number;
@@ -1342,6 +1409,12 @@ export interface components {
             keywords?: string[];
             /** Format: double */
             confidence_threshold?: number;
+            is_active?: boolean;
+        };
+        PatchedMaskingPatternRequest: {
+            name?: string;
+            pattern?: string;
+            replacement?: string;
             is_active?: boolean;
         };
         PatchedProfileUpdateRequest: {
@@ -2441,6 +2514,27 @@ export interface operations {
             };
         };
     };
+    issues_original_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueOriginalResponse"];
+                };
+            };
+        };
+    };
     issues_reject_create: {
         parameters: {
             query?: never;
@@ -2612,6 +2706,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkflowAssignee"][];
+                };
+            };
+        };
+    };
+    issues_masking_patterns_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaskingPattern"][];
+                };
+            };
+        };
+    };
+    issues_masking_patterns_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaskingPatternRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["MaskingPatternRequest"];
+                "multipart/form-data": components["schemas"]["MaskingPatternRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaskingPattern"];
+                };
+            };
+        };
+    };
+    issues_masking_patterns_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedMaskingPatternRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedMaskingPatternRequest"];
+                "multipart/form-data": components["schemas"]["PatchedMaskingPatternRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaskingPattern"];
                 };
             };
         };

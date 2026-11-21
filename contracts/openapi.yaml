@@ -938,6 +938,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/Note'
           description: ''
+  /api/issues/{id}/original/:
+    get:
+      operationId: issues_original_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - privacy
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueOriginalResponse'
+          description: ''
   /api/issues/{id}/reject/:
     post:
       operationId: issues_reject_create
@@ -1133,6 +1153,78 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/WorkflowAssignee'
+          description: ''
+  /api/issues/masking-patterns/:
+    get:
+      operationId: issues_masking_patterns_list
+      tags:
+      - privacy
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MaskingPattern'
+          description: ''
+    post:
+      operationId: issues_masking_patterns_create
+      tags:
+      - privacy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaskingPatternRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MaskingPatternRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MaskingPatternRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaskingPattern'
+          description: ''
+  /api/issues/masking-patterns/{id}/:
+    patch:
+      operationId: issues_masking_patterns_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - privacy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMaskingPatternRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMaskingPatternRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMaskingPatternRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaskingPattern'
           description: ''
   /api/issues/masking-preview/:
     post:
@@ -2421,6 +2513,16 @@ components:
       - id
       - kind
       - to_status
+    IssueOriginalResponse:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+      required:
+      - description
+      - title
     IssueStatusEnum:
       enum:
       - DRAFT
@@ -2572,6 +2674,52 @@ components:
       required:
       - detected_types
       - masked_fields
+    MaskingPattern:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        pattern:
+          type: string
+          maxLength: 200
+        replacement:
+          type: string
+          maxLength: 80
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - pattern
+    MaskingPatternRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        pattern:
+          type: string
+          minLength: 1
+          maxLength: 200
+        replacement:
+          type: string
+          minLength: 1
+          maxLength: 80
+        is_active:
+          type: boolean
+      required:
+      - name
+      - pattern
     Module:
       type: object
       properties:
@@ -2798,6 +2946,23 @@ components:
           format: double
           maximum: 1
           minimum: 0
+        is_active:
+          type: boolean
+    PatchedMaskingPatternRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        pattern:
+          type: string
+          minLength: 1
+          maxLength: 200
+        replacement:
+          type: string
+          minLength: 1
+          maxLength: 80
         is_active:
           type: boolean
     PatchedProfileUpdateRequest:

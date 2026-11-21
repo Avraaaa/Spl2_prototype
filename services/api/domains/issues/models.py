@@ -113,3 +113,26 @@ class WorkflowSettings(models.Model):
     """Singleton policy edited only by DataSoft administrators."""
 
     reopen_days = models.PositiveIntegerField(default=30)
+
+
+class MaskingPattern(models.Model):
+    """An additive administrator managed rule; built-in OTP/card rules stay mandatory."""
+
+    name = models.CharField(max_length=100, unique=True)
+    pattern = models.CharField(max_length=200)
+    replacement = models.CharField(max_length=80, default="[SENSITIVE]")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+        permissions = [("view_unmasked_original", "Can view unmasked original issue text")]
+
+
+class IssueOriginalText(models.Model):
+    """Restricted text copy; OTPs and full card numbers are removed before storage."""
+
+    issue = models.OneToOneField(Issue, on_delete=models.CASCADE, related_name="original_text")
+    title = models.CharField(max_length=200, blank=True)
+    description = models.TextField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True)

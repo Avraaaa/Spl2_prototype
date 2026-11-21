@@ -15,9 +15,10 @@
     "P4-T3",
     "P5-T1",
     "P5-T2",
-    "P6-T1"
+    "P6-T1",
+    "P7-T1"
   ],
-  "last_updated": "2026-11-22",
+  "last_updated": "2026-11-21",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
   "evidence": {
     "P0-T1": {
@@ -241,6 +242,25 @@
       "gates": {
         "node scripts/dev.mjs test": 0
       }
+    },
+    "P7-T1": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 2,
+      "base": "35ed8b5d979ebe96ad73d8a083197c51bf98e373",
+      "follow_ups": [
+        "[follow-up] Custom regex validation blocks invalid syntax, long patterns, and one nested-quantifier form, but other potentially expensive expressions may still be accepted. Consider stronger regex restrictions or a timeout.",
+        "[follow-up] Tests cover tenant isolation for original issue text and masking before attachment NLP, but do not directly verify cross-tenant attachment downloads or audit-chain verification."
+      ],
+      "rebased_onto": "2d8dce0d184281a6b572ba62c82360ee70c0fad8"
     }
   },
   "latest_review": "PASS"
