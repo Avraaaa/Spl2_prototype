@@ -11,9 +11,13 @@
     "P3-T1",
     "P4-T1",
     "P4-T2",
-    "P4-T2b"
+    "P4-T2b",
+    "P4-T3",
+    "P5-T1",
+    "P5-T2",
+    "P6-T1"
   ],
-  "last_updated": "2026-11-14",
+  "last_updated": "2026-11-22",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
   "evidence": {
     "P0-T1": {
@@ -209,6 +213,34 @@
         "[follow-up] removeQueries keeps every query under the 'auth' key prefix, not just ME_KEY. If other auth-scoped queries are added later, they will survive a user switch. Match the full ME_KEY instead.",
         "[follow-up] I did not confirm in the diff that the banner is hidden until a save/submit attempt. Only hasErrors and set() changed; whether the banner is gated on an attempt flag is unverified."
       ]
+    },
+    "P4-T3": {
+      "mode": "native-windows",
+      "recorded": "2026-11-22 reconciliation from git history",
+      "gates": {
+        "node scripts/dev.mjs test": 0
+      }
+    },
+    "P5-T1": {
+      "mode": "native-windows",
+      "recorded": "2026-11-22 reconciliation from git history",
+      "gates": {
+        "node scripts/dev.mjs test": 0
+      }
+    },
+    "P5-T2": {
+      "mode": "native-windows",
+      "recorded": "2026-11-22 reconciliation from git history",
+      "gates": {
+        "node scripts/dev.mjs test": 0
+      }
+    },
+    "P6-T1": {
+      "mode": "native-windows",
+      "recorded": "2026-11-22 reconciliation from git history",
+      "gates": {
+        "node scripts/dev.mjs test": 0
+      }
     }
   },
   "latest_review": "PASS"
