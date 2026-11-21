@@ -18,7 +18,8 @@
     "P6-T1",
     "P7-T1",
     "P7-T5",
-    "P7-T6"
+    "P7-T6",
+    "P7-T2"
   ],
   "last_updated": "2026-11-21",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
@@ -299,6 +300,25 @@
       "follow_ups": [
         "[follow-up] The normalization test checks that lexical HitRate@5 does not regress on a single sample, but both normalized and baseline scores are already 1.0; it does not demonstrate a normalization benefit or exercise ranking with the fake embedder required by the task plan.",
         "[follow-up] Local GTE checkpoints enable `trust_remote_code`, which executes checkpoint-provided code. Keep this restricted to trusted local checkpoints and document that trust assumption."
+      ]
+    },
+    "P7-T2": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 2,
+      "base": "79250d77c7b34ab8a01e513ea157f91fa2859ec9",
+      "follow_ups": [
+        "[follow-up] The deployed-version form asks admins to enter a client organization ID manually; an organization selector would reduce entry errors.",
+        "[follow-up] Response due dates use the timestamp’s direct `.date()` value, while report dates use local time. Near-midnight submissions could display a due date one day off from the portal’s local date.",
+        "[follow-up] The new tests cover bank isolation and a configured overdue period, but do not cover support-agent read access to cross-bank deployment history or the exact due-date boundary."
       ]
     }
   },

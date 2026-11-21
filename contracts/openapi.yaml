@@ -102,6 +102,45 @@ paths:
               schema:
                 $ref: '#/components/schemas/Module'
           description: ''
+  /api/admin/response-due-periods/:
+    get:
+      operationId: admin_response_due_periods_retrieve
+      tags:
+      - admin
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseDuePeriods'
+          description: ''
+    put:
+      operationId: admin_response_due_periods_update
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResponseDuePeriodsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResponseDuePeriodsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResponseDuePeriodsRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseDuePeriods'
+          description: ''
   /api/admin/users/:
     get:
       operationId: admin_users_list
@@ -441,6 +480,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PortalUser'
+          description: ''
+  /api/deployed-versions/:
+    get:
+      operationId: deployed_versions_list
+      tags:
+      - products
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeployedVersion'
+          description: ''
+    post:
+      operationId: deployed_versions_create
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeployedVersionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeployedVersionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DeployedVersionRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeployedVersion'
           description: ''
   /api/health/:
     get:
@@ -2161,6 +2241,66 @@ components:
       - delivery_note
       - deployment_details
       - version
+    DeployedVersion:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        organization:
+          type: integer
+        organization_name:
+          type: string
+          readOnly: true
+        product:
+          type: integer
+        product_name:
+          type: string
+          readOnly: true
+        module:
+          type: integer
+          nullable: true
+        module_name:
+          type: string
+          readOnly: true
+          nullable: true
+        version:
+          type: string
+          maxLength: 80
+        deployed_at:
+          type: string
+          format: date
+      required:
+      - deployed_at
+      - id
+      - module_name
+      - organization
+      - organization_name
+      - product
+      - product_name
+      - version
+    DeployedVersionRequest:
+      type: object
+      properties:
+        organization:
+          type: integer
+        product:
+          type: integer
+        module:
+          type: integer
+          nullable: true
+        version:
+          type: string
+          minLength: 1
+          maxLength: 80
+        deployed_at:
+          type: string
+          format: date
+      required:
+      - deployed_at
+      - organization
+      - product
+      - version
     DetailedReportRow:
       type: object
       properties:
@@ -2197,6 +2337,8 @@ components:
           nullable: true
         is_overdue:
           type: boolean
+        response_due_date:
+          type: string
       required:
       - actual_delivery_date
       - bank
@@ -2208,6 +2350,7 @@ components:
       - issue_officer
       - last_status_update_date
       - reference_id
+      - response_due_date
       - status
       - submission_date
       - tentative_delivery_date
@@ -3144,6 +3287,28 @@ components:
         * `CHANGE` - Change
         * `FEATURE` - Feature
         * `SUPPORT` - Support
+    ResponseDuePeriods:
+      type: object
+      properties:
+        periods:
+          type: object
+          additionalProperties:
+            type: integer
+            maximum: 3650
+            minimum: 0
+      required:
+      - periods
+    ResponseDuePeriodsRequest:
+      type: object
+      properties:
+        periods:
+          type: object
+          additionalProperties:
+            type: integer
+            maximum: 3650
+            minimum: 0
+      required:
+      - periods
     RolesEnum:
       enum:
       - ISSUE_OFFICER

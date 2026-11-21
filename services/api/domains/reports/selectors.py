@@ -6,22 +6,63 @@ from django.db.models import Count, Q, QuerySet
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
 
-from domains.issues.models import Issue, IssueStatus
+from domains.issues.models import Issue, IssueStatus, Priority
+from domains.products.models import ResponseDuePeriod
 from domains.tenants.models import OrganizationKind
 from domains.tenants.selectors import authorized_rows, portal_organization
 
 
 def is_overdue(issue: Issue) -> bool:
-    return bool(
+    if (
         issue.tentative_delivery_date
         and issue.tentative_delivery_date < timezone.localdate()
         and issue.actual_delivery_at is None
+    ):
+        return True
+    if issue.status != IssueStatus.SUBMITTED:
+        return False
+    return response_due_date(issue) < timezone.localdate()
+
+
+def response_due_date(issue: Issue) -> date:
+    configured: dict[str, int] = dict(ResponseDuePeriod.objects.values_list("priority", "days"))
+    defaults: dict[str, int] = {
+        str(Priority.LOW): 10,
+        str(Priority.MEDIUM): 5,
+        str(Priority.HIGH): 3,
+        str(Priority.CRITICAL): 1,
+    }
+    priority = str(issue.priority)
+    return (issue.submitted_at or issue.created_at).date() + timedelta(
+        days=configured.get(priority, defaults.get(priority, 5))
     )
 
 
 def overdue_rows(rows: QuerySet[Issue]) -> QuerySet[Issue]:
+    today = timezone.localdate()
+    configured: dict[str, int] = dict(ResponseDuePeriod.objects.values_list("priority", "days"))
+    defaults: dict[str, int] = {
+        str(Priority.LOW): 10,
+        str(Priority.MEDIUM): 5,
+        str(Priority.HIGH): 3,
+        str(Priority.CRITICAL): 1,
+    }
+    response_q = Q()
+    for priority, days in {**defaults, **configured}.items():
+        response_q |= Q(
+            priority=priority,
+            status=IssueStatus.SUBMITTED,
+            submitted_at__isnull=False,
+            submitted_at__date__lt=today - timedelta(days=days),
+        )
+        response_q |= Q(
+            priority=priority,
+            status=IssueStatus.SUBMITTED,
+            submitted_at__isnull=True,
+            created_at__date__lt=today - timedelta(days=days),
+        )
     return rows.filter(
-        tentative_delivery_date__lt=timezone.localdate(), actual_delivery_at__isnull=True
+        Q(tentative_delivery_date__lt=today, actual_delivery_at__isnull=True) | response_q
     )
 
 
@@ -99,6 +140,7 @@ def detailed_rows(rows: QuerySet[Issue]) -> list[dict]:
                 timezone.localtime(issue.closed_at).date().isoformat() if issue.closed_at else None
             ),
             "is_overdue": is_overdue(issue),
+            "response_due_date": response_due_date(issue).isoformat(),
         }
         for issue in rows
     ]

@@ -25,3 +25,27 @@ class Module(models.Model):
 
     def __str__(self) -> str:
         return f"{self.product.name} / {self.name}"
+
+
+class DeployedVersion(models.Model):
+    organization = models.ForeignKey(
+        "tenants.Organization", on_delete=models.PROTECT, related_name="deployed_versions"
+    )
+    product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name="deployments")
+    module = models.ForeignKey(
+        Module, on_delete=models.PROTECT, null=True, blank=True, related_name="deployments"
+    )
+    version = models.CharField(max_length=80)
+    deployed_at = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-deployed_at", "-id"]
+
+
+class ResponseDuePeriod(models.Model):
+    priority = models.CharField(max_length=10, unique=True)
+    days = models.PositiveSmallIntegerField()
+
+    class Meta:
+        ordering = ["priority"]

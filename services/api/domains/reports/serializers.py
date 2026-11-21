@@ -16,6 +16,7 @@ class DetailedReportRowSerializer(serializers.Serializer):
     last_status_update_date = serializers.CharField(allow_null=True)
     closure_date = serializers.CharField(allow_null=True)
     is_overdue = serializers.BooleanField()
+    response_due_date = serializers.CharField()
 
 
 class SummaryReportSerializer(serializers.Serializer):

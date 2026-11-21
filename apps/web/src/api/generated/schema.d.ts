@@ -52,6 +52,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/response-due-periods/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin_response_due_periods_retrieve"];
+        put: operations["admin_response_due_periods_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/users/": {
         parameters: {
             query?: never;
@@ -278,6 +294,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["auth_me_partial_update"];
+        trace?: never;
+    };
+    "/api/deployed-versions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["deployed_versions_list"];
+        put?: never;
+        post: operations["deployed_versions_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/health/": {
@@ -1126,6 +1158,26 @@ export interface components {
             delivery_note: string;
             deployment_details: string;
         };
+        DeployedVersion: {
+            readonly id: number;
+            organization: number;
+            readonly organization_name: string;
+            product: number;
+            readonly product_name: string;
+            module?: number | null;
+            readonly module_name: string | null;
+            version: string;
+            /** Format: date */
+            deployed_at: string;
+        };
+        DeployedVersionRequest: {
+            organization: number;
+            product: number;
+            module?: number | null;
+            version: string;
+            /** Format: date */
+            deployed_at: string;
+        };
         DetailedReportRow: {
             id: number;
             reference_id: string;
@@ -1141,6 +1193,7 @@ export interface components {
             last_status_update_date: string | null;
             closure_date: string | null;
             is_overdue: boolean;
+            response_due_date: string;
         };
         DuplicateReviewRequestRequest: {
             issue: number;
@@ -1491,6 +1544,16 @@ export interface components {
          * @enum {string}
          */
         RequestTypeEnum: "BUG" | "CHANGE" | "FEATURE" | "SUPPORT";
+        ResponseDuePeriods: {
+            periods: {
+                [key: string]: number;
+            };
+        };
+        ResponseDuePeriodsRequest: {
+            periods: {
+                [key: string]: number;
+            };
+        };
         /**
          * @description * `ISSUE_OFFICER` - Client Issue Officer
          *     * `ISSUE_VERIFIER` - Client Issue Verifier
@@ -1712,6 +1775,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Module"];
+                };
+            };
+        };
+    };
+    admin_response_due_periods_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseDuePeriods"];
+                };
+            };
+        };
+    };
+    admin_response_due_periods_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResponseDuePeriodsRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ResponseDuePeriodsRequest"];
+                "multipart/form-data": components["schemas"]["ResponseDuePeriodsRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseDuePeriods"];
                 };
             };
         };
@@ -2076,6 +2183,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PortalUser"];
+                };
+            };
+        };
+    };
+    deployed_versions_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeployedVersion"][];
+                };
+            };
+        };
+    };
+    deployed_versions_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeployedVersionRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DeployedVersionRequest"];
+                "multipart/form-data": components["schemas"]["DeployedVersionRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeployedVersion"];
                 };
             };
         };

@@ -56,3 +56,8 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 ## P7-T6 — 2026-11-21
 - [ ] [follow-up] The normalization test checks that lexical HitRate@5 does not regress on a single sample, but both normalized and baseline scores are already 1.0; it does not demonstrate a normalization benefit or exercise ranking with the fake embedder required by the task plan.
 - [ ] [follow-up] Local GTE checkpoints enable `trust_remote_code`, which executes checkpoint-provided code. Keep this restricted to trusted local checkpoints and document that trust assumption.
+
+## P7-T2 — 2026-11-21
+- [ ] [follow-up] The deployed-version form asks admins to enter a client organization ID manually; an organization selector would reduce entry errors.
+- [ ] [follow-up] Response due dates use the timestamp’s direct `.date()` value, while report dates use local time. Near-midnight submissions could display a due date one day off from the portal’s local date.
+- [ ] [follow-up] The new tests cover bank isolation and a configured overdue period, but do not cover support-agent read access to cross-bank deployment history or the exact due-date boundary.
