@@ -320,7 +320,7 @@ function doTask(task) {
         if (coderKind === 'claude') claudeCode(wd, prompt, logs, `coder-${attempt}`, gateEnv ?? {});
         else codex(wd, prompt, logs, `coder-${attempt}`, process.env.DATASOFT_CODER_MODEL || null,
           // Speed: first attempt reasons deeply; retries only fix specific gate/review findings.
-          attempt === 0 ? 'high' : (process.env.DATASOFT_RETRY_EFFORT || 'medium'));
+          attempt === 0 ? (process.env.DATASOFT_CODER_EFFORT || 'high') : (process.env.DATASOFT_RETRY_EFFORT || 'medium'));
       }
       const changed = checkChanges(wd, base, task);
       if (!changed.length) throw new Error('No source changes; cannot mark task implemented');

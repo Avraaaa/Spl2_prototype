@@ -482,6 +482,134 @@
         "node scripts/dev.mjs lint",
         "node scripts/dev.mjs test"
       ]
+    },
+    {
+      "id": "P7-T1",
+      "phase": 7,
+      "title": "Permissioned audited access to unmasked originals and configurable masking rules",
+      "req": [
+        "E-11",
+        "E-14"
+      ],
+      "depends_on": [
+        "P6-T1"
+      ],
+      "allow": [
+        "services/api/",
+        "services/ml/",
+        "apps/web/src/",
+        "contracts/",
+        "seed/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "Only roles granted explicit permission (DataSoft Administrator by default) can view original unmasked text; everyone else, including other tenants, sees masked text (404 for other banks).",
+        "Every original-content view appends an audit event (actor, request, timestamp) to the hash-chained audit log.",
+        "Administrator can add/disable masking patterns via API; detection uses active patterns; built-in patterns cannot be weakened below OTP/card defaults.",
+        "Text extracted from text-type attachments is masked before any NLP processing.",
+        "Tests: two banks, unauthorized users, audit append, custom pattern applied."
+      ]
+    },
+    {
+      "id": "P7-T2",
+      "phase": 7,
+      "title": "Deployed version history and configurable response due dates",
+      "req": [
+        "N-05",
+        "N-25"
+      ],
+      "depends_on": [
+        "P7-T1"
+      ],
+      "allow": [
+        "services/api/",
+        "services/ml/",
+        "apps/web/src/",
+        "contracts/",
+        "seed/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "Record per client organization which product/module version is deployed, with dated history; tenant-scoped reads; DataSoft admin writes.",
+        "Administrator configures response due periods (e.g. per priority); overdue warnings and reports use them instead of constants.",
+        "Frontend screens in DataSoft console for both; bank users see their own deployed versions.",
+        "Tests for tenant isolation and overdue calculation edge cases."
+      ]
+    },
+    {
+      "id": "P7-T3",
+      "phase": 7,
+      "title": "Comments on workflow actions and attachment quarantine",
+      "req": [
+        "N-21",
+        "EX-05"
+      ],
+      "depends_on": [
+        "P7-T2"
+      ],
+      "allow": [
+        "services/api/",
+        "services/ml/",
+        "apps/web/src/",
+        "contracts/",
+        "seed/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "Every workflow action (submit, accept, reject, assign, deliver, verify pass/fail, close, reopen) accepts an optional comment stored with the history event and shown per visibility rules.",
+        "Uploaded attachments start QUARANTINED; a pluggable local scanner (default: signature/EICAR + type/size check, no paid service) marks CLEAN or REJECTED; only CLEAN files can be downloaded.",
+        "UI shows comment field on actions and attachment scan status.",
+        "Tests including EICAR rejection and cross-tenant download denial."
+      ]
+    },
+    {
+      "id": "P7-T4",
+      "phase": 7,
+      "title": "Bangla suggestion quality and accessible responsive UI",
+      "req": [
+        "E-02",
+        "E-05",
+        "EX-10"
+      ],
+      "depends_on": [
+        "P7-T3"
+      ],
+      "allow": [
+        "services/api/",
+        "services/ml/",
+        "apps/web/src/",
+        "contracts/",
+        "seed/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "Synthetic English+Bangla seed fixtures and evaluation tests showing similar-request ranking and label suggestions work for Bangla and mixed text (keyword fallback tokenizes Bangla correctly).",
+        "Frontend: labelled form controls, keyboard focus states, aria-live for errors, layouts usable at 360px; add unit tests for any pure helpers."
+      ]
     }
   ]
 }
