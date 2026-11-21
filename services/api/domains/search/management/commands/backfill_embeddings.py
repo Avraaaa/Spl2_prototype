@@ -9,6 +9,7 @@ from domains.search.embeddings import (
     MODEL_ID,
     PREPROCESSING_VERSION,
     VECTOR_DIMENSION,
+    embedding_input,
     passage_text,
 )
 from domains.search.models import EmbeddingJob
@@ -53,7 +54,7 @@ class Command(BaseCommand):
         completed = 0
         jobs = EmbeddingJob.objects.filter(status="pending").select_related("issue")
         for job in jobs.iterator(chunk_size=50):
-            vectors = _ml_embeddings([job.masked_text])
+            vectors = _ml_embeddings([embedding_input(job.masked_text)])
             if not vectors or len(vectors[0]) != VECTOR_DIMENSION:
                 continue
             issue = job.issue

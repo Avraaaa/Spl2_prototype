@@ -19,15 +19,24 @@ from pgvector.django import CosineDistance
 from domains.issues.models import Issue, IssueStatus
 from domains.issues.services import mask_sensitive
 
+from .banglish import normalize_banglish
 from .clustering import cluster_vectors
-from .embeddings import MODEL_ID, PREPROCESSING_VERSION, VECTOR_DIMENSION, query_text
+from .embeddings import (
+    MODEL_ID,
+    PREPROCESSING_VERSION,
+    VECTOR_DIMENSION,
+    embedding_input,
+    query_text,
+)
 from .models import IssueLabelSelection, Label, LabelConfidenceThreshold, TopicProposal
 
 TOKEN = re.compile(r"[\w\u0980-\u09ff]{2,}", re.UNICODE)
 
 
 def _tokens(value: str) -> set[str]:
-    return {token.casefold() for token in TOKEN.findall(mask_sensitive(value))}
+    masked = mask_sensitive(value)
+    supplemental = normalize_banglish(masked)
+    return {token.casefold() for token in TOKEN.findall(f"{masked} {supplemental}")}
 
 
 def _score(query_tokens: set[str], candidate_tokens: set[str]) -> float:
@@ -117,7 +126,7 @@ def candidate_suggestions(
 
     semantic_rank: dict[int, int] = {}
     semantic_candidates: list[Issue] = []
-    vectors = _ml_embeddings([query_text(f"{title}\n{description}")])
+    vectors = _ml_embeddings([embedding_input(query_text(f"{title}\n{description}"))])
     if vectors:
         try:
             semantic_rows = list(
@@ -162,7 +171,7 @@ def label_suggestions(
 ) -> list[dict]:
     tokens = _tokens(f"{title} {description}")
     suggestions: list[dict[str, object]] = []
-    query_vectors = _ml_embeddings([query_text(f"{title}\n{description}")])
+    query_vectors = _ml_embeddings([embedding_input(query_text(f"{title}\n{description}"))])
     query_vector = query_vectors[0] if query_vectors else None
     for label in labels:
         threshold = label.confidence_threshold
@@ -232,7 +241,9 @@ def label_suggestions(
                 {"id": label.pk, "name": label.name, "score": round(score, 4), "tentative": False}
             )
         elif not examples and query_vector is not None and label.description.strip():
-            prototype = _ml_embeddings([f"passage: {mask_sensitive(label.description)}"])
+            prototype = _ml_embeddings(
+                [embedding_input(f"passage: {mask_sensitive(label.description)}")]
+            )
             if prototype:
                 dense_score = sum(a * b for a, b in zip(query_vector, prototype[0], strict=True))
                 if dense_score >= max(0.65, threshold):

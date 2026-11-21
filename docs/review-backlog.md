@@ -52,3 +52,7 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] Topic clustering falls back to keyword groups when no current-version vectors exist, and those groups can contain only two issues. P7-T5 specifies vector proposals only for at least 20 eligible requests and clusters of at least three; consider skipping proposals until those conditions are met.
 - [ ] [follow-up] The new tests cover tenant-scoped label examples and search results, but do not directly verify cross-bank topic-cluster isolation, masking on draft edits/submission, or stale-job handling.
 - [ ] [follow-up] The evaluation command compares lexical, dense, and RRF rankings on synthetic fixture records, but does not exercise the production candidate retrieval path or its minimum-relevance gate.
+
+## P7-T6 — 2026-11-21
+- [ ] [follow-up] The normalization test checks that lexical HitRate@5 does not regress on a single sample, but both normalized and baseline scores are already 1.0; it does not demonstrate a normalization benefit or exercise ranking with the fake embedder required by the task plan.
+- [ ] [follow-up] Local GTE checkpoints enable `trust_remote_code`, which executes checkpoint-provided code. Keep this restricted to trusted local checkpoints and document that trust assumption.

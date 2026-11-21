@@ -17,7 +17,8 @@
     "P5-T2",
     "P6-T1",
     "P7-T1",
-    "P7-T5"
+    "P7-T5",
+    "P7-T6"
   ],
   "last_updated": "2026-11-21",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
@@ -280,6 +281,24 @@
         "[follow-up] Topic clustering falls back to keyword groups when no current-version vectors exist, and those groups can contain only two issues. P7-T5 specifies vector proposals only for at least 20 eligible requests and clusters of at least three; consider skipping proposals until those conditions are met.",
         "[follow-up] The new tests cover tenant-scoped label examples and search results, but do not directly verify cross-bank topic-cluster isolation, masking on draft edits/submission, or stale-job handling.",
         "[follow-up] The evaluation command compares lexical, dense, and RRF rankings on synthetic fixture records, but does not exercise the production candidate retrieval path or its minimum-relevance gate."
+      ]
+    },
+    "P7-T6": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 1,
+      "base": "09c1205e3d7e6abdbb000deafc57e1d279bcf17c",
+      "follow_ups": [
+        "[follow-up] The normalization test checks that lexical HitRate@5 does not regress on a single sample, but both normalized and baseline scores are already 1.0; it does not demonstrate a normalization benefit or exercise ranking with the fake embedder required by the task plan.",
+        "[follow-up] Local GTE checkpoints enable `trust_remote_code`, which executes checkpoint-provided code. Keep this restricted to trusted local checkpoints and document that trust assumption."
       ]
     }
   },

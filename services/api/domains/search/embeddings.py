@@ -4,17 +4,36 @@ import hashlib
 
 from domains.issues.services import mask_sensitive
 
+from .banglish import NORMALIZATION_VERSION, normalize_banglish
+
 MODEL_ID = "multilingual-e5-small"
-PREPROCESSING_VERSION = "masked-e5-v1"
+PREPROCESSING_VERSION = f"masked-e5-v2-{NORMALIZATION_VERSION}"
 VECTOR_DIMENSION = 384
 
 
 def passage_text(value: str) -> str:
-    return f"passage: {mask_sensitive(value)}"
+    masked = mask_sensitive(value)
+    return f"passage: {masked}"
 
 
 def query_text(value: str) -> str:
-    return f"query: {mask_sensitive(value)}"
+    masked = mask_sensitive(value)
+    return f"query: {masked}"
+
+
+def embedding_input(value: str) -> str:
+    """Add versioned Banglish text as a supplemental model input view."""
+    prefix, separator, text = value.partition(": ")
+    if not separator:
+        text = value
+        prefix = ""
+    normalized = normalize_banglish(text)
+    supplemental = f"Supplemental normalized text: {normalized}"
+    if normalized == text:
+        return value
+    if prefix:
+        return f"{prefix}: {text}\n{supplemental}"
+    return f"{text}\n{supplemental}"
 
 
 def queue_issue_embedding(issue) -> None:

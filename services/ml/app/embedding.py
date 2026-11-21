@@ -12,9 +12,15 @@ from pathlib import Path
 def load_local_sentence_transformer():
     if os.environ.get("ML_MODEL_ENABLED") != "1":
         raise RuntimeError("ML inference disabled by default")
-    path = Path(os.environ.get("ML_MODEL_PATH", "/models/multilingual-e5-small"))
+    models_dir = Path(
+        os.environ.get("ML_MODELS_DIR", Path(__file__).resolve().parents[3] / "models")
+    ).resolve()
+    path = Path(os.environ.get("ML_MODEL_PATH", models_dir / "multilingual-e5-small")).resolve()
     if not path.is_dir():
         raise RuntimeError("Local model directory is missing; runtime downloads are forbidden")
     from sentence_transformers import SentenceTransformer  # optional heavy dependency
 
-    return SentenceTransformer(str(path), local_files_only=True, trust_remote_code=False)
+    trust_remote_code = path.name == "gte-multilingual-base" and path.is_relative_to(models_dir)
+    return SentenceTransformer(
+        str(path), local_files_only=True, trust_remote_code=trust_remote_code
+    )
