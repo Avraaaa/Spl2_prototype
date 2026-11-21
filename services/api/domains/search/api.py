@@ -70,12 +70,14 @@ class TopicProposalSerializer(serializers.Serializer):
     title = serializers.CharField()
     keywords = serializers.ListField(child=serializers.CharField())
     issue_ids = serializers.ListField(child=serializers.IntegerField())
+    representatives = serializers.ListField(child=serializers.DictField())
     status = serializers.CharField()
 
 
 class TopicProposalCreatedSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     title = serializers.CharField()
+    representatives = serializers.ListField(child=serializers.DictField())
 
 
 class TopicReviewRequest(serializers.Serializer):
@@ -174,6 +176,7 @@ class TopicProposalView(APIView):
                     "title": row.title,
                     "keywords": row.keywords,
                     "issue_ids": row.issue_ids,
+                    "representatives": row.representatives,
                     "status": row.status,
                 }
                 for row in rows
@@ -194,7 +197,14 @@ class TopicProposalView(APIView):
                 bank = Organization.objects.get(pk=organization_id)
                 proposals.extend(create_topic_proposals(organization=bank, rows=scoped))
         return Response(
-            [{"id": proposal.id, "title": proposal.title} for proposal in proposals],
+            [
+                {
+                    "id": proposal.id,
+                    "title": proposal.title,
+                    "representatives": proposal.representatives,
+                }
+                for proposal in proposals
+            ],
             status=status.HTTP_201_CREATED,
         )
 

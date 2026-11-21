@@ -16,7 +16,8 @@
     "P5-T1",
     "P5-T2",
     "P6-T1",
-    "P7-T1"
+    "P7-T1",
+    "P7-T5"
   ],
   "last_updated": "2026-11-21",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
@@ -261,6 +262,25 @@
         "[follow-up] Tests cover tenant isolation for original issue text and masking before attachment NLP, but do not directly verify cross-tenant attachment downloads or audit-chain verification."
       ],
       "rebased_onto": "2d8dce0d184281a6b572ba62c82360ee70c0fad8"
+    },
+    "P7-T5": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 3,
+      "base": "c4a3fab025fb74f0a9bec5ae7a45884564476272",
+      "follow_ups": [
+        "[follow-up] Topic clustering falls back to keyword groups when no current-version vectors exist, and those groups can contain only two issues. P7-T5 specifies vector proposals only for at least 20 eligible requests and clusters of at least three; consider skipping proposals until those conditions are met.",
+        "[follow-up] The new tests cover tenant-scoped label examples and search results, but do not directly verify cross-bank topic-cluster isolation, masking on draft edits/submission, or stale-job handling.",
+        "[follow-up] The evaluation command compares lexical, dense, and RRF rankings on synthetic fixture records, but does not exercise the production candidate retrieval path or its minimum-relevance gate."
+      ]
     }
   },
   "latest_review": "PASS"

@@ -193,6 +193,9 @@ def create_draft(user, fields: dict) -> Issue:
         # BigAutoField uses the database sequence; this reference is immutable thereafter.
         issue.reference = f"SR-{issue.pk + 1023}"
         issue.save(update_fields=["reference", "updated_at"])
+        from domains.search.embeddings import queue_issue_embedding
+
+        queue_issue_embedding(issue)
     return issue
 
 
@@ -225,6 +228,10 @@ def edit_draft(user, issue: Issue, fields: dict) -> Issue:
             original.save(update_fields=[*original_fields, "updated_at"])
         locked.version += 1
         locked.save()
+        if original_fields:
+            from domains.search.embeddings import queue_issue_embedding
+
+            queue_issue_embedding(locked)
     return locked
 
 
@@ -284,5 +291,8 @@ def submit(user, issue: Issue) -> Issue:
             from_status=IssueStatus.DRAFT,
             to_status=IssueStatus.SUBMITTED,
         )
+        from domains.search.embeddings import queue_issue_embedding
+
+        queue_issue_embedding(locked)
         notify_issue_event(event)
     return locked

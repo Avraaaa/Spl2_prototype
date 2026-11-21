@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from pgvector.django import VectorField
 
 from domains.issues.models import Issue
 from domains.tenants.models import Organization
@@ -12,9 +13,25 @@ class Label(models.Model):
     confidence_threshold = models.FloatField(default=0.55)
     is_active = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
+    embedding = VectorField(dimensions=384, null=True, blank=True)
+    embedding_model_id = models.CharField(max_length=120, blank=True)
+    embedding_preprocessing_version = models.CharField(max_length=40, blank=True)
 
     class Meta:
         ordering = ["name"]
+
+
+class LabelConfidenceThreshold(models.Model):
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+    label = models.ForeignKey(Label, on_delete=models.CASCADE)
+    threshold = models.FloatField(default=0.55)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "label"], name="unique_org_label_threshold"
+            )
+        ]
 
 
 class SuggestionFeedback(models.Model):
@@ -66,8 +83,20 @@ class TopicProposal(models.Model):
     title = models.CharField(max_length=160)
     keywords = models.JSONField(default=list)
     issue_ids = models.JSONField(default=list)
+    representatives = models.JSONField(default=list, blank=True)
     status = models.CharField(max_length=20, default="proposed")
     reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT
     )
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class EmbeddingJob(models.Model):
+    """Idempotent transactional outbox containing masked, prefixed text only."""
+
+    issue = models.OneToOneField(Issue, on_delete=models.CASCADE, related_name="embedding_job")
+    masked_text = models.TextField()
+    content_hash = models.CharField(max_length=64)
+    status = models.CharField(max_length=16, default="pending")
+    attempts = models.PositiveSmallIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)

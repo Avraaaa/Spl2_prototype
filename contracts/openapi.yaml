@@ -3347,6 +3347,11 @@ components:
           type: array
           items:
             type: integer
+        representatives:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
         status:
           type: string
       required:
@@ -3354,6 +3359,7 @@ components:
       - issue_ids
       - keywords
       - organization
+      - representatives
       - status
       - title
     TopicProposalCreated:
@@ -3363,8 +3369,14 @@ components:
           type: integer
         title:
           type: string
+        representatives:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
       required:
       - id
+      - representatives
       - title
     TopicReviewRequestStatusEnum:
       enum:

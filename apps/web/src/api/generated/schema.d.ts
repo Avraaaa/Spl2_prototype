@@ -1567,11 +1567,17 @@ export interface components {
             title: string;
             keywords: string[];
             issue_ids: number[];
+            representatives: {
+                [key: string]: unknown;
+            }[];
             status: string;
         };
         TopicProposalCreated: {
             id: number;
             title: string;
+            representatives: {
+                [key: string]: unknown;
+            }[];
         };
         /**
          * @description * `proposed` - proposed

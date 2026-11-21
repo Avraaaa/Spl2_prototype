@@ -82,6 +82,9 @@ class Issue(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     embedding = VectorField(dimensions=384, null=True, blank=True)
+    embedding_model_id = models.CharField(max_length=120, blank=True)
+    embedding_preprocessing_version = models.CharField(max_length=40, blank=True)
+    embedding_dimension = models.PositiveSmallIntegerField(null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at", "-id"]

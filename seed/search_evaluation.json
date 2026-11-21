@@ -1,0 +1,9 @@
+{
+  "revision": "synthetic-p7t5-v1",
+  "split": "held-out-synthetic",
+  "queries": [
+    {"language": "English", "text": "transfer times out after confirmation", "candidates": [{"text": "payment transfer timeout after confirmation", "grade": 2}, {"text": "transfer screen does not show receipt", "grade": 1}, {"text": "same transfer module shows wrong fee", "grade": 0}]},
+    {"language": "Bangla", "text": "লেনদেন নিশ্চিত করার পর আটকে যায়", "candidates": [{"text": "নিশ্চিত করার পর লেনদেন আটকে থাকে", "grade": 2}, {"text": "লেনদেনের রসিদ দেখা যায় না", "grade": 1}, {"text": "লেনদেন মডিউলে ভুল ফি দেখায়", "grade": 0}]},
+    {"language": "Banglish", "text": "transfer confirm korle timeout hoy", "candidates": [{"text": "transfer confirm korar por timeout", "grade": 2}, {"text": "transfer receipt show kore na", "grade": 1}, {"text": "same transfer module e fee vul", "grade": 0}]}
+  ]
+}

@@ -47,3 +47,8 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 ## P7-T1 — 2026-11-21
 - [ ] [follow-up] Custom regex validation blocks invalid syntax, long patterns, and one nested-quantifier form, but other potentially expensive expressions may still be accepted. Consider stronger regex restrictions or a timeout.
 - [ ] [follow-up] Tests cover tenant isolation for original issue text and masking before attachment NLP, but do not directly verify cross-tenant attachment downloads or audit-chain verification.
+
+## P7-T5 — 2026-11-21
+- [ ] [follow-up] Topic clustering falls back to keyword groups when no current-version vectors exist, and those groups can contain only two issues. P7-T5 specifies vector proposals only for at least 20 eligible requests and clusters of at least three; consider skipping proposals until those conditions are met.
+- [ ] [follow-up] The new tests cover tenant-scoped label examples and search results, but do not directly verify cross-bank topic-cluster isolation, masking on draft edits/submission, or stale-job handling.
+- [ ] [follow-up] The evaluation command compares lexical, dense, and RRF rankings on synthetic fixture records, but does not exercise the production candidate retrieval path or its minimum-relevance gate.
