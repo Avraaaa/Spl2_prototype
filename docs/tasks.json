@@ -560,6 +560,41 @@
       ]
     },
     {
+      "id": "P7-T6",
+      "phase": 7,
+      "title": "Banglish normalization and embedding model comparison harness",
+      "req": [
+        "E-02",
+        "E-03",
+        "E-05",
+        "E-09"
+      ],
+      "depends_on": [
+        "P7-T5"
+      ],
+      "allow": [
+        "services/api/",
+        "services/ml/",
+        "apps/web/src/",
+        "contracts/",
+        "seed/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "Deterministic Banglish normalization (versioned): Unicode NFC, whitespace/punctuation cleanup, protected technical tokens (OTP, RTGS, BEFTN, NPSB, error codes like E105, module names) never altered, and a reviewed domain dictionary in a data file mapping common romanized Bangla spelling variants (e.g. ashche/ashe/ashtese, hocche/hoche, partesi/parchi, na) to canonical Bangla forms. Original masked text is always kept; the normalized view is added as a supplemental lexical/embedding input, never replacing user text. No new dependencies (no IndicXlit).",
+        "Normalization runs after masking and before lexical indexing/embedding; bump preprocessing version so stale vectors are ignored and backfill can re-embed.",
+        "Model comparison: the evaluation command accepts configurations (embedder path/id, prefix scheme symmetric vs asymmetric, normalization on/off, fusion) and runs a matrix: lexical, dense, hybrid, hybrid+normalization, and any alternative local checkpoints present under ML_MODELS_DIR (e.g. gte-multilingual-base, a Banglish E5 checkpoint); missing checkpoints are skipped with a clear message, never downloaded. Report per language variant (English, Bangla, Banglish, code-switched, typo) and p50/p95 embedding latency, and write the experiment manifest.",
+        "Expand the synthetic fixture with Banglish variants, typos and hard negatives (same error code, different failure); split by underlying incident before augmentation so no near-clones leak between splits.",
+        "Tests: normalization preserves protected tokens and is idempotent; normalization improves or does not hurt lexical HitRate@5 on the Banglish fixture with a fake embedder; two-bank isolation unaffected; matrix runner skips missing models."
+      ]
+    },
+    {
       "id": "P7-T2",
       "phase": 7,
       "title": "Deployed version history and configurable response due dates",
@@ -568,7 +603,7 @@
         "N-25"
       ],
       "depends_on": [
-        "P7-T5"
+        "P7-T6"
       ],
       "allow": [
         "services/api/",
