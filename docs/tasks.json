@@ -610,6 +610,45 @@
         "Synthetic English+Bangla seed fixtures and evaluation tests showing similar-request ranking and label suggestions work for Bangla and mixed text (keyword fallback tokenizes Bangla correctly).",
         "Frontend: labelled form controls, keyboard focus states, aria-live for errors, layouts usable at 360px; add unit tests for any pure helpers."
       ]
+    },
+    {
+      "id": "P7-T5",
+      "phase": 7,
+      "title": "Precomputed embeddings, semantic labels, vector topic clustering and evaluation",
+      "req": [
+        "E-01",
+        "E-02",
+        "E-03",
+        "E-05",
+        "E-08",
+        "E-09",
+        "E-15"
+      ],
+      "depends_on": [
+        "P7-T4"
+      ],
+      "allow": [
+        "services/api/",
+        "services/ml/",
+        "apps/web/src/",
+        "contracts/",
+        "seed/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "Embeddings are computed once from masked title+description when a request is submitted/edited (via the transactional outbox or an idempotent job), never on the search read path; search uses stored vectors with pgvector and falls back to lexical when absent or ML is offline.",
+        "A management command backfills missing embeddings (masked input only, tenant-agnostic vectors, no external calls).",
+        "Label suggestions combine lexical score with embedding similarity to label centroids (mean of vectors of requests the same bank tagged with the label, plus the label description embedding); per-label threshold still applies; tenant data never crosses banks.",
+        "Topic proposals cluster stored vectors of recent unlabelled requests (deterministic agglomerative/cosine threshold clustering in numpy, no new heavy dependency unless already locked) with top distinguishing keywords as titles; lexical fallback when vectors are missing.",
+        "Evaluation: a synthetic English+Bangla labelled set and a management command reporting precision@5/recall@5 for lexical vs hybrid; tests assert hybrid >= lexical on the fixture using a deterministic fake embedder.",
+        "Tests: two banks, ML offline fallback, masking before embedding, no embedding writes during search."
+      ]
     }
   ]
 }
