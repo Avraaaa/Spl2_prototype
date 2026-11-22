@@ -65,6 +65,14 @@ export function validateDraft(draft: Draft, mode: 'save' | 'submit'): DraftError
 
 export const hasErrors = (errors: DraftErrors) => Object.values(errors).some(Boolean);
 
+/** Attributes and stable error id shared by the draft form's labelled controls. */
+export function fieldAccessibility(name: keyof Draft, error?: string) {
+  return {
+    'aria-invalid': error ? true : undefined,
+    'aria-describedby': error ? `draft-${name}-error` : undefined,
+  } as const;
+}
+
 /** Error carrying DRF field messages so the form can show them next to the inputs. */
 export class FieldError extends Error {
   fields: DraftErrors;

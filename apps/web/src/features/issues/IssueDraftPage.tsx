@@ -13,6 +13,7 @@ import {
   blankDraft,
   draftFromIssue,
   FieldError,
+  fieldAccessibility,
   hasErrors,
   parseServerErrors,
   requiredFields,
@@ -68,7 +69,7 @@ function Field({ name, label, required, error, children }: FieldProps) {
       </label>
       {children}
       {error && (
-        <span className="field-error" role="alert">
+        <span className="field-error" id={`draft-${name}-error`} role="alert" aria-live="polite">
           {error}
         </span>
       )}
@@ -263,6 +264,7 @@ function DraftForm({ existing }: { existing?: Issue }) {
   const text = (name: 'environment' | 'steps_to_reproduce' | 'expected_result' | 'actual_result' | 'description', rows: number) => (
     <textarea
       id={`draft-${name}`}
+      {...fieldAccessibility(name, errors[name])}
       rows={rows}
       value={draft[name] ?? ''}
       onChange={e => set(name, e.target.value)}
@@ -279,6 +281,7 @@ function DraftForm({ existing }: { existing?: Issue }) {
         <Field {...field('title', 'Title')}>
           <input
             id="draft-title"
+            {...fieldAccessibility('title', errors.title)}
             maxLength={200}
             value={draft.title ?? ''}
             onChange={e => set('title', e.target.value)}
@@ -314,7 +317,7 @@ function DraftForm({ existing }: { existing?: Issue }) {
         )}
         {maskReviewOpen && maskPreview.isError && <p className="alert error small">Privacy preview is unavailable; the server will still mask text before persistence.</p>}
         {suggestions.data?.available && (
-          <aside className="suggestion-panel" aria-label="Possible duplicate requests">
+          <aside className="suggestion-panel" aria-label="Possible duplicate requests" aria-live="polite">
             <div>
               <strong>Helpful matches</strong>
               <p className="muted small">These are private, tenant-scoped suggestions. Your request still saves normally if suggestions are unavailable.</p>
@@ -353,11 +356,12 @@ function DraftForm({ existing }: { existing?: Issue }) {
             {selectedLabel && <p className="muted small">Selected label: <strong>{selectedLabel.name}</strong></p>}
           </aside>
         )}
-        {suggestions.isError && <p className="muted small">Suggestions are temporarily unavailable; you can continue.</p>}
+        {suggestions.isError && <p className="muted small" aria-live="polite">Suggestions are temporarily unavailable; you can continue.</p>}
         <div className="form-row">
           <Field {...field('request_type', 'Type')}>
             <select
               id="draft-request_type"
+              {...fieldAccessibility('request_type', errors.request_type)}
               value={draft.request_type ?? ''}
               onChange={e => set('request_type', e.target.value as Draft['request_type'])}
             >
@@ -371,6 +375,7 @@ function DraftForm({ existing }: { existing?: Issue }) {
           <Field {...field('priority', 'Priority')}>
             <select
               id="draft-priority"
+              {...fieldAccessibility('priority', errors.priority)}
               value={draft.priority ?? ''}
               onChange={e => set('priority', e.target.value as Draft['priority'])}
             >
@@ -386,6 +391,7 @@ function DraftForm({ existing }: { existing?: Issue }) {
           <Field {...field('product', 'Product')}>
             <select
               id="draft-product"
+              {...fieldAccessibility('product', errors.product)}
               value={draft.product ?? ''}
               onChange={e => {
                 set('product', e.target.value ? Number(e.target.value) : null);
@@ -403,6 +409,7 @@ function DraftForm({ existing }: { existing?: Issue }) {
           <Field {...field('module', 'Module')}>
             <select
               id="draft-module"
+              {...fieldAccessibility('module', errors.module)}
               value={draft.module ?? ''}
               onChange={e => set('module', e.target.value ? Number(e.target.value) : null)}
             >
@@ -420,6 +427,7 @@ function DraftForm({ existing }: { existing?: Issue }) {
         <Field {...field('related_request', 'Related request')}>
           <select
             id="draft-related_request"
+            {...fieldAccessibility('related_request', errors.related_request)}
             value={draft.related_request ?? ''}
             onChange={e => set('related_request', e.target.value ? Number(e.target.value) : null)}
           >
@@ -478,7 +486,7 @@ function DraftForm({ existing }: { existing?: Issue }) {
         {products.isError && <ErrorState error={products.error} />}
         {save.isError && <ErrorState error={save.error} />}
         {hasErrors(errors) && !save.isError && (
-          <p className="alert error" role="alert">
+          <p className="alert error" role="alert" aria-live="polite">
             Please fix the highlighted fields.
           </p>
         )}

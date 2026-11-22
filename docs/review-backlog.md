@@ -69,3 +69,8 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] REJECTED files still persist in storage and in the attachment list (visible with status REJECTED). Only download is blocked. Consider purging them or hiding them from non-owners.
 - [ ] [follow-up] Comments are masked with mask_sensitive and stored in event details. They are shown to everyone who can see the issue timeline, with no separate per-role comment visibility. This matches the existing event visibility rules.
 - [ ] [follow-up] The tests cover comment storage, masking, EICAR rejection, clean download and cross-tenant download denial. There is no test that every workflow action accepts a comment, and none for a 423 response on a rejected file.
+
+## P7-T4 — 2026-11-22
+- [ ] [follow-up] Bangla tests rely on the existing seed fixture and a few hand-made cases. A larger Bangla/mixed fixture with graded relevance would give stronger evidence.
+- [ ] [follow-up] The 360px layout fixes are CSS-only and have no automated check. They need a manual viewport check.
+- [ ] [follow-up] Field errors set both role=alert and aria-live=polite, which is redundant. Screen readers may announce them twice.
