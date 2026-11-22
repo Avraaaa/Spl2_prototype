@@ -764,6 +764,45 @@
         "N-11: the request form lets the Officer mark the request as Recurring of an earlier same-organization request (existing recurring_of field; picker limited to the user's own organization, ideally closed requests), and issue detail shows the recurring link.",
         "EX-10 visual bug: the required-field asterisk in draft form labels wraps onto its own line, so paired columns (Title/Description, Product/Module) misalign. Keep the asterisk inline with the label text."
       ]
+    },
+    {
+      "id": "P7-T8",
+      "phase": 7,
+      "title": "Evaluation rigor and masking detector gaps",
+      "req": [
+        "E-02",
+        "E-03",
+        "E-05",
+        "E-06",
+        "E-08",
+        "E-09",
+        "E-11",
+        "E-12"
+      ],
+      "depends_on": [
+        "P7-T7"
+      ],
+      "allow": [
+        "services/api/",
+        "services/ml/",
+        "apps/web/src/",
+        "contracts/",
+        "seed/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "Masking: add detectors for email addresses ([EMAIL]) and NID numbers in ASCII and Bangla digits near NID keywords (NID, national ID, জাতীয় পরিচয়পত্র, এনআইডি). Keep the OTP proximity rule. Add NEW table tests for these plus must-not-mask long order/transaction references explicitly labelled (e.g. Txn ID, Order no) so they are not masked as cards. Existing masking tests must still pass.",
+        "evaluate_search: dense/hybrid/hybrid+normalization configurations must use real embeddings when a local checkpoint is available (load in-process from ML_MODELS_DIR / ./models), not silently fall back to lexical. If no embedder is available, the configuration is reported as SKIPPED with a reason, never reported with lexical numbers.",
+        "Expand seed/search_evaluation.json to at least 60 graded queries (at least 10 per variant: English, Bangla, Banglish, code-switched, typo) with hard negatives (same module or error code, different problem), split by incident, synthetic only.",
+        "evaluate_search also reports label suggestion accuracy@1, coverage and abstention rate (with the per-tenant thresholds) on a synthetic labelled fixture, and runs vector topic clustering on a synthetic fixture of at least 20 embedded unlabelled requests, reporting cluster purity against fixture topic ids.",
+        "Write results into the experiment manifest. NEW tests only (fake embedder) asserting: SKIPPED instead of silent fallback, label metrics present, fixture size/variant counts."
+      ]
     }
   ]
 }
