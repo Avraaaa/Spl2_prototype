@@ -1,5 +1,7 @@
+from hashlib import sha256
 from typing import Any
 
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
@@ -15,7 +17,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.throttling import ScopedRateThrottle, SimpleRateThrottle
 from rest_framework.views import APIView
 
 from domains.tenants.models import Organization
@@ -42,6 +44,25 @@ INVALID = {"detail": "Invalid username or password.", "code": "invalid_credentia
 # Explicit lists replace DRF defaults, so the first-login gate must be repeated here.
 ADMIN_PERMISSIONS = [IsAuthenticated, HasPortalAccount, PasswordChangeCompleted, IsDataSoftAdmin]
 PROFILE_PERMISSIONS = [IsAuthenticated, HasPortalAccount, PasswordChangeCompleted]
+
+
+class ResetEmailThrottle(SimpleRateThrottle):
+    """Additional forgot-password throttle keyed by a normalized, hashed email."""
+
+    scope = "password_reset_email"
+
+    def get_rate(self) -> str:
+        return f"{max(1, int(settings.PASSWORD_RESET_RATE_PER_MINUTE))}/min"
+
+    def get_cache_key(self, request: Request, view: APIView) -> str | None:
+        try:
+            email = str(request.data.get("email", "")).strip().casefold()
+        except (AttributeError, TypeError, ValueError):
+            return None
+        if not email:
+            return None
+        digest = sha256(email.encode("utf-8")).hexdigest()
+        return self.cache_format % {"scope": self.scope, "ident": digest}
 
 
 def _translate(exc: Exception) -> Exception:
@@ -175,7 +196,7 @@ class ChangePasswordView(APIView):
 
 class ForgotPasswordView(APIView):
     permission_classes = [AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ScopedRateThrottle, ResetEmailThrottle]
     throttle_scope = "password_reset"
 
     @extend_schema(request=ForgotPasswordSerializer, responses={202: None}, tags=["auth"])
@@ -244,7 +265,7 @@ class OrganizationAdminViewSet(mixins.ListModelMixin, viewsets.GenericViewSet[Or
         if contact_email is None:
             raise ValidationError({"contact_email": "This field is required."})
         org.contact_email = contact_email
-        org.contact_email_placeholder = False
+        org.contact_email_placeholder = not bool(contact_email.strip())
         org.save(update_fields=["contact_email", "contact_email_placeholder"])
         return Response(OrganizationSerializer(org).data)
 

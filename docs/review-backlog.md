@@ -132,3 +132,10 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] The runner self-test (test_agent_runner_self_test_checks_crlf_warning_filter) is no longer in services/api/tests/test_p7_t11_progress.py, and nothing in the file references agent-runner or crlf. The remaining tests are the progress, backfill warning and seed-local backfill tests.
 - [ ] [follow-up] ProgressReporter.warning duplicates the body of _log, apart from the logger level. It could share one helper. This is style only.
 - [ ] [follow-up] ProgressReporter opens its log file in __init__ and closes it only in finish(). If a command fails mid-run the file handle stays open until the process exits. This is minor.
+
+## P3-T3b — 2026-11-22
+- [ ] [follow-up] When email delivery is not configured, the console-fallback reset link still puts the token in the query string (`?uid=..&token=..#token=..`). This is intended for local use only, but the secret reaches server logs and referrers in that mode.
+- [ ] [follow-up] ResetEmailThrottle uses the default cache. With a per-process LocMemCache the limit is not shared across workers, so production needs a shared cache for it to hold.
+- [ ] [follow-up] The outbox scrub only redacts `body` and `html` keys. Any other payload key that carries secrets would be left in place.
+- [ ] [follow-up] `_send_temporary_credential` now emails a one-time link instead of the password and discards `temporary`. I did not confirm that completing the reset clears any must-change-password flag.
+- [ ] [follow-up] CompletePasswordResetPage reads the URL with `window.location` rather than the router. This works, but the page has no component-level test for the history-stripping effect.

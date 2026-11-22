@@ -12,6 +12,8 @@ from django.utils.html import escape
 
 from .models import OutboxMessage
 
+REDACTED_EMAIL_CONTENT = "[REDACTED AFTER DELIVERY]"
+
 
 def _send_claimed(message_id: int, lease: datetime, *, max_attempts: int) -> bool:
     """Send a claimed message while its database row remains locked.
@@ -57,6 +59,8 @@ def _send_claimed(message_id: int, lease: datetime, *, max_attempts: int) -> boo
             current.next_attempt_at = timezone.now() + timedelta(seconds=seconds)
             current.locked_until = None
             current.last_error = type(exc).__name__[:200]
+            if current.status == OutboxMessage.Status.DEAD:
+                current.payload = _scrub_email_payload(current.payload)
             current.save(
                 update_fields=[
                     "attempts",
@@ -64,6 +68,7 @@ def _send_claimed(message_id: int, lease: datetime, *, max_attempts: int) -> boo
                     "next_attempt_at",
                     "locked_until",
                     "last_error",
+                    "payload",
                 ]
             )
         else:
@@ -71,8 +76,20 @@ def _send_claimed(message_id: int, lease: datetime, *, max_attempts: int) -> boo
             current.status = OutboxMessage.Status.SENT
             current.locked_until = None
             current.last_error = ""
-            current.save(update_fields=["attempts", "status", "locked_until", "last_error"])
+            current.payload = _scrub_email_payload(current.payload)
+            current.save(
+                update_fields=["attempts", "status", "locked_until", "last_error", "payload"]
+            )
         return True
+
+
+def _scrub_email_payload(payload: dict) -> dict:
+    scrubbed = dict(payload)
+    if "body" in scrubbed:
+        scrubbed["body"] = REDACTED_EMAIL_CONTENT
+    if "html" in scrubbed:
+        scrubbed["html"] = REDACTED_EMAIL_CONTENT
+    return scrubbed
 
 
 def process_due(*, limit: int = 100) -> int:

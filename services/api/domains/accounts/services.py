@@ -148,6 +148,8 @@ def email_delivery_configured() -> bool:
 def _send_temporary_credential(user: User, temporary: str, *, key: str) -> None:
     from domains.notifications.models import OutboxMessage
 
+    del temporary  # configured delivery uses a one-time setup link, never the password
+
     OutboxMessage.objects.filter(
         recipient=user,
         channel=OutboxMessage.Channel.EMAIL,
@@ -160,16 +162,24 @@ def _send_temporary_credential(user: User, temporary: str, *, key: str) -> None:
         status__in=[OutboxMessage.Status.PENDING, OutboxMessage.Status.FAILED],
         idempotency_key__startswith=f"admin-credential-reset:{user.pk}:",
     ).delete()
-    expiry_hours = int(TEMPORARY_PASSWORD_TTL.total_seconds() // 3600)
+    now = timezone.now()
+    PasswordResetToken.objects.filter(user=user, used_at__isnull=True).update(used_at=now)
+    raw = secrets.token_urlsafe(32)
+    token = PasswordResetToken.objects.create(
+        user=user,
+        token_hash=sha256(raw.encode()).hexdigest(),
+        expires_at=now + timedelta(minutes=max(1, int(settings.PASSWORD_RESET_TTL_MINUTES))),
+    )
+    uid = f"{user.pk}.{token.pk}"
+    link = f"{settings.PORTAL_BASE_URL}/reset-password?uid={uid}#token={raw}"
     body = (
         f"Hello {user.account.full_name},\n\n"
-        f"Username: {user.username}\nTemporary password: {temporary}\n\n"
-        f"Sign in at {settings.PORTAL_BASE_URL}. You must change this password at first sign-in. "
-        f"It expires in {expiry_hours} hours."
+        f"Username: {user.username}\nSet your password using this one-time link:\n{link}\n\n"
+        f"The link expires in {settings.PASSWORD_RESET_TTL_MINUTES} minutes."
     )
     _email_account_message(
         user,
-        "Your DataSoft portal sign-in details",
+        "Set up your DataSoft portal password",
         body,
         key,
     )
@@ -269,7 +279,14 @@ def request_password_reset(email: str) -> None:
         token_hash=digest,
         expires_at=now + timedelta(minutes=max(1, int(settings.PASSWORD_RESET_TTL_MINUTES))),
     )
-    link = f"{settings.PORTAL_BASE_URL}/reset-password?uid={user.pk}.{token.pk}&token={raw}"
+    uid = f"{user.pk}.{token.pk}"
+    link = f"{settings.PORTAL_BASE_URL}/reset-password?uid={uid}#token={raw}"
+    # Preserve links used by the local console fallback. Once email delivery is
+    # configured, the secret is only in the fragment and never reaches servers
+    # through request URLs or referrers. The reset page migrates legacy query
+    # tokens into the fragment and removes them from browser history.
+    if not email_delivery_configured():
+        link = f"{settings.PORTAL_BASE_URL}/reset-password?uid={uid}&token={raw}#token={raw}"
     _email_account_message(
         user,
         "Reset your DataSoft portal password",

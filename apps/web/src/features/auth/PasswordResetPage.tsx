@@ -1,7 +1,16 @@
-import { useState, type FormEvent } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useEffect, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { errorMessage } from './hooks';
+
+export function readResetParams(href: string) {
+  const current = new URL(href);
+  const fragment = new URLSearchParams(current.hash.replace(/^#/, ''));
+  return {
+    uid: current.searchParams.get('uid') ?? '',
+    token: fragment.get('token') ?? current.searchParams.get('token') ?? '',
+  };
+}
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -37,13 +46,28 @@ export function ForgotPasswordPage() {
 }
 
 export function CompletePasswordResetPage() {
-  const [params] = useSearchParams();
-  const uid = params.get('uid') ?? '';
-  const token = params.get('token') ?? '';
+  const [initial] = useState(() => readResetParams(window.location.href));
+  const { uid, token } = initial;
   const [password, setPassword] = useState('');
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
+  useEffect(() => {
+    const current = new URL(window.location.href);
+    const queryToken = current.searchParams.get('token');
+    const fragment = new URLSearchParams(current.hash.replace(/^#/, ''));
+    const fragmentToken = fragment.get('token');
+
+    // Migrate old links into the fragment, then remove the secret from browser history.
+    current.searchParams.delete('token');
+    if (queryToken && !fragmentToken) {
+      current.hash = new URLSearchParams({ token: queryToken }).toString();
+      window.history.replaceState(null, '', current.pathname + current.search + current.hash);
+    }
+    if (queryToken || fragmentToken) {
+      window.history.replaceState(null, '', current.pathname + current.search);
+    }
+  }, []);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setPending(true);
