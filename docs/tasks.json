@@ -970,6 +970,39 @@
         "Write the comparison markdown with these tables. Keep P7-T11 progress logging in the commands.",
         "NEW tests with a small --count and fake embedder: loader validates the corpus schema, groups never split across banks, per-type masking keys present, hard-negative metric present. Do not edit existing tests."
       ]
+    },
+    {
+      "id": "P3-T3b",
+      "phase": 7,
+      "title": "Email security hardening from P3-T3 review",
+      "req": [
+        "EX-04",
+        "N-01"
+      ],
+      "depends_on": [
+        "P7-T11"
+      ],
+      "allow": [
+        "services/api/domains/accounts/",
+        "services/api/domains/notifications/",
+        "services/api/tests/",
+        "apps/web/src/features/auth/",
+        "contracts/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "Outbox email payloads that contain a temporary credential are scrubbed after a successful send (body/html replaced with a redacted marker, subject kept) and after terminal failure; the plaintext never persists beyond delivery. Prefer sending a one-time setup link instead of a plaintext temporary password when email is configured.",
+        "Forgot-password: add a per-email (normalized, hashed key) throttle in addition to the per-IP one; response stays identical whether or not the account exists.",
+        "Reset link: token is carried in the URL fragment (#token=...) and submitted via POST body by the reset page, never in a query string; the reset page reads it from location.hash and clears it from history (replaceState). Backward compatible: if a query token arrives, the page moves it to the fragment and the API still accepts POST only.",
+        "contact_email_placeholder is recomputed whenever contact_email is saved (blank => True).",
+        "NEW tests only: payload scrubbed after send and after terminal failure; per-email throttle; reset API rejects GET token use; placeholder recompute. Do not edit existing tests."
+      ]
     }
   ]
 }
