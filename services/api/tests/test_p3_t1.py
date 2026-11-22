@@ -102,7 +102,7 @@ def test_private_file_validation_and_two_bank_download(
     )
     assert upload.status_code == 201
     file_id = upload.data["id"]
-    assert upload.data["quarantine_status"] == "unscanned"
+    assert upload.data["quarantine_status"] == "CLEAN"
     assert "url" not in upload.data
     stored = Attachment.objects.get(pk=file_id)
     assert stored.file.name.startswith("private/")
