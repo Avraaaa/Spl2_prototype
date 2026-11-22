@@ -720,6 +720,46 @@
         "REJECTED attachments are hidden from attachment listings for client users other than the uploader, and their stored file content is deleted once marked REJECTED; the metadata row stays for audit.",
         "NEW test file(s) only: a parametrized test that every workflow action (submit, accept, reject, assign, deliver, verify pass, verify fail, close, reopen) accepts an optional comment and stores it masked with the history event; a 423 download test for QUARANTINED/REJECTED; a non-UTF-8 upload test; a legacy-backfill migration test; cross-tenant download denial still holds."
       ]
+    },
+    {
+      "id": "P7-T7",
+      "phase": 7,
+      "title": "UI for existing intelligence/admin endpoints, acceptance criteria and issue labels",
+      "req": [
+        "E-04",
+        "E-05",
+        "E-08",
+        "E-09",
+        "E-11",
+        "E-13",
+        "E-14",
+        "E-18",
+        "N-18"
+      ],
+      "depends_on": [
+        "P7-T3b"
+      ],
+      "allow": [
+        "services/api/",
+        "services/ml/",
+        "apps/web/src/",
+        "contracts/",
+        "seed/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "Admin console gets real screens (calling the EXISTING endpoints, generated OpenAPI types) for: masking patterns CRUD (/api/issues/masking-patterns/), topic proposals review incl. add-as-label (/api/search/topics/), audit chain verify + result showing first broken record (/api/audit/verify/), and suggestion accuracy/evaluation metrics (/api/search/evaluation/). Each screen only visible to roles the backend permits; backend stays the authority.",
+        "Issue detail: a Show original button for users holding the unmasked-original permission calling /api/issues/{id}/original/ (audited server-side); hidden otherwise.",
+        "N-18: Issue gets an optional acceptance_criteria text field (masked like description, editable in draft, shown to the Verifier next to the delivery note when verifying). Backward compatible: optional, existing tests untouched.",
+        "E-05: confirmed labels (IssueLabelSelection) are exposed read-only on the issue serializer and shown on issue detail and list; DataSoft can filter the issue list by label.",
+        "Frontend unit tests (vitest) for new pure helpers; NEW backend test files for acceptance_criteria masking, labels on serializer with two-bank isolation. Do not edit existing tests. Readable components, no 1000-char JSX lines."
+      ]
     }
   ]
 }
