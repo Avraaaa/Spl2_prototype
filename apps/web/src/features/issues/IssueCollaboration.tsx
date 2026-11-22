@@ -258,9 +258,9 @@ export function AttachmentsPanel({ id, me }: { id: number; me: PortalUser }) {
                 </span>
                 <span className="attachment-tags">
                   {item.comment ? <span className="chip">Attached to {comment(item.comment)}</span> : null}
-                  {isStaff(me) && item.quarantine_status === 'unscanned' ? (
-                    <span className="chip warn">Not virus-scanned</span>
-                  ) : null}
+                  <span className={`chip ${item.quarantine_status === 'CLEAN' ? '' : 'warn'}`}>
+                    {item.quarantine_status === 'CLEAN' ? 'Scan clean' : `Attachment ${item.quarantine_status.toLowerCase()}`}
+                  </span>
                 </span>
               </div>
             </article>

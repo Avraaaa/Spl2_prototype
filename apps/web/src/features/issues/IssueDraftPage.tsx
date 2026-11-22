@@ -102,6 +102,7 @@ function DraftForm({ existing }: { existing?: Issue }) {
   const [suggestionInput, setSuggestionInput] = useState({ title: '', description: '', product: null as number | null, module: null as number | null });
   const [selectedLabel, setSelectedLabel] = useState<{ id: number; name: string } | null>(null);
   const [labelTouched, setLabelTouched] = useState(false);
+  const [submissionComment, setSubmissionComment] = useState('');
   const [maskReviewOpen, setMaskReviewOpen] = useState(false);
 
   useEffect(() => {
@@ -225,7 +226,7 @@ function DraftForm({ existing }: { existing?: Issue }) {
         await labelFeedback.mutateAsync({ issue: saved.id, label: selectedLabel?.id ?? null, accepted: selectedLabel !== null });
       }
       if (!submit) return saved.id;
-      const { data, error } = await api.POST('/api/issues/{id}/submit/', { params: { path: { id: saved.id } } });
+      const { data, error } = await api.POST('/api/issues/{id}/submit/', { params: { path: { id: saved.id } }, body: { comment: submissionComment } });
       if (!data) {
         const failure = serverError(error);
         failure.message = `Your draft was saved but not submitted. ${failure.message}`;
@@ -481,6 +482,7 @@ function DraftForm({ existing }: { existing?: Issue }) {
             Please fix the highlighted fields.
           </p>
         )}
+        <label>Submission comment (optional)<textarea rows={2} value={submissionComment} onChange={event => setSubmissionComment(event.target.value)} maxLength={5000} /></label>
         <div className="actions">
           <button type="button" className="btn" disabled={save.isPending} onClick={() => run(null, 'save')}>
             {save.isPending ? 'Saving…' : 'Save draft'}

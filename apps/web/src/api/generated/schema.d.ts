@@ -1074,6 +1074,7 @@ export interface components {
     schemas: {
         AcceptRequest: {
             version: number;
+            comment?: string;
             /** Format: date */
             tentative_delivery_date?: string | null;
             /** @default false */
@@ -1086,6 +1087,7 @@ export interface components {
         };
         AssignRequest: {
             version: number;
+            comment?: string;
             assignee: number;
         };
         Attachment: {
@@ -1141,6 +1143,7 @@ export interface components {
         };
         DateRevisionRequest: {
             version: number;
+            comment?: string;
             /** Format: date */
             tentative_delivery_date?: string | null;
             /** @default false */
@@ -1155,6 +1158,7 @@ export interface components {
         DecisionEnum: "confirmed" | "recurring" | "dismissed";
         DeliveryRequest: {
             version: number;
+            comment?: string;
             delivery_note: string;
             deployment_details: string;
         };
@@ -1530,6 +1534,7 @@ export interface components {
         };
         ReasonRequest: {
             version: number;
+            comment?: string;
             reason: string;
         };
         ReportBank: {
@@ -1564,6 +1569,9 @@ export interface components {
         RolesEnum: "ISSUE_OFFICER" | "ISSUE_VERIFIER" | "DATASOFT_ADMIN" | "SUPPORT_AGENT";
         RolesRequest: {
             roles: components["schemas"]["RolesEnum"][];
+        };
+        SubmitRequest: {
+            comment?: string;
         };
         SuggestionRequestRequest: {
             title: string;
@@ -1655,6 +1663,7 @@ export interface components {
         };
         TransitionVersionRequest: {
             version: number;
+            comment?: string;
         };
         UnreadCount: {
             readonly count: number;
@@ -2809,7 +2818,13 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SubmitRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SubmitRequest"];
+                "multipart/form-data": components["schemas"]["SubmitRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {

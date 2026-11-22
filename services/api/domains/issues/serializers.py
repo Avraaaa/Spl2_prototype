@@ -208,6 +208,15 @@ class IssueDraftEditSerializer(IssueWriteSerializer):
 
 class TransitionVersionSerializer(serializers.Serializer):
     version = serializers.IntegerField(min_value=1)
+    comment = serializers.CharField(
+        required=False, allow_blank=True, max_length=5000, trim_whitespace=True
+    )
+
+
+class SubmitSerializer(serializers.Serializer):
+    comment = serializers.CharField(
+        required=False, allow_blank=True, max_length=5000, trim_whitespace=True
+    )
 
 
 class AcceptSerializer(TransitionVersionSerializer):

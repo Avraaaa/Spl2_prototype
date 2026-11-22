@@ -57,6 +57,7 @@ def _record(
     prior: str,
     *,
     reason: str = "",
+    comment: str = "",
     details: dict | None = None,
 ) -> Issue:
     now = timezone.now()
@@ -71,7 +72,10 @@ def _record(
         from_status=prior,
         to_status=issue.status,
         reason=mask_sensitive(reason),
-        details=details or {},
+        details={
+            **(details or {}),
+            **({"comment": mask_sensitive(comment.strip())} if comment.strip() else {}),
+        },
     )
     notify_issue_event(event)
     return issue
@@ -99,6 +103,7 @@ def accept(
     *,
     tentative_delivery_date: date | None = None,
     tentative_delivery_later: bool = False,
+    comment: str = "",
 ) -> Issue:
     issue = _locked(user, issue_id, version, frozenset({IssueStatus.SUBMITTED}), DATASOFT_ROLES)
     _date_input(tentative_delivery_date, tentative_delivery_later)
@@ -117,16 +122,17 @@ def accept(
             else None,
             "tentative_delivery_later": tentative_delivery_later,
         },
+        comment=comment,
     )
 
 
 @transaction.atomic
-def reject(user: User, issue_id: int, version: int, *, reason: str) -> Issue:
+def reject(user: User, issue_id: int, version: int, *, reason: str, comment: str = "") -> Issue:
     issue = _locked(user, issue_id, version, frozenset({IssueStatus.SUBMITTED}), DATASOFT_ROLES)
     reason = _required(reason, "reason")
     prior = issue.status
     issue.status = IssueStatus.REJECTED
-    return _record(issue, user, "REJECTED", prior, reason=reason)
+    return _record(issue, user, "REJECTED", prior, reason=reason, comment=comment)
 
 
 @transaction.atomic
@@ -137,6 +143,7 @@ def revise_date(
     *,
     tentative_delivery_date: date | None = None,
     tentative_delivery_later: bool = False,
+    comment: str = "",
 ) -> Issue:
     issue = _locked(
         user,
@@ -163,11 +170,12 @@ def revise_date(
             "to_date": str(tentative_delivery_date) if tentative_delivery_date else None,
             "to_later": tentative_delivery_later,
         },
+        comment=comment,
     )
 
 
 @transaction.atomic
-def assign(user: User, issue_id: int, version: int, *, assignee: User) -> Issue:
+def assign(user: User, issue_id: int, version: int, *, assignee: User, comment: str = "") -> Issue:
     issue = _locked(
         user,
         issue_id,
@@ -188,20 +196,27 @@ def assign(user: User, issue_id: int, version: int, *, assignee: User) -> Issue:
         "ASSIGNED" if old_assignee is None else "REASSIGNED",
         prior,
         details={"from_assignee": old_assignee, "to_assignee": assignee.pk},
+        comment=comment,
     )
 
 
 @transaction.atomic
-def start(user: User, issue_id: int, version: int) -> Issue:
+def start(user: User, issue_id: int, version: int, *, comment: str = "") -> Issue:
     issue = _locked(user, issue_id, version, frozenset({IssueStatus.PENDING}), DATASOFT_ROLES)
     prior = issue.status
     issue.status = IssueStatus.IN_PROGRESS
-    return _record(issue, user, "STARTED", prior)
+    return _record(issue, user, "STARTED", prior, comment=comment)
 
 
 @transaction.atomic
 def deliver(
-    user: User, issue_id: int, version: int, *, delivery_note: str, deployment_details: str
+    user: User,
+    issue_id: int,
+    version: int,
+    *,
+    delivery_note: str,
+    deployment_details: str,
+    comment: str = "",
 ) -> Issue:
     issue = _locked(user, issue_id, version, frozenset({IssueStatus.IN_PROGRESS}), DATASOFT_ROLES)
     note = _required(delivery_note, "delivery_note")
@@ -222,11 +237,12 @@ def deliver(
             "deployment_details": deployment,
             "actual_delivery_at": delivered_at.isoformat(),
         },
+        comment=comment,
     )
 
 
 @transaction.atomic
-def verify(user: User, issue_id: int, version: int) -> Issue:
+def verify(user: User, issue_id: int, version: int, *, comment: str = "") -> Issue:
     issue = _locked(
         user,
         issue_id,
@@ -236,11 +252,13 @@ def verify(user: User, issue_id: int, version: int) -> Issue:
     )
     prior = issue.status
     issue.status = IssueStatus.VERIFIED
-    return _record(issue, user, "VERIFIED", prior)
+    return _record(issue, user, "VERIFIED", prior, comment=comment)
 
 
 @transaction.atomic
-def fail_verification(user: User, issue_id: int, version: int, *, reason: str) -> Issue:
+def fail_verification(
+    user: User, issue_id: int, version: int, *, reason: str, comment: str = ""
+) -> Issue:
     issue = _locked(
         user,
         issue_id,
@@ -252,20 +270,20 @@ def fail_verification(user: User, issue_id: int, version: int, *, reason: str) -
     prior = issue.status
     issue.status = IssueStatus.IN_PROGRESS
     issue.actual_delivery_at = None
-    return _record(issue, user, "VERIFICATION_FAILED", prior, reason=reason)
+    return _record(issue, user, "VERIFICATION_FAILED", prior, reason=reason, comment=comment)
 
 
 @transaction.atomic
-def close(user: User, issue_id: int, version: int) -> Issue:
+def close(user: User, issue_id: int, version: int, *, comment: str = "") -> Issue:
     issue = _locked(user, issue_id, version, frozenset({IssueStatus.VERIFIED}), DATASOFT_ROLES)
     prior = issue.status
     issue.status = IssueStatus.CLOSED
     issue.closed_at = timezone.now()
-    return _record(issue, user, "CLOSED", prior)
+    return _record(issue, user, "CLOSED", prior, comment=comment)
 
 
 @transaction.atomic
-def reopen(user: User, issue_id: int, version: int, *, reason: str) -> Issue:
+def reopen(user: User, issue_id: int, version: int, *, reason: str, comment: str = "") -> Issue:
     issue = _locked(
         user, issue_id, version, frozenset({IssueStatus.CLOSED}), BANK_ROLES | DATASOFT_ROLES
     )
@@ -285,4 +303,4 @@ def reopen(user: User, issue_id: int, version: int, *, reason: str) -> Issue:
     issue.status = IssueStatus.IN_PROGRESS
     issue.closed_at = None
     issue.actual_delivery_at = None
-    return _record(issue, user, "REOPENED", prior, reason=reason)
+    return _record(issue, user, "REOPENED", prior, reason=reason, comment=comment)

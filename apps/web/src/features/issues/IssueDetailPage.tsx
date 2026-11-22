@@ -163,9 +163,10 @@ function DuplicateReview({ row, me }: { row: Issue; me: PortalUser }) {
 function DraftActions({ row }: { row: Issue }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const [comment, setComment] = useState('');
   const submit = useMutation({
     mutationFn: async () => {
-      const { data, error } = await api.POST('/api/issues/{id}/submit/', { params: { path: { id: row.id } } });
+      const { data, error } = await api.POST('/api/issues/{id}/submit/', { params: { path: { id: row.id } }, body: { comment } });
       if (!data) throw new Error(errorMessage(error));
       return data;
     },
@@ -191,6 +192,7 @@ function DraftActions({ row }: { row: Issue }) {
       <Link className="btn" to={`/issues/${row.id}/edit`}>
         Edit draft
       </Link>
+      <label>Comment (optional)<textarea rows={2} value={comment} onChange={event => setComment(event.target.value)} maxLength={5000} /></label>
       <button className="btn primary" disabled={submit.isPending} onClick={() => submit.mutate()}>
         Submit request
       </button>

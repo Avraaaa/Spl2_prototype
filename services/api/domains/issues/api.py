@@ -46,6 +46,7 @@ from .serializers import (
     MaskPreviewResponseSerializer,
     MaskPreviewSerializer,
     ReasonSerializer,
+    SubmitSerializer,
     TransitionVersionSerializer,
     WorkflowAssigneeSerializer,
     WorkflowSettingsSerializer,
@@ -315,11 +316,15 @@ class IssueDetailView(APIView):
 
 
 class IssueSubmitView(APIView):
-    @extend_schema(request=None, responses=IssueSerializer, tags=["issues"])
+    @extend_schema(request=SubmitSerializer, responses=IssueSerializer, tags=["issues"])
     def post(self, request: Request, id: int) -> Response:
         issue = get_authorized_object_or_404(request.user, writable_rows(request.user), id)
+        data = SubmitSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
         try:
-            submitted = services.submit(request.user, issue)
+            submitted = services.submit(
+                request.user, issue, comment=data.validated_data.get("comment", "")
+            )
         except (DjangoPermissionDenied, DjangoValidationError) as exc:
             raise translate(exc) from exc
         return Response(IssueSerializer(submitted).data)

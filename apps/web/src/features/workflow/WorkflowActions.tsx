@@ -51,6 +51,7 @@ export function WorkflowActions({ issue, me }: { issue: Issue; me: PortalUser })
   const [date, setDate] = useState(issue.tentative_delivery_date ?? '');
   const [later, setLater] = useState(issue.tentative_delivery_later ?? false);
   const [reason, setReason] = useState('');
+  const [comment, setComment] = useState('');
   const [assignee, setAssignee] = useState(issue.assignee?.toString() ?? '');
   const [note, setNote] = useState('');
   const [deployment, setDeployment] = useState('');
@@ -63,49 +64,49 @@ export function WorkflowActions({ issue, me }: { issue: Issue; me: PortalUser })
       if (version === undefined) throw new Error('Request version is unavailable. Reload this request.');
       switch (selected) {
         case 'accept': {
-          const { data, error, response } = await api.POST('/api/issues/{id}/accept/', { params, body: { version, tentative_delivery_date: later ? null : date || null, tentative_delivery_later: later } });
+          const { data, error, response } = await api.POST('/api/issues/{id}/accept/', { params, body: { version, tentative_delivery_date: later ? null : date || null, tentative_delivery_later: later, comment } });
           return requireIssue(data, error, response.status);
         }
         case 'reject': {
-          const { data, error, response } = await api.POST('/api/issues/{id}/reject/', { params, body: { version, reason } });
+          const { data, error, response } = await api.POST('/api/issues/{id}/reject/', { params, body: { version, reason, comment } });
           return requireIssue(data, error, response.status);
         }
         case 'revise-date': {
-          const { data, error, response } = await api.POST('/api/issues/{id}/revise-date/', { params, body: { version, tentative_delivery_date: later ? null : date || null, tentative_delivery_later: later } });
+          const { data, error, response } = await api.POST('/api/issues/{id}/revise-date/', { params, body: { version, tentative_delivery_date: later ? null : date || null, tentative_delivery_later: later, comment } });
           return requireIssue(data, error, response.status);
         }
         case 'assign': {
-          const { data, error, response } = await api.POST('/api/issues/{id}/assign/', { params, body: { version, assignee: Number(assignee) } });
+          const { data, error, response } = await api.POST('/api/issues/{id}/assign/', { params, body: { version, assignee: Number(assignee), comment } });
           return requireIssue(data, error, response.status);
         }
         case 'start': {
-          const { data, error, response } = await api.POST('/api/issues/{id}/start/', { params, body: { version } });
+          const { data, error, response } = await api.POST('/api/issues/{id}/start/', { params, body: { version, comment } });
           return requireIssue(data, error, response.status);
         }
         case 'deliver': {
-          const { data, error, response } = await api.POST('/api/issues/{id}/deliver/', { params, body: { version, delivery_note: note, deployment_details: deployment } });
+          const { data, error, response } = await api.POST('/api/issues/{id}/deliver/', { params, body: { version, delivery_note: note, deployment_details: deployment, comment } });
           return requireIssue(data, error, response.status);
         }
         case 'verify': {
-          const { data, error, response } = await api.POST('/api/issues/{id}/verify/', { params, body: { version } });
+          const { data, error, response } = await api.POST('/api/issues/{id}/verify/', { params, body: { version, comment } });
           return requireIssue(data, error, response.status);
         }
         case 'fail-verification': {
-          const { data, error, response } = await api.POST('/api/issues/{id}/fail-verification/', { params, body: { version, reason } });
+          const { data, error, response } = await api.POST('/api/issues/{id}/fail-verification/', { params, body: { version, reason, comment } });
           return requireIssue(data, error, response.status);
         }
         case 'close': {
-          const { data, error, response } = await api.POST('/api/issues/{id}/close/', { params, body: { version } });
+          const { data, error, response } = await api.POST('/api/issues/{id}/close/', { params, body: { version, comment } });
           return requireIssue(data, error, response.status);
         }
         case 'reopen': {
-          const { data, error, response } = await api.POST('/api/issues/{id}/reopen/', { params, body: { version, reason } });
+          const { data, error, response } = await api.POST('/api/issues/{id}/reopen/', { params, body: { version, reason, comment } });
           return requireIssue(data, error, response.status);
         }
       }
     },
     onSuccess: () => {
-      setReason(''); setNote(''); setDeployment('');
+      setReason(''); setNote(''); setDeployment(''); setComment('');
       qc.invalidateQueries({ queryKey: ['issues'] });
       qc.invalidateQueries({ queryKey: ['report'] });
     },
@@ -178,6 +179,10 @@ export function WorkflowActions({ issue, me }: { issue: Issue; me: PortalUser })
           </label>
         </>
       )}
+      <label>
+        Comment (optional)
+        <textarea rows={2} value={comment} onChange={event => setComment(event.target.value)} maxLength={5000} />
+      </label>
       {assignees.isError && action === 'assign' && <p className="alert error">{assignees.error.message}</p>}
       {mutation.isError && (
         <p className="alert error" role="alert">

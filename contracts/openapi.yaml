@@ -1177,6 +1177,17 @@ paths:
         required: true
       tags:
       - issues
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SubmitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SubmitRequest'
       security:
       - cookieAuth: []
       responses:
@@ -2030,6 +2041,9 @@ components:
         version:
           type: integer
           minimum: 1
+        comment:
+          type: string
+          maxLength: 5000
         tentative_delivery_date:
           type: string
           format: date
@@ -2055,6 +2069,9 @@ components:
         version:
           type: integer
           minimum: 1
+        comment:
+          type: string
+          maxLength: 5000
         assignee:
           type: integer
       required:
@@ -2206,6 +2223,9 @@ components:
         version:
           type: integer
           minimum: 1
+        comment:
+          type: string
+          maxLength: 5000
         tentative_delivery_date:
           type: string
           format: date
@@ -2231,6 +2251,9 @@ components:
         version:
           type: integer
           minimum: 1
+        comment:
+          type: string
+          maxLength: 5000
         delivery_note:
           type: string
           minLength: 1
@@ -3259,6 +3282,9 @@ components:
         version:
           type: integer
           minimum: 1
+        comment:
+          type: string
+          maxLength: 5000
         reason:
           type: string
           minLength: 1
@@ -3330,6 +3356,12 @@ components:
             $ref: '#/components/schemas/RolesEnum'
       required:
       - roles
+    SubmitRequest:
+      type: object
+      properties:
+        comment:
+          type: string
+          maxLength: 5000
     SuggestionRequestRequest:
       type: object
       properties:
@@ -3569,6 +3601,9 @@ components:
         version:
           type: integer
           minimum: 1
+        comment:
+          type: string
+          maxLength: 5000
       required:
       - version
     UnreadCount:

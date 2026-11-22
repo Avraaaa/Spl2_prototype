@@ -83,6 +83,12 @@ def checked_file(upload):
     return MIME_TYPES[suffix]
 
 
+def scan_attachment(contents: bytes) -> str:
+    """Local pluggable scanner; deployments can replace this implementation."""
+    rejected = b"EICAR-STANDARD-ANTIVIRUS-TEST-FILE" in contents
+    return "REJECTED" if rejected else "CLEAN"
+
+
 class AttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attachment
@@ -129,22 +135,9 @@ class IssueAttachmentListView(APIView):
         data.is_valid(raise_exception=True)
         upload = data.validated_data["file"]
         content_type = checked_file(upload)
-        if Path(upload.name).suffix.lower() in {".txt", ".csv", ".log"}:
-            # Keep the uploaded original private in storage. Only the separate
-            # copy sent to NLP is masked.
-            upload.seek(0)
-            extracted_text = upload.read().decode("utf-8")
-            masked_text = mask_extracted_text(extracted_text)
-            masked_bytes = masked_text.encode("utf-8")
-            # Persist a reviewable copy with only mandatory OTP/card
-            # protections applied; configurable detections stay in the NLP copy.
-            upload = ContentFile(
-                safe_original_text(extracted_text).encode("utf-8"),
-                name=Path(upload.name).name,
-            )
-            from domains.search.services import _ml_embeddings
-
-            _ml_embeddings([masked_bytes[:20_000].decode("utf-8", errors="ignore")])
+        upload.seek(0)
+        contents = upload.read()
+        upload.seek(0)
         comment = None
         if "comment" in data.validated_data:
             comment = get_authorized_object_or_404(
@@ -162,7 +155,29 @@ class IssueAttachmentListView(APIView):
             content_type=content_type,
             size=upload.size,
             uploaded_by=request.user,
+            quarantine_status="QUARANTINED",
         )
+        # A rejected file is kept private and can never be downloaded.
+        # Scan the validated upload bytes directly. Reopening a newly written
+        # file is unreliable on some Windows storage backends and is unnecessary.
+        attachment.quarantine_status = scan_attachment(contents)
+        attachment.save(update_fields=["quarantine_status"])
+        if attachment.quarantine_status == "REJECTED":
+            return Response(AttachmentSerializer(attachment).data, status=status.HTTP_201_CREATED)
+        if Path(upload.name).suffix.lower() in {".txt", ".csv", ".log"}:
+            # Only clean text files may reach the optional NLP path. Store
+            # mandatory OTP/card redactions; NLP receives a separately masked copy.
+            with attachment.file.open("rb") as saved_file:
+                extracted_text = saved_file.read().decode("utf-8")
+            masked_text = mask_extracted_text(extracted_text)
+            attachment.file.save(
+                Path(attachment.original_name).name,
+                ContentFile(safe_original_text(extracted_text).encode("utf-8")),
+                save=True,
+            )
+            from domains.search.services import _ml_embeddings
+
+            _ml_embeddings([masked_text[:20_000]])
         return Response(AttachmentSerializer(attachment).data, status=status.HTTP_201_CREATED)
 
 
@@ -179,6 +194,8 @@ class AttachmentDownloadView(APIView):
             organization_field="issue__organization",
             allow_datasoft=True,
         )
+        if attachment.quarantine_status != "CLEAN":
+            return Response({"detail": "Attachment is not available for download."}, status=423)
         is_text = Path(attachment.original_name).suffix.lower() in {".txt", ".csv", ".log"}
         may_view_original = is_datasoft_admin(request.user) or request.user.has_perm(
             "issues.view_unmasked_original"

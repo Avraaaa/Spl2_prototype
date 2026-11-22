@@ -26,6 +26,7 @@ export function eventLines(event: TimelineEvent): string[] {
   if (details.delivery_note) lines.push(`Delivery: ${String(details.delivery_note)}`);
   if (details.deployment_details) lines.push(`Version/deployment: ${String(details.deployment_details)}`);
   if (details.to_assignee && event.assignee_name) lines.push(`Assigned to: ${event.assignee_name}`);
+  if (details.comment) lines.push(`Comment: ${String(details.comment)}`);
   if (event.reason) lines.push(`Reason: ${event.reason}`);
   return lines;
 }

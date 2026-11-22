@@ -22,6 +22,6 @@ class Attachment(models.Model):
     original_name = models.CharField(max_length=255)
     content_type = models.CharField(max_length=100)
     size = models.PositiveIntegerField()
-    quarantine_status = models.CharField(max_length=20, default="unscanned")
+    quarantine_status = models.CharField(max_length=20, default="QUARANTINED")
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)

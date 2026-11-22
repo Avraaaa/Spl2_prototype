@@ -19,9 +19,10 @@
     "P7-T1",
     "P7-T5",
     "P7-T6",
-    "P7-T2"
+    "P7-T2",
+    "P7-T3"
   ],
-  "last_updated": "2026-11-21",
+  "last_updated": "2026-11-22",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
   "evidence": {
     "P0-T1": {
@@ -319,6 +320,28 @@
         "[follow-up] The deployed-version form asks admins to enter a client organization ID manually; an organization selector would reduce entry errors.",
         "[follow-up] Response due dates use the timestamp’s direct `.date()` value, while report dates use local time. Near-midnight submissions could display a due date one day off from the portal’s local date.",
         "[follow-up] The new tests cover bank isolation and a configured overdue period, but do not cover support-agent read access to cross-bank deployment history or the exact due-date boundary."
+      ]
+    },
+    "P7-T3": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 1,
+      "base": "466a0a04081c2cdaa4c0bb8704dfbad4cf488d07",
+      "follow_ups": [
+        "[follow-up] Existing attachment rows with legacy status \"unscanned\" become non-downloadable (HTTP 423) because the download check requires CLEAN. Migration 0002 only changes the field default and does not backfill or rescan old rows.",
+        "[follow-up] The scanner only checks for the EICAR signature. The plan's \"type/size check\" is covered by the existing checked_file validation, and the scanner is a plain function rather than a configurable plug-in point.",
+        "[follow-up] Text attachments are read in full and decoded as UTF-8 after the scan. A non-UTF-8 .txt/.csv/.log file would raise a 500 on upload. The attachment record would already exist at that point with status CLEAN, but its stored file would not have been redacted.",
+        "[follow-up] REJECTED files still persist in storage and in the attachment list (visible with status REJECTED). Only download is blocked. Consider purging them or hiding them from non-owners.",
+        "[follow-up] Comments are masked with mask_sensitive and stored in event details. They are shown to everyone who can see the issue timeline, with no separate per-role comment visibility. This matches the existing event visibility rules.",
+        "[follow-up] The tests cover comment storage, masking, EICAR rejection, clean download and cross-tenant download denial. There is no test that every workflow action accepts a comment, and none for a 423 response on a rejected file."
       ]
     }
   },

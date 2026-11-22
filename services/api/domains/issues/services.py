@@ -255,7 +255,7 @@ def delete_draft(user, issue: Issue) -> None:
         locked.delete()
 
 
-def submit(user, issue: Issue) -> Issue:
+def submit(user, issue: Issue, *, comment: str = "") -> Issue:
     with transaction.atomic():
         locked = get_authorized_object_or_404(user, Issue.objects.select_for_update(), issue.pk)
         if not is_officer(user) or locked.created_by_id != user.pk:
@@ -290,6 +290,7 @@ def submit(user, issue: Issue) -> Issue:
             kind="SUBMITTED",
             from_status=IssueStatus.DRAFT,
             to_status=IssueStatus.SUBMITTED,
+            details={"comment": mask_sensitive(comment.strip())} if comment.strip() else {},
         )
         from domains.search.embeddings import queue_issue_embedding
 
