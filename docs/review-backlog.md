@@ -118,3 +118,11 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] The masking comparison in compare_features detects categories by marker substring in the stored description. It measures the seeded text, not a live mask_sensitive pass, so it can miss regressions that differ from what was stored.
 - [ ] [follow-up] The sentinel in mask_sensitive now uses the invisible U+2063 character plus a nonce. If an input contains stray U+2063 characters the behavior is untested.
 - [ ] [follow-up] Test coverage still relies on the seed-time lookalike (Txn ID 123456789012 in the masking tests), and there is no test for the cross-tenant ranking boundary in compare_features beyond the reported counter.
+
+## P3-T3 — 2026-11-22
+- [ ] [follow-up] The temporary password is stored in plaintext in the OutboxMessage payload (body and html) until the message is sent or deleted. It is needed for delivery, but consider purging the payload after a successful send.
+- [ ] [follow-up] Password reset and forgot-password are throttled per scope (the default is per IP), but there is no per-email throttle. Add a per-email limit to guard against reset-email flooding.
+- [ ] [follow-up] The reset token is in the URL query string. A link in a URL can leak through referrers or logs, so consider a fragment or POST-only flow.
+- [ ] [follow-up] The contact_email_placeholder flag is stored but only set explicitly. It is not recomputed if contact_email is later blanked through other paths.
+- [ ] [follow-up] `_send_temporary_credential` deletes pending and failed outbox rows with filters on the user's own keys. This is safe, but the idempotent get_or_create means a re-created key could silently skip.
+- [ ] [follow-up] The test for the configured-email path is now inside override_settings, but it does not assert that no console fallback occurs after the worker runs.

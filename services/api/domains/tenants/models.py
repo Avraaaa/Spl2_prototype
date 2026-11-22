@@ -12,6 +12,8 @@ class Organization(models.Model):
 
     name = models.CharField(max_length=200, unique=True)
     code = models.CharField(max_length=20, unique=True)
+    contact_email = models.EmailField(max_length=254, blank=True)
+    contact_email_placeholder = models.BooleanField(default=False)
     kind = models.CharField(max_length=10, choices=OrganizationKind.choices)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

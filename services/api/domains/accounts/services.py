@@ -1,9 +1,10 @@
-"""Account write services. Every mutation is transactional and appends an AccountEvent.
-Credentials are never logged or stored in plaintext."""
+"""Account write services. Mutations append AccountEvents; password storage is always hashed.
+Plain credentials exist only in the one-time email body needed for delivery."""
 
 import secrets
 from collections.abc import Iterable
 from datetime import timedelta
+from hashlib import sha256
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -11,11 +12,13 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
+from django.utils.crypto import constant_time_compare
+from django.utils.html import escape
 
 from domains.tenants.models import Organization, OrganizationKind
 from domains.tenants.selectors import portal_organization
 
-from .models import Account, AccountEvent, Membership
+from .models import Account, AccountEvent, Membership, PasswordResetToken
 from .roles import BANK_ROLES, DATASOFT_ROLES, Role
 
 LOGIN_RATE_PER_MINUTE: int = settings.LOGIN_RATE_PER_MINUTE
@@ -76,10 +79,16 @@ def ensure_datasoft_organization() -> Organization:
 
 
 @transaction.atomic
-def register_organization(actor: User, *, name: str, code: str) -> Organization:
+def register_organization(
+    actor: User, *, name: str, code: str, contact_email: str = ""
+) -> Organization:
     _require_admin(actor)
     return Organization.objects.create(
-        name=name.strip(), code=code.strip().upper(), kind=OrganizationKind.BANK
+        name=name.strip(),
+        code=code.strip().upper(),
+        kind=OrganizationKind.BANK,
+        contact_email=contact_email.strip(),
+        contact_email_placeholder=not bool(contact_email.strip()),
     )
 
 
@@ -111,6 +120,61 @@ def _issue_temporary_password(user: User) -> str:
     return temporary
 
 
+def _email_account_message(user: User, subject: str, body: str, key: str) -> None:
+    from domains.notifications.models import OutboxMessage
+
+    OutboxMessage.objects.get_or_create(
+        idempotency_key=key,
+        defaults={
+            "channel": OutboxMessage.Channel.EMAIL,
+            "recipient": user,
+            "payload": {
+                "subject": subject,
+                "body": body,
+                "html": f"<p>{escape(body).replace(chr(10), '<br>')}</p>",
+                "to": user.email,
+            },
+            "next_attempt_at": timezone.now(),
+        },
+    )
+
+
+def email_delivery_configured() -> bool:
+    # This is intentionally independent of EMAIL_BACKEND: locmem and console are
+    # useful test/development transports, but neither means account delivery is configured.
+    return bool(settings.EMAIL_DELIVERY_CONFIGURED)
+
+
+def _send_temporary_credential(user: User, temporary: str, *, key: str) -> None:
+    from domains.notifications.models import OutboxMessage
+
+    OutboxMessage.objects.filter(
+        recipient=user,
+        channel=OutboxMessage.Channel.EMAIL,
+        status__in=[OutboxMessage.Status.PENDING, OutboxMessage.Status.FAILED],
+        idempotency_key__in=[f"account-created:{user.pk}"],
+    ).delete()
+    OutboxMessage.objects.filter(
+        recipient=user,
+        channel=OutboxMessage.Channel.EMAIL,
+        status__in=[OutboxMessage.Status.PENDING, OutboxMessage.Status.FAILED],
+        idempotency_key__startswith=f"admin-credential-reset:{user.pk}:",
+    ).delete()
+    expiry_hours = int(TEMPORARY_PASSWORD_TTL.total_seconds() // 3600)
+    body = (
+        f"Hello {user.account.full_name},\n\n"
+        f"Username: {user.username}\nTemporary password: {temporary}\n\n"
+        f"Sign in at {settings.PORTAL_BASE_URL}. You must change this password at first sign-in. "
+        f"It expires in {expiry_hours} hours."
+    )
+    _email_account_message(
+        user,
+        "Your DataSoft portal sign-in details",
+        body,
+        key,
+    )
+
+
 @transaction.atomic
 def create_user(
     actor: User,
@@ -130,7 +194,16 @@ def create_user(
         organization=organization, username=username, email=email, full_name=full_name, roles=roles
     )
     temporary = _issue_temporary_password(user)
-    _event(actor, user, "USER_CREATED", organization=organization.code, roles=roles_of(user))
+    if email_delivery_configured():
+        _send_temporary_credential(user, temporary, key=f"account-created:{user.pk}")
+    _event(
+        actor,
+        user,
+        "USER_CREATED",
+        organization=organization.code,
+        contact_email=organization.contact_email,
+        roles=roles_of(user),
+    )
     return user, temporary
 
 
@@ -138,6 +211,13 @@ def create_user(
 def force_password_reset(actor: User, user: User) -> str:
     _require_admin(actor)
     temporary = _issue_temporary_password(user)
+    PasswordResetToken.objects.filter(user=user, used_at__isnull=True).update(
+        used_at=timezone.now()
+    )
+    if email_delivery_configured():
+        _send_temporary_credential(
+            user, temporary, key=f"admin-credential-reset:{user.pk}:{secrets.token_hex(8)}"
+        )
     _event(actor, user, "PASSWORD_RESET_FORCED")
     return temporary
 
@@ -149,7 +229,7 @@ def deactivate_user(actor: User, user: User) -> User:
         raise ValidationError("Administrators cannot deactivate themselves.")
     user.is_active = False  # ModelBackend then rejects the live session and new logins
     user.save(update_fields=["is_active"])
-    _event(actor, user, "USER_DEACTIVATED")
+    _event(actor, user, "USER_DEACTIVATED", contact_email=user.account.organization.contact_email)
     return user
 
 
@@ -164,8 +244,69 @@ def assign_roles(actor: User, user: User, roles: Iterable[str]) -> User:
     Membership.objects.bulk_create(
         Membership(user=user, organization=organization, role=r) for r in chosen
     )
-    _event(actor, user, "ROLES_ASSIGNED", roles=sorted(chosen))
+    _event(
+        actor,
+        user,
+        "ROLES_ASSIGNED",
+        roles=sorted(chosen),
+        contact_email=organization.contact_email,
+    )
     return user
+
+
+@transaction.atomic
+def request_password_reset(email: str) -> None:
+    """Queue a generic reset response; unknown addresses have no observable result."""
+    user = User.objects.filter(email__iexact=email, is_active=True, account__isnull=False).first()
+    if user is None:
+        return
+    now = timezone.now()
+    PasswordResetToken.objects.filter(user=user, used_at__isnull=True).update(used_at=now)
+    raw = secrets.token_urlsafe(32)
+    digest = sha256(raw.encode()).hexdigest()
+    token = PasswordResetToken.objects.create(
+        user=user,
+        token_hash=digest,
+        expires_at=now + timedelta(minutes=max(1, int(settings.PASSWORD_RESET_TTL_MINUTES))),
+    )
+    link = f"{settings.PORTAL_BASE_URL}/reset-password?uid={user.pk}.{token.pk}&token={raw}"
+    _email_account_message(
+        user,
+        "Reset your DataSoft portal password",
+        f"Use this one-time link within {settings.PASSWORD_RESET_TTL_MINUTES} minutes:\n{link}",
+        f"password-reset:{token.pk}",
+    )
+
+
+@transaction.atomic
+def complete_password_reset(*, uid: str, raw_token: str, password: str) -> None:
+    try:
+        user_id, token_id = (int(part) for part in uid.split(".", 1))
+        token = (
+            PasswordResetToken.objects.select_for_update()
+            .select_related("user")
+            .get(pk=token_id, user_id=user_id)
+        )
+    except (ValueError, PasswordResetToken.DoesNotExist) as exc:
+        raise ValidationError("This reset link is invalid or expired.") from exc
+    digest = sha256(raw_token.encode()).hexdigest()
+    if (
+        token.used_at is not None
+        or token.expires_at <= timezone.now()
+        or not constant_time_compare(token.token_hash, digest)
+        or not token.user.is_active
+    ):
+        raise ValidationError("This reset link is invalid or expired.")
+    validate_password(password, token.user)
+    token.user.set_password(password)
+    token.user.save(update_fields=["password"])
+    account = token.user.account
+    account.must_change_password = False
+    account.temporary_password_expires_at = None
+    account.save(update_fields=["must_change_password", "temporary_password_expires_at"])
+    now = timezone.now()
+    PasswordResetToken.objects.filter(user=token.user, used_at__isnull=True).update(used_at=now)
+    _event(None, token.user, "PASSWORD_RESET_COMPLETED")
 
 
 def temporary_credential_expired(user: User) -> bool:

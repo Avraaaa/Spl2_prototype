@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { ChangePasswordPage } from '../features/auth/ChangePasswordPage';
 import { LoginPage } from '../features/auth/LoginPage';
+import { CompletePasswordResetPage, ForgotPasswordPage } from '../features/auth/PasswordResetPage';
 import { useMe } from '../features/auth/hooks';
 import { redirectFor } from '../features/auth/nav';
 import { landingFor, type PortalUser } from '../features/auth/roles';
@@ -43,6 +44,8 @@ export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<CompletePasswordResetPage />} />
       <Route path="/change-password" element={<ChangePasswordPage />} />
       <Route path="/account/password" element={user ? <ChangePasswordPage /> : <Navigate to="/login" replace />} />
       <Route path="/" element={page(u => <Dashboard me={u} />)} />

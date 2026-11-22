@@ -14,5 +14,7 @@ urlpatterns = [
     path("auth/me/", api.MeView.as_view(), name="auth-me"),
     path("auth/change-password/", api.ChangePasswordView.as_view(), name="auth-change-password"),
     path("auth/change-username/", api.ChangeUsernameView.as_view(), name="auth-change-username"),
+    path("auth/forgot-password/", api.ForgotPasswordView.as_view(), name="auth-forgot-password"),
+    path("auth/reset-password/", api.ResetPasswordView.as_view(), name="auth-reset-password"),
     path("", include(router.urls)),
 ]

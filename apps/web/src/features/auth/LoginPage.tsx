@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useLogin, useMe } from './hooks';
 import { landingFor } from './roles';
 
@@ -56,6 +56,7 @@ export function LoginPage() {
           <button className="btn primary auth-submit" disabled={login.isPending}>
             {login.isPending ? 'Signing in…' : 'Sign in'}
           </button>
+          <Link to="/forgot-password">Forgot your password?</Link>
           <p className="muted small">No public registration. Accounts are managed by DataSoft.</p>
         </form>
       </section>

@@ -27,10 +27,12 @@ from .serializers import (
     ChangePasswordSerializer,
     ChangeUsernameSerializer,
     ErrorSerializer,
+    ForgotPasswordSerializer,
     LoginSerializer,
     OrganizationSerializer,
     PortalUserSerializer,
     ProfileUpdateSerializer,
+    ResetPasswordSerializer,
     RolesSerializer,
     TemporaryCredentialSerializer,
     UserCreateSerializer,
@@ -171,6 +173,43 @@ class ChangePasswordView(APIView):
         return Response(PortalUserSerializer(request.user).data)
 
 
+class ForgotPasswordView(APIView):
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "password_reset"
+
+    @extend_schema(request=ForgotPasswordSerializer, responses={202: None}, tags=["auth"])
+    def post(self, request: Request) -> Response:
+        data = ForgotPasswordSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        services.request_password_reset(data.validated_data["email"])
+        return Response(status=status.HTTP_202_ACCEPTED)
+
+
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "password_reset"
+
+    @extend_schema(
+        request=ResetPasswordSerializer,
+        responses={204: None, 400: ErrorSerializer},
+        tags=["auth"],
+    )
+    def post(self, request: Request) -> Response:
+        data = ResetPasswordSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        try:
+            services.complete_password_reset(
+                uid=data.validated_data["uid"],
+                raw_token=data.validated_data["token"],
+                password=data.validated_data["password"],
+            )
+        except DjangoValidationError as exc:
+            raise _translate(exc) from exc
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class OrganizationAdminViewSet(mixins.ListModelMixin, viewsets.GenericViewSet[Organization]):
     permission_classes = ADMIN_PERMISSIONS
     serializer_class = OrganizationSerializer
@@ -185,13 +224,29 @@ class OrganizationAdminViewSet(mixins.ListModelMixin, viewsets.GenericViewSet[Or
         )
 
     @extend_schema(
-        request=OrganizationSerializer, responses={201: OrganizationSerializer}, tags=["admin"]
+        request=OrganizationSerializer,
+        responses={201: OrganizationSerializer},
+        tags=["admin"],
     )
     def create(self, request: Request) -> Response:
         data = OrganizationSerializer(data=request.data)
         data.is_valid(raise_exception=True)
         org = services.register_organization(request.user, **data.validated_data)
         return Response(OrganizationSerializer(org).data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(request=OrganizationSerializer, responses=OrganizationSerializer, tags=["admin"])
+    @action(detail=True, methods=["patch"], url_path="contact-email")
+    def contact_email(self, request: Request, pk: str | None = None) -> Response:
+        org = self.get_object()
+        data = OrganizationSerializer(org, data=request.data, partial=True)
+        data.is_valid(raise_exception=True)
+        contact_email = data.validated_data.get("contact_email")
+        if contact_email is None:
+            raise ValidationError({"contact_email": "This field is required."})
+        org.contact_email = contact_email
+        org.contact_email_placeholder = False
+        org.save(update_fields=["contact_email", "contact_email_placeholder"])
+        return Response(OrganizationSerializer(org).data)
 
 
 @extend_schema(tags=["admin"])
@@ -223,10 +278,16 @@ class UserAdminViewSet(
         data = UserCreateSerializer(data=request.data)
         data.is_valid(raise_exception=True)
         try:
-            user, temporary = services.create_user(request.user, **data.validated_data)
+            user, _temporary = services.create_user(request.user, **data.validated_data)
         except (DjangoValidationError, DjangoPermissionDenied) as exc:
             raise _translate(exc) from exc
-        body = {"user": PortalUserSerializer(user).data, "temporary_password": temporary}
+        email_configured = services.email_delivery_configured()
+        body = {
+            "user": PortalUserSerializer(user).data,
+            "delivery": "email" if email_configured else "console",
+        }
+        if not email_configured:
+            body["temporary_password"] = _temporary
         return Response(body, status=status.HTTP_201_CREATED)
 
     @extend_schema(request=None, responses=PortalUserSerializer)
@@ -243,10 +304,17 @@ class UserAdminViewSet(
     def reset_password(self, request: Request, pk: str | None = None) -> Response:
         user = self.get_object()
         try:
-            temporary = services.force_password_reset(request.user, user)
+            _temporary = services.force_password_reset(request.user, user)
         except DjangoPermissionDenied as exc:
             raise _translate(exc) from exc
-        return Response({"user": PortalUserSerializer(user).data, "temporary_password": temporary})
+        email_configured = services.email_delivery_configured()
+        body = {
+            "user": PortalUserSerializer(user).data,
+            "delivery": "email" if email_configured else "console",
+        }
+        if not email_configured:
+            body["temporary_password"] = _temporary
+        return Response(body)
 
     @extend_schema(request=RolesSerializer, responses=PortalUserSerializer)
     @action(detail=True, methods=["put"])

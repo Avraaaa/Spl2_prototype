@@ -4,10 +4,11 @@ from datetime import datetime, timedelta
 from hashlib import sha256
 
 from django.conf import settings
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.html import escape
 
 from .models import OutboxMessage
 
@@ -26,13 +27,20 @@ def _send_claimed(message_id: int, lease: datetime, *, max_attempts: int) -> boo
 
         try:
             fingerprint = sha256(current.idempotency_key.encode()).hexdigest()
-            email = EmailMessage(
+            headers = {"Message-ID": f"<{fingerprint}@datasoft.local>"}
+            if getattr(settings, "EMAIL_REPLY_TO", ""):
+                headers["Reply-To"] = settings.EMAIL_REPLY_TO
+            email = EmailMultiAlternatives(
                 subject=current.payload["subject"],
                 body=current.payload["body"],
                 from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "notifications@example.test"),
                 to=[current.payload["to"]],
-                headers={"Message-ID": f"<{fingerprint}@datasoft.local>"},
+                headers=headers,
             )
+            html_body = current.payload.get("html") or (
+                f"<p>{escape(current.payload['body']).replace(chr(10), '<br>')}</p>"
+            )
+            email.attach_alternative(html_body, "text/html")
             sent = email.send(fail_silently=False)
             if sent != 1:
                 raise RuntimeError("No email accepted")

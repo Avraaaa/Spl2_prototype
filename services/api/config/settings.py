@@ -83,7 +83,23 @@ USE_I18N = True
 USE_TZ = True
 STATIC_URL = "/static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+EMAIL_DELIVERY_CONFIGURED = bool(RESEND_API_KEY)
+EMAIL_BACKEND = (
+    "django.core.mail.backends.smtp.EmailBackend"
+    if EMAIL_DELIVERY_CONFIGURED
+    else "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = "smtp.resend.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "resend"
+EMAIL_HOST_PASSWORD = RESEND_API_KEY
+DEFAULT_FROM_EMAIL = os.getenv("EMAIL_FROM", "portal@example.test")
+EMAIL_REPLY_TO = os.getenv("EMAIL_REPLY_TO", "")
+PORTAL_BASE_URL = os.getenv("PORTAL_BASE_URL", "http://localhost:5173").rstrip("/")
+PASSWORD_RESET_TTL_MINUTES = int(os.getenv("PASSWORD_RESET_TTL_MINUTES", "30"))
+PASSWORD_RESET_RATE_PER_MINUTE = int(os.getenv("PASSWORD_RESET_RATE_PER_MINUTE", "5"))
 NOTIFICATION_EMAIL_ENABLED = os.getenv("NOTIFICATION_EMAIL_ENABLED", "1") == "1"
 VERIFICATION_REMINDER_DAYS = int(os.getenv("VERIFICATION_REMINDER_DAYS", "3"))
 OUTBOX_MAX_ATTEMPTS = int(os.getenv("OUTBOX_MAX_ATTEMPTS", "5"))
@@ -101,6 +117,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "login": f"{LOGIN_RATE_PER_MINUTE}/min",
         "password_check": f"{PASSWORD_CHECK_RATE_PER_MINUTE}/min",
+        "password_reset": f"{PASSWORD_RESET_RATE_PER_MINUTE}/min",
     },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }

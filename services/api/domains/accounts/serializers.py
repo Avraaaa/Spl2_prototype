@@ -17,10 +17,24 @@ class OrganizationSummarySerializer(serializers.ModelSerializer[Organization]):
 
 
 class OrganizationSerializer(serializers.ModelSerializer[Organization]):
+    contact_email = serializers.EmailField(max_length=254, required=False, allow_blank=True)
+
     class Meta:
         model = Organization
-        fields = ["id", "name", "code", "kind", "is_active", "created_at"]
-        read_only_fields = ["id", "kind", "is_active", "created_at"]
+        fields = [
+            "id",
+            "name",
+            "code",
+            "kind",
+            "contact_email",
+            "contact_email_placeholder",
+            "is_active",
+            "created_at",
+        ]
+        read_only_fields = ["id", "kind", "contact_email_placeholder", "is_active", "created_at"]
+
+    def validate_contact_email(self, value: str) -> str:
+        return value.strip()
 
 
 class PortalUserSerializer(serializers.ModelSerializer[User]):
@@ -29,6 +43,7 @@ class PortalUserSerializer(serializers.ModelSerializer[User]):
     roles = serializers.SerializerMethodField()
     must_change_password = serializers.BooleanField(source="account.must_change_password")
     can_view_unmasked_original = serializers.SerializerMethodField()
+    credentials_pending = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -42,6 +57,7 @@ class PortalUserSerializer(serializers.ModelSerializer[User]):
             "is_active",
             "must_change_password",
             "can_view_unmasked_original",
+            "credentials_pending",
             "last_login",
             "date_joined",
         ]
@@ -54,6 +70,33 @@ class PortalUserSerializer(serializers.ModelSerializer[User]):
     @extend_schema_field(serializers.BooleanField)
     def get_can_view_unmasked_original(self, user: User) -> bool:
         return is_datasoft_admin(user) or user.has_perm("issues.view_unmasked_original")
+
+    @extend_schema_field(serializers.BooleanField)
+    def get_credentials_pending(self, user: User) -> bool:
+        from domains.notifications.models import OutboxMessage
+
+        return (
+            OutboxMessage.objects.filter(
+                recipient=user,
+                channel=OutboxMessage.Channel.EMAIL,
+                status__in=[
+                    OutboxMessage.Status.PENDING,
+                    OutboxMessage.Status.FAILED,
+                    OutboxMessage.Status.DEAD,
+                ],
+                idempotency_key__in=[f"account-created:{user.pk}"],
+            ).exists()
+            or OutboxMessage.objects.filter(
+                recipient=user,
+                channel=OutboxMessage.Channel.EMAIL,
+                status__in=[
+                    OutboxMessage.Status.PENDING,
+                    OutboxMessage.Status.FAILED,
+                    OutboxMessage.Status.DEAD,
+                ],
+                idempotency_key__startswith=f"admin-credential-reset:{user.pk}:",
+            ).exists()
+        )
 
 
 class UserCreateSerializer(serializers.Serializer[Any]):
@@ -76,9 +119,18 @@ class RolesSerializer(serializers.Serializer[Any]):
 
 class TemporaryCredentialSerializer(serializers.Serializer[Any]):
     user = PortalUserSerializer()
-    temporary_password = serializers.CharField(
-        help_text="Shown once. Never logged or stored in plaintext."
-    )
+    delivery = serializers.ChoiceField(choices=["email", "console"])
+    temporary_password = serializers.CharField(required=False)
+
+
+class ForgotPasswordSerializer(serializers.Serializer[Any]):
+    email = serializers.EmailField(max_length=254)
+
+
+class ResetPasswordSerializer(serializers.Serializer[Any]):
+    uid = serializers.CharField(max_length=80)
+    token = serializers.CharField(max_length=100)
+    password = serializers.CharField(trim_whitespace=False, write_only=True)
 
 
 class LoginSerializer(serializers.Serializer[Any]):

@@ -44,6 +44,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/Organization'
           description: ''
+  /api/admin/organizations/{id}/contact-email/:
+    patch:
+      operationId: admin_organizations_contact_email_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this organization.
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrganizationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrganizationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrganizationRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+          description: ''
   /api/admin/products/:
     post:
       operationId: admin_products_create
@@ -396,6 +428,29 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/auth/forgot-password/:
+    post:
+      operationId: auth_forgot_password_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '202':
+          description: No response body
   /api/auth/login/:
     post:
       operationId: auth_login_create
@@ -480,6 +535,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PortalUser'
+          description: ''
+  /api/auth/reset-password/:
+    post:
+      operationId: auth_reset_password_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: ''
   /api/deployed-versions/:
     get:
@@ -2259,6 +2343,14 @@ components:
         * `confirmed` - confirmed
         * `recurring` - recurring
         * `dismissed` - dismissed
+    DeliveryEnum:
+      enum:
+      - email
+      - console
+      type: string
+      description: |-
+        * `email` - email
+        * `console` - console
     DeliveryRequest:
       type: object
       properties:
@@ -2478,6 +2570,16 @@ components:
           type: boolean
       required:
       - recorded
+    ForgotPasswordRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+      required:
+      - email
     Health:
       type: object
       properties:
@@ -3032,6 +3134,16 @@ components:
           allOf:
           - $ref: '#/components/schemas/KindEnum'
           readOnly: true
+        contact_email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        contact_email_placeholder:
+          type: boolean
+          readOnly: true
         is_active:
           type: boolean
           readOnly: true
@@ -3041,6 +3153,7 @@ components:
           readOnly: true
       required:
       - code
+      - contact_email_placeholder
       - created_at
       - id
       - is_active
@@ -3057,6 +3170,13 @@ components:
           type: string
           minLength: 1
           maxLength: 20
+        contact_email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
       required:
       - code
       - name
@@ -3159,6 +3279,24 @@ components:
           maxLength: 80
         is_active:
           type: boolean
+    PatchedOrganizationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        contact_email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
     PatchedProfileUpdateRequest:
       type: object
       properties:
@@ -3246,6 +3384,9 @@ components:
         can_view_unmasked_original:
           type: boolean
           readOnly: true
+        credentials_pending:
+          type: boolean
+          readOnly: true
         last_login:
           type: string
           format: date-time
@@ -3257,6 +3398,7 @@ components:
           readOnly: true
       required:
       - can_view_unmasked_original
+      - credentials_pending
       - date_joined
       - email
       - full_name
@@ -3345,6 +3487,25 @@ components:
         * `CHANGE` - Change
         * `FEATURE` - Feature
         * `SUPPORT` - Support
+    ResetPasswordRequest:
+      type: object
+      properties:
+        uid:
+          type: string
+          minLength: 1
+          maxLength: 80
+        token:
+          type: string
+          minLength: 1
+          maxLength: 100
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - token
+      - uid
     ResponseDuePeriods:
       type: object
       properties:
@@ -3553,11 +3714,12 @@ components:
       properties:
         user:
           $ref: '#/components/schemas/PortalUser'
+        delivery:
+          $ref: '#/components/schemas/DeliveryEnum'
         temporary_password:
           type: string
-          description: Shown once. Never logged or stored in plaintext.
       required:
-      - temporary_password
+      - delivery
       - user
     TopicProposal:
       type: object

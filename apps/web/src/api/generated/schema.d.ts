@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/organizations/{id}/contact-email/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["admin_organizations_contact_email_partial_update"];
+        trace?: never;
+    };
     "/api/admin/products/": {
         parameters: {
             query?: never;
@@ -244,6 +260,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/forgot-password/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth_forgot_password_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login/": {
         parameters: {
             query?: never;
@@ -294,6 +326,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["auth_me_partial_update"];
+        trace?: never;
+    };
+    "/api/auth/reset-password/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth_reset_password_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/deployed-versions/": {
@@ -1160,6 +1208,12 @@ export interface components {
          * @enum {string}
          */
         DecisionEnum: "confirmed" | "recurring" | "dismissed";
+        /**
+         * @description * `email` - email
+         *     * `console` - console
+         * @enum {string}
+         */
+        DeliveryEnum: "email" | "console";
         DeliveryRequest: {
             version: number;
             comment?: string;
@@ -1237,6 +1291,10 @@ export interface components {
         };
         FeedbackResponse: {
             recorded: boolean;
+        };
+        ForgotPasswordRequest: {
+            /** Format: email */
+            email: string;
         };
         Health: {
             status: string;
@@ -1438,6 +1496,8 @@ export interface components {
             name: string;
             code: string;
             readonly kind: components["schemas"]["KindEnum"];
+            contact_email?: string;
+            readonly contact_email_placeholder: boolean;
             readonly is_active: boolean;
             /** Format: date-time */
             readonly created_at: string;
@@ -1445,6 +1505,7 @@ export interface components {
         OrganizationRequest: {
             name: string;
             code: string;
+            contact_email?: string;
         };
         OrganizationSummary: {
             readonly id: number;
@@ -1481,6 +1542,11 @@ export interface components {
             pattern?: string;
             replacement?: string;
             is_active?: boolean;
+        };
+        PatchedOrganizationRequest: {
+            name?: string;
+            code?: string;
+            contact_email?: string;
         };
         PatchedProfileUpdateRequest: {
             full_name?: string;
@@ -1519,6 +1585,7 @@ export interface components {
             readonly is_active: boolean;
             must_change_password: boolean;
             readonly can_view_unmasked_original: boolean;
+            readonly credentials_pending: boolean;
             /** Format: date-time */
             readonly last_login: string | null;
             /** Format: date-time */
@@ -1558,6 +1625,11 @@ export interface components {
          * @enum {string}
          */
         RequestTypeEnum: "BUG" | "CHANGE" | "FEATURE" | "SUPPORT";
+        ResetPasswordRequest: {
+            uid: string;
+            token: string;
+            password: string;
+        };
         ResponseDuePeriods: {
             periods: {
                 [key: string]: number;
@@ -1638,8 +1710,8 @@ export interface components {
         };
         TemporaryCredential: {
             user: components["schemas"]["PortalUser"];
-            /** @description Shown once. Never logged or stored in plaintext. */
-            temporary_password: string;
+            delivery: components["schemas"]["DeliveryEnum"];
+            temporary_password?: string;
         };
         TopicProposal: {
             id: number;
@@ -1736,6 +1808,34 @@ export interface operations {
         };
         responses: {
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Organization"];
+                };
+            };
+        };
+    };
+    admin_organizations_contact_email_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this organization. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedOrganizationRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedOrganizationRequest"];
+                "multipart/form-data": components["schemas"]["PatchedOrganizationRequest"];
+            };
+        };
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2110,6 +2210,30 @@ export interface operations {
             };
         };
     };
+    auth_forgot_password_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ForgotPasswordRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ForgotPasswordRequest"];
+                "multipart/form-data": components["schemas"]["ForgotPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     auth_login_create: {
         parameters: {
             query?: never;
@@ -2201,6 +2325,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PortalUser"];
+                };
+            };
+        };
+    };
+    auth_reset_password_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ResetPasswordRequest"];
+                "multipart/form-data": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
         };

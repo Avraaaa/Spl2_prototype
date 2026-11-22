@@ -67,3 +67,11 @@ class AccountEvent(models.Model):
 
     def delete(self, *args: Any, **kwargs: Any) -> Any:
         raise ValueError("AccountEvent is append-only")
+
+
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    token_hash = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)

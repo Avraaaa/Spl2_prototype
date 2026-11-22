@@ -36,12 +36,18 @@ function useUsers(organization: number | null) {
 }
 
 function CredentialNotice({ credential, onClose }: { credential: Credential; onClose: () => void }) {
+  const email = credential.user.email;
+  const [local, domain] = email.split('@');
+  const maskedEmail = domain ? `${(local ?? '').slice(0, 1)}••••@${domain}` : email;
+  const temporaryPassword = (credential as Credential & { temporary_password?: string }).temporary_password;
   return (
     <div className="alert success" role="status">
-      <strong>Temporary password for {credential.user.username}</strong>
-      <p>Hand this over securely. It is shown only once, expires in 72 hours and must be changed at first sign-in.</p>
-      <code className="secret">{credential.temporary_password}</code>
-      <button className="btn ghost" onClick={onClose}>I have recorded it</button>
+      <>
+        <strong>{credential.delivery === 'email' ? `Credentials sent to ${maskedEmail}` : 'Credentials are available in the local console email output.'}</strong>
+        <p>The temporary password expires in 72 hours and must be changed at first sign-in.</p>
+        {credential.delivery === 'console' && temporaryPassword && <p>Temporary password: <code>{temporaryPassword}</code></p>}
+      </>
+      <button className="btn ghost" onClick={onClose}>Dismiss</button>
     </div>
   );
 }
@@ -50,23 +56,49 @@ function CreateBankForm({ onDone }: { onDone: () => void }) {
   const qc = useQueryClient();
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
   const create = useMutation({
     mutationFn: async () => {
-      const { data, error } = await api.POST('/api/admin/organizations/', { body: { name, code } });
+      const { data, error } = await api.POST('/api/admin/organizations/', { body: { name, code, contact_email: contactEmail } });
       if (!data) throw new Error(errorMessage(error));
       return data;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ORGS }); setName(''); setCode(''); onDone(); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ORGS }); setName(''); setCode(''); setContactEmail(''); onDone(); },
   });
   return (
     <form className="card form-grid" onSubmit={(e: FormEvent) => { e.preventDefault(); create.mutate(); }}>
       <h3>Register client bank</h3>
       <label>Bank name<input value={name} onChange={e => setName(e.target.value)} required /></label>
       <label>Short code<input value={code} onChange={e => setCode(e.target.value)} required maxLength={20} /></label>
+      <label>Official contact email<input type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)} required /></label>
       {create.isError && <p className="alert error">{create.error.message}</p>}
       <button className="btn primary" disabled={create.isPending}>Register bank</button>
     </form>
   );
+}
+
+function OrganizationContactRows({ organizations }: { organizations: Organization[] }) {
+  const qc = useQueryClient();
+  const [drafts, setDrafts] = useState<Record<number, string>>({});
+  const save = useMutation({
+    mutationFn: async (organization: Organization) => {
+      const { data, error } = await api.PATCH('/api/admin/organizations/{id}/contact-email/', {
+        params: { path: { id: organization.id } },
+        body: { contact_email: drafts[organization.id] ?? organization.contact_email },
+      });
+      if (!data) throw new Error(errorMessage(error));
+      return data;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ORGS }); setDrafts({}); },
+  });
+  return <div className="card stack"><h3>Client organization contact emails</h3>
+    {organizations.filter(org => org.kind === 'BANK').map(org => <div className="toolbar" key={org.id}>
+      <strong>{org.name}{org.contact_email_placeholder ? ' · placeholder needs review' : ''}</strong>
+      <input aria-label={`${org.name} official contact email`} type="email" required value={drafts[org.id] ?? org.contact_email} onChange={event => setDrafts(current => ({ ...current, [org.id]: event.target.value }))} />
+      <button className="btn small" disabled={save.isPending || (drafts[org.id] ?? org.contact_email) === org.contact_email} onClick={() => save.mutate(org)}>Save email</button>
+    </div>)}
+    {save.isError && <p role="alert" className="alert error">{save.error.message}</p>}
+  </div>;
 }
 
 function CreateUserForm({ orgs, onCreated }: { orgs: Organization[]; onCreated: (c: Credential) => void }) {
@@ -150,6 +182,7 @@ function UserRow({ user, me, onCredential }: { user: PortalUser; me: PortalUser;
       <td>{user.roles.map(r => <span key={r} className="chip">{roleLabel(r)}</span>)}</td>
       <td>
         {!user.is_active ? <span className="chip muted">Deactivated</span>
+          : user.credentials_pending ? <span className="chip warn">Credentials pending delivery</span>
           : user.must_change_password ? <span className="chip warn">Awaiting first sign-in</span>
           : <span className="chip ok">Active</span>}
       </td>
@@ -185,6 +218,7 @@ export function UsersAdminPage({ me }: { me: PortalUser }) {
         {orgs.data && <CreateUserForm orgs={orgs.data} onCreated={setCredential} />}
         {showBank && <CreateBankForm onDone={() => setShowBank(false)} />}
       </div>
+      {orgs.data && <OrganizationContactRows organizations={orgs.data} />}
       <div className="card">
         <div className="toolbar">
           <h3>Accounts</h3>
