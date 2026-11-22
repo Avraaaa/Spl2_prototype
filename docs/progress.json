@@ -24,7 +24,8 @@
     "P7-T4",
     "P7-T3b",
     "P7-T7",
-    "P7-T8"
+    "P7-T8",
+    "P7-T10"
   ],
   "last_updated": "2026-11-22",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
@@ -434,6 +435,26 @@
         "[follow-up] NID masking only applies when a keyword appears within 80 characters. A bare Bangla-digit NID with no keyword is not masked. This is a deliberate precision tradeoff, so document it."
       ],
       "rebased_onto": "8b6701a00446cd8875319142f87e6c9c79303b00"
+    },
+    "P7-T10": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 1,
+      "base": "0bd81d5a8fa6be01e57afff7dcfba71d52115ecd",
+      "follow_ups": [
+        "[follow-up] For Support Agents the label options come from the currently filtered list (`issues.data`). After selecting a label, the options shrink to that label only, so the user must clear the filter to switch labels. The orchestrator note allowed this approach.",
+        "[follow-up] addTopicLabelRetrySafe finds an existing label by name only. If the admin has an unrelated label with the same name, the topic is accepted without creating a new label. This is a minor edge case.",
+        "[follow-up] The partial-state flag for topic labels is kept in sessionStorage under a single key. It tracks one topic at a time and is not tenant-scoped, which is harmless here because only DataSoft Admin sees this page.",
+        "[follow-up] The audit summary parsing relies on guessed backend field names such as first_invalid_record_id and first_invalid_record_time. If the backend omits them, the UI shows 'ID not provided'. This degrades gracefully."
+      ]
     }
   },
   "latest_review": "PASS"

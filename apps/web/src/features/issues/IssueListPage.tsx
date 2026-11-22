@@ -1,7 +1,11 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../../api/client';
+import { errorMessage } from '../auth/hooks';
 import { Link } from 'react-router-dom';
 import { hasRole, type PortalUser } from '../auth/roles';
 import { isStaff } from '../auth/nav';
+import { canLoadLabelOptions, labelOptionSource } from './labelFilter';
 import { EmptyState, ErrorState, LoadingState } from '../ui/EmptyState';
 import { PageHeader } from '../ui/PageHeader';
 import { StatusBadge } from '../ui/StatusBadge';
@@ -36,12 +40,24 @@ const MODES: Record<ListMode, { title: string; subtitle: string; fixed: IssueFil
 export function IssueListPage({ me, mode = 'all' }: { me: PortalUser; mode?: ListMode }) {
   const config = MODES[mode];
   const staff = isStaff(me);
+  const canLoadLabels = canLoadLabelOptions(me.roles);
   const [filters, setFilters] = useState({ status: '', request_type: '', priority: '', search: '', organization: '', label: '' });
   const fixed = config.fixed;
   const issues = useIssues({ ...filters, ...fixed, status: fixed.status ?? filters.status });
   const banks = useBanks(staff);
-  const allIssues = useIssues({}, staff);
-  const labelOptions = [...new Map((allIssues.data ?? []).flatMap(issue => issue.confirmed_label ? [[issue.confirmed_label.id, issue.confirmed_label.name] as const] : [])).entries()];
+  const labels = useQuery({
+    queryKey: ['search-labels'],
+    enabled: canLoadLabels,
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/search/labels/');
+      if (!data) throw new Error(errorMessage(error));
+      return data;
+    },
+  });
+  const labelSource = labelOptionSource(me.roles, issues.data ?? []);
+  const labelOptions = labelSource === 'admin'
+    ? (labels.data ?? []).filter(label => label.is_active).map(({ id, name }) => ({ id, name }))
+    : labelSource;
   const officer = hasRole(me, 'ISSUE_OFFICER');
   const update = (name: keyof typeof filters, value: string) => setFilters(f => ({ ...f, [name]: value }));
   const showStatusFilter = mode === 'all' || mode === 'mine';
@@ -102,12 +118,13 @@ export function IssueListPage({ me, mode = 'all' }: { me: PortalUser; mode?: Lis
             </option>
           ))}
         </select>
-        {staff && labelOptions.length > 0 && (
+        {staff && (
           <select aria-label="Confirmed label" value={filters.label} onChange={e => update('label', e.target.value)}>
             <option value="">All labels</option>
-            {labelOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+            {labelOptions.map(label => <option key={label.id} value={label.id}>{label.name}</option>)}
           </select>
         )}
+        {labels.isError && canLoadLabels && <span className="alert error" role="alert">Labels could not be loaded.</span>}
       </div>
       {issues.isPending && <LoadingState label="Loading requests…" />}
       {issues.isError && <ErrorState error={issues.error} />}

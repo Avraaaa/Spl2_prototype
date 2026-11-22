@@ -4,6 +4,7 @@ import { api } from '../../api/client';
 import { errorMessage } from '../auth/hooks';
 import { PageHeader } from '../ui/PageHeader';
 import { evaluationMetric, type EvaluationMetric } from './evaluationMetrics';
+import { addTopicLabelRetrySafe, auditSummary, topicRepresentativeRows } from './intelligenceAdmin';
 
 const PATTERNS = ['admin', 'masking-patterns'] as const;
 const TOPICS = ['admin', 'topics'] as const;
@@ -14,7 +15,10 @@ export function IntelligenceAdminPage() {
   const [pattern, setPattern] = useState('');
   const [replacement, setReplacement] = useState('[SENSITIVE]');
   const [editingPattern, setEditingPattern] = useState<number | null>(null);
-  const [auditResult, setAuditResult] = useState<string | null>(null);
+  const [auditResult, setAuditResult] = useState<ReturnType<typeof auditSummary> | null>(null);
+  const [labelCreatedFor, setLabelCreatedFor] = useState<string | null>(() => {
+    try { return window.sessionStorage.getItem('p7t10-partial-topic-label'); } catch { return null; }
+  });
   const patterns = useQuery({
     queryKey: PATTERNS,
     queryFn: async () => {
@@ -81,14 +85,29 @@ export function IntelligenceAdminPage() {
   });
   const addTopicLabel = useMutation({
     mutationFn: async (topic: NonNullable<typeof topics.data>[number]) => {
-      const { data, error } = await api.POST('/api/search/labels/', {
-        body: { name: topic.title.slice(0, 80), description: `Emerging topic: ${topic.title}`.slice(0, 300), keywords: topic.keywords.slice(0, 30) },
+      const labelName = topic.title.slice(0, 80);
+      await addTopicLabelRetrySafe(labelName, async name => {
+        const { data, error } = await api.GET('/api/search/labels/');
+        if (!data) throw new Error(errorMessage(error));
+        return data.find(label => label.name.trim().toLocaleLowerCase() === name.trim().toLocaleLowerCase()) ?? null;
+      }, async name => {
+        const { data, error } = await api.POST('/api/search/labels/', {
+          body: { name, description: `Emerging topic: ${topic.title}`.slice(0, 300), keywords: topic.keywords.slice(0, 30) },
+        });
+        if (!data) throw new Error(errorMessage(error));
+        return data;
+      }, async () => {
+        const reviewed = await api.PATCH('/api/search/topics/{id}/', {
+          params: { path: { id: topic.id } }, body: { status: 'accepted' },
+        });
+        if (!reviewed.data) {
+          setLabelCreatedFor(labelName);
+          try { window.sessionStorage.setItem('p7t10-partial-topic-label', labelName); } catch { /* UI can still explain the partial state until reload. */ }
+          throw new Error(errorMessage(reviewed.error));
+        }
+        setLabelCreatedFor(null);
+        try { window.sessionStorage.removeItem('p7t10-partial-topic-label'); } catch { /* Session storage is optional. */ }
       });
-      if (!data) throw new Error(errorMessage(error));
-      const reviewed = await api.PATCH('/api/search/topics/{id}/', {
-        params: { path: { id: topic.id } }, body: { status: 'accepted' },
-      });
-      if (!reviewed.data) throw new Error(errorMessage(reviewed.error));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: TOPICS });
@@ -101,7 +120,7 @@ export function IntelligenceAdminPage() {
       if (!data) throw new Error(errorMessage(error));
       return data;
     },
-    onSuccess: result => setAuditResult(JSON.stringify(result, null, 2) ?? String(result)),
+    onSuccess: result => setAuditResult(auditSummary(result)),
   });
 
   return (
@@ -140,13 +159,22 @@ export function IntelligenceAdminPage() {
           <div>
             <h3>{topic.title}</h3>
             <p className="muted">{topic.keywords.join(', ')} · {topic.issue_ids.length} requests · {topic.status}</p>
+            {labelCreatedFor === topic.title.slice(0, 80) && <p className="alert info" role="status">A matching label already exists. Retry to reuse it and finish accepting this topic.</p>}
             <details>
-              <summary>Review representative requests</summary>
-              <pre className="audit-result">{JSON.stringify(topic.representatives, null, 2)}</pre>
+              <summary>Representative requests</summary>
+              <ul className="topic-representatives">
+                {topicRepresentativeRows(topic.representatives, topic.keywords).map((representative, index) => (
+                  <li key={`${representative.reference}-${index}`}>
+                    <strong>{representative.reference}</strong>
+                    <p>{representative.snippet}</p>
+                    {representative.topTerms.length > 0 && <p className="muted">Top terms: {representative.topTerms.join(', ')}</p>}
+                  </li>
+                ))}
+              </ul>
             </details>
           </div>
           {topic.status === 'proposed' && <div className="actions">
-            <button className="btn small primary" onClick={() => addTopicLabel.mutate(topic)} disabled={addTopicLabel.isPending}>Add as label</button>
+            <button className="btn small primary" onClick={() => addTopicLabel.mutate(topic)} disabled={addTopicLabel.isPending}>{labelCreatedFor === topic.title.slice(0, 80) ? 'Retry topic review' : 'Add as label'}</button>
             <button className="btn small" onClick={() => reviewTopic.mutate({ id: topic.id, status: 'accepted' })}>Accept</button>
             <button className="btn small" onClick={() => reviewTopic.mutate({ id: topic.id, status: 'rejected' })}>Reject</button>
           </div>}
@@ -160,7 +188,21 @@ export function IntelligenceAdminPage() {
           <p className="muted">Recompute every active bank’s audit chain and locate the first invalid record.</p>
           <button className="btn primary" onClick={() => verifyAudit.mutate()} disabled={verifyAudit.isPending}>{verifyAudit.isPending ? 'Verifying…' : 'Verify audit chains'}</button>
           {verifyAudit.isError && <p className="alert error" role="alert">{verifyAudit.error.message}</p>}
-          {auditResult !== null && <pre className="audit-result" aria-live="polite">{auditResult}</pre>}
+          {auditResult !== null && <div className="audit-result" aria-live="polite" aria-label="Audit verification result">
+            <p><strong className={`audit-status ${auditResult.status}`}>{auditResult.status === 'ok' ? 'Chain intact' : 'Broken chain'}</strong></p>
+            <p>Records checked: {auditResult.recordsChecked ?? 'Not provided by the verification service'}</p>
+            {auditResult.status === 'broken' && <p>First broken record: {auditResult.firstBrokenRecordId ?? 'ID not provided'} · {auditResult.firstBrokenRecordTime ? new Date(auditResult.firstBrokenRecordTime).toLocaleString() : 'time not provided'}</p>}
+            {auditResult.organizations.length === 0 && <p>No active client audit chains were returned.</p>}
+            <ul className="audit-organizations">
+              {auditResult.organizations.map(organization => <li key={organization.code}>
+                <strong>{organization.code}</strong>
+                <span className={`audit-status ${organization.valid ? 'ok' : 'broken'}`}>{organization.valid ? 'Chain intact' : 'Broken chain'}</span>
+                <span>Records checked: {organization.recordsChecked ?? 'Not provided'}</span>
+                {!organization.valid && <span>First broken record: {organization.firstBrokenRecordId ?? 'ID not provided'} · {organization.firstBrokenRecordTime ? new Date(organization.firstBrokenRecordTime).toLocaleString() : 'time not provided'}</span>}
+                {!organization.valid && <span>First invalid sequence: {organization.firstInvalidSequence ?? 'Unknown'}</span>}
+              </li>)}
+            </ul>
+          </div>}
         </section>
         <section className="card stack" aria-labelledby="evaluation-title">
           <h2 id="evaluation-title">Suggestion accuracy</h2>

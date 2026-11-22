@@ -17,6 +17,7 @@ import { InternalSection } from './InternalSection';
 import { deliverySummary } from './delivery';
 import { ISSUE_KEY, useIssue } from './hooks';
 import { eventLines, eventTitle } from './timeline';
+import { canRequestOriginalText, originalTextAction, type OriginalTextState } from './originalText';
 
 type Issue = components['schemas']['Issue'];
 
@@ -289,11 +290,12 @@ export function IssueDetailPage({ me }: { me: PortalUser }) {
 }
 
 function OriginalTextButton({ id }: { id: number }) {
-  const [open, setOpen] = useState(false);
+  const [state, setState] = useState<OriginalTextState>('hidden');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [original, setOriginal] = useState<components['schemas']['IssueOriginalResponse'] | null>(null);
   const loadOriginal = async () => {
+    if (!canRequestOriginalText(state)) return;
     setLoading(true);
     setError('');
     const { data, error: apiError } = await api.GET('/api/issues/{id}/original/', { params: { path: { id } } });
@@ -303,15 +305,18 @@ function OriginalTextButton({ id }: { id: number }) {
       return;
     }
     setOriginal(data);
-    setOpen(true);
+    setState(current => originalTextAction(current, 'reveal'));
   };
   return (
     <div className="stack original-review">
-      <button className="btn small" type="button" onClick={() => void loadOriginal()} disabled={loading}>
-        {loading ? 'Loading original…' : 'Show original'}
-      </button>
+      {state === 'hidden' && <button className="btn small" type="button" onClick={() => setState(originalTextAction(state, 'show'))}>Show original</button>}
+      {state === 'confirm' && <div className="alert info" role="group" aria-label="Confirm original text access">
+        <p>Original text may contain sensitive information. Access is recorded. Continue?</p>
+        <button className="btn small" type="button" onClick={() => setState(originalTextAction(state, 'cancel'))}>Cancel</button>
+        <button className="btn small primary" type="button" onClick={() => void loadOriginal()} disabled={loading}>{loading ? 'Loading original…' : 'Continue'}</button>
+      </div>}
       {error && <p role="alert" className="alert error">{error}</p>}
-      {open && original && <aside className="alert info"><strong>Original text</strong><p>{original.title}</p><p className="prewrap">{original.description}</p></aside>}
+      {state === 'revealed' && original && <aside className="alert info"><strong>Original text</strong><p>{original.title}</p><p className="prewrap">{original.description}</p><button className="btn small" type="button" onClick={() => { setOriginal(null); setState(originalTextAction(state, 'hide')); }}>Hide original</button></aside>}
     </div>
   );
 }

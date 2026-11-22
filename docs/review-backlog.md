@@ -104,3 +104,9 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] When no local embedder is available, the dense and hybrid configurations are skipped and listed under skipped_configurations. This is correct, but the command prints a full JSON manifest that includes local paths.
 - [ ] [follow-up] NID_KEYWORDS repeats the same Bangla alternative twice. Remove the duplicate.
 - [ ] [follow-up] NID masking only applies when a keyword appears within 80 characters. A bare Bangla-digit NID with no keyword is not masked. This is a deliberate precision tradeoff, so document it.
+
+## P7-T10 — 2026-11-22
+- [ ] [follow-up] For Support Agents the label options come from the currently filtered list (`issues.data`). After selecting a label, the options shrink to that label only, so the user must clear the filter to switch labels. The orchestrator note allowed this approach.
+- [ ] [follow-up] addTopicLabelRetrySafe finds an existing label by name only. If the admin has an unrelated label with the same name, the topic is accepted without creating a new label. This is a minor edge case.
+- [ ] [follow-up] The partial-state flag for topic labels is kept in sessionStorage under a single key. It tracks one topic at a time and is not tenant-scoped, which is harmless here because only DataSoft Admin sees this page.
+- [ ] [follow-up] The audit summary parsing relies on guessed backend field names such as first_invalid_record_id and first_invalid_record_time. If the backend omits them, the UI shows 'ID not provided'. This degrades gracefully.
