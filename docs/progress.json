@@ -21,7 +21,8 @@
     "P7-T6",
     "P7-T2",
     "P7-T3",
-    "P7-T4"
+    "P7-T4",
+    "P7-T3b"
   ],
   "last_updated": "2026-11-22",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
@@ -363,6 +364,29 @@
         "[follow-up] The 360px layout fixes are CSS-only and have no automated check. They need a manual viewport check.",
         "[follow-up] Field errors set both role=alert and aria-live=polite, which is redundant. Screen readers may announce them twice."
       ]
+    },
+    "P7-T3b": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 2,
+      "base": "f449178379cf923639ba1b2340d97b28b4259397",
+      "follow_ups": [
+        "[follow-up] Bank-side listing hides REJECTED attachments from every bank user, including the uploader. The spec says to hide them from other client users, so the uploader may not see their own rejection status.",
+        "[follow-up] A text upload's stored bytes are the safe_original_text version, but `size` is len(contents) of that stored version. The `size` can therefore differ from the originally uploaded size. This is harmless.",
+        "[follow-up] The legacy-rescan migration treats an attachment whose file is missing or unreadable as REJECTED. That is the safe default, but it is irreversible: the reverse operation is a noop and rejected content is deleted.",
+        "[follow-up] The download view for text files calls `attachment.file.open(\"rb\").read()` without closing the handle. This was already present before this change.",
+        "[follow-up] The ML embedding failure is silently swallowed with a bare `except Exception`. Logging it would help."
+      ],
+      "rebased_onto": "6a86090ee88ea8417639034bf76aee5159161b2c",
+      "integrated_by": "agent-runner --integrate"
     }
   },
   "latest_review": "PASS"

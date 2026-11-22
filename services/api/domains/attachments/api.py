@@ -2,6 +2,7 @@ from pathlib import Path
 from zipfile import BadZipFile, ZipFile
 
 from django.core.files.base import ContentFile
+from django.db import transaction
 from django.http import FileResponse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
@@ -14,7 +15,8 @@ from rest_framework.views import APIView
 from domains.accounts.services import is_datasoft_admin
 from domains.issues.api import visible_rows
 from domains.issues.services import mask_extracted_text, safe_original_text
-from domains.tenants.selectors import get_authorized_object_or_404
+from domains.tenants.models import OrganizationKind
+from domains.tenants.selectors import get_authorized_object_or_404, portal_organization
 
 from .models import Attachment
 
@@ -120,6 +122,9 @@ class IssueAttachmentListView(APIView):
             request.user, visible_rows(request.user), id, allow_datasoft=True
         )
         rows = Attachment.objects.filter(issue=issue).order_by("created_at", "id")
+        organization = portal_organization(request.user)
+        if organization and organization.kind == OrganizationKind.BANK:
+            rows = rows.exclude(quarantine_status="REJECTED")
         return Response(AttachmentSerializer(rows, many=True).data)
 
     @extend_schema(
@@ -147,37 +152,51 @@ class IssueAttachmentListView(APIView):
                 organization_field="issue__organization",
                 allow_datasoft=True,
             )
-        attachment = Attachment.objects.create(
+        quarantine_status = scan_attachment(contents)
+        masked_text = None
+        if Path(upload.name).suffix.lower() in {".txt", ".csv", ".log"}:
+            try:
+                extracted_text = contents.decode("utf-8")
+            except UnicodeDecodeError as exc:
+                # Recheck the bytes actually read for persistence. Do not allow
+                # a changed or unusual upload stream to fail after validation.
+                raise ValidationError(
+                    {"file": "Text attachments must use UTF-8 encoding."}
+                ) from exc
+            masked_text = mask_extracted_text(extracted_text)
+            contents = safe_original_text(extracted_text).encode("utf-8")
+        # Validate and scan before creating either the row or stored file. The
+        # transaction keeps metadata and quarantine state in step if persistence fails.
+        attachment = Attachment(
             issue=issue,
             comment=comment,
-            file=upload,
+            file=ContentFile(contents, name=Path(upload.name).name),
             original_name=Path(upload.name).name[:255],
             content_type=content_type,
-            size=upload.size,
+            size=len(contents),
             uploaded_by=request.user,
-            quarantine_status="QUARANTINED",
+            quarantine_status=quarantine_status,
         )
-        # A rejected file is kept private and can never be downloaded.
-        # Scan the validated upload bytes directly. Reopening a newly written
-        # file is unreliable on some Windows storage backends and is unnecessary.
-        attachment.quarantine_status = scan_attachment(contents)
-        attachment.save(update_fields=["quarantine_status"])
-        if attachment.quarantine_status == "REJECTED":
-            return Response(AttachmentSerializer(attachment).data, status=status.HTTP_201_CREATED)
-        if Path(upload.name).suffix.lower() in {".txt", ".csv", ".log"}:
-            # Only clean text files may reach the optional NLP path. Store
-            # mandatory OTP/card redactions; NLP receives a separately masked copy.
-            with attachment.file.open("rb") as saved_file:
-                extracted_text = saved_file.read().decode("utf-8")
-            masked_text = mask_extracted_text(extracted_text)
-            attachment.file.save(
-                Path(attachment.original_name).name,
-                ContentFile(safe_original_text(extracted_text).encode("utf-8")),
-                save=True,
-            )
+        try:
+            with transaction.atomic():
+                attachment.save()
+                if quarantine_status == "REJECTED":
+                    attachment.file.delete(save=True)
+        except Exception:
+            # Storage is not transaction-aware; remove an orphan if a later DB
+            # operation failed after the storage backend accepted the content.
+            if attachment.file:
+                attachment.file.delete(save=False)
+            raise
+        if quarantine_status == "CLEAN" and masked_text is not None:
             from domains.search.services import _ml_embeddings
 
-            _ml_embeddings([masked_text[:20_000]])
+            try:
+                _ml_embeddings([masked_text[:20_000]])
+            except Exception:
+                # Optional inference must not turn an otherwise valid upload into
+                # an inconsistent failed request.
+                pass
         return Response(AttachmentSerializer(attachment).data, status=status.HTTP_201_CREATED)
 
 

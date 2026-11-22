@@ -74,3 +74,17 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] Bangla tests rely on the existing seed fixture and a few hand-made cases. A larger Bangla/mixed fixture with graded relevance would give stronger evidence.
 - [ ] [follow-up] The 360px layout fixes are CSS-only and have no automated check. They need a manual viewport check.
 - [ ] [follow-up] Field errors set both role=alert and aria-live=polite, which is redundant. Screen readers may announce them twice.
+
+## P7-T3b — 2026-11-22
+- [ ] [follow-up] Bank-side listing hides REJECTED attachments from every bank user, including the uploader. The spec says to hide them from other client users, so the uploader may not see their own rejection status.
+- [ ] [follow-up] A text upload's stored bytes are the safe_original_text version, but `size` is len(contents) of that stored version. The `size` can therefore differ from the originally uploaded size. This is harmless.
+- [ ] [follow-up] The legacy-rescan migration treats an attachment whose file is missing or unreadable as REJECTED. That is the safe default, but it is irreversible: the reverse operation is a noop and rejected content is deleted.
+- [ ] [follow-up] The download view for text files calls `attachment.file.open("rb").read()` without closing the handle. This was already present before this change.
+- [ ] [follow-up] The ML embedding failure is silently swallowed with a bare `except Exception`. Logging it would help.
+
+## P7-T3b — 2026-11-22
+- [ ] [follow-up] Bank-side listing hides REJECTED attachments from every bank user, including the uploader. The spec says to hide them from other client users, so the uploader may not see their own rejection status.
+- [ ] [follow-up] A text upload's stored bytes are the safe_original_text version, but `size` is len(contents) of that stored version. The `size` can therefore differ from the originally uploaded size. This is harmless.
+- [ ] [follow-up] The legacy-rescan migration treats an attachment whose file is missing or unreadable as REJECTED. That is the safe default, but it is irreversible: the reverse operation is a noop and rejected content is deleted.
+- [ ] [follow-up] The download view for text files calls `attachment.file.open("rb").read()` without closing the handle. This was already present before this change.
+- [ ] [follow-up] The ML embedding failure is silently swallowed with a bare `except Exception`. Logging it would help.
