@@ -1,0 +1,1040 @@
+{
+ "area": "cards",
+ "groups": [
+  {
+   "group_id": "cards-g01",
+   "label": "Transaction",
+   "product": "ATM Switch",
+   "module": "ATM Withdrawal",
+   "error_code": "E-3021",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "Customer debited but ATM dispensed no cash",
+     "description": "A customer withdrew BDT 10,000 at our branch ATM. The machine showed a cash-not-dispensed slip, yet the account was debited. Switch log shows E-3021 on the dispense step. Please check and advise on the reversal."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "এটিএম থেকে টাকা না পেয়েও হিসাব থেকে কেটে নিয়েছে",
+     "description": "গ্রাহক এটিএম বুথ থেকে ১০,০০০ টাকা তুলতে গিয়েছিলেন। মেশিন থেকে টাকা বের হয়নি, অথচ হিসাব থেকে টাকা কেটে নেওয়া হয়েছে। সুইচ লগে E-3021 দেখাচ্ছে। দ্রুত সমাধান দরকার।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "ATM e taka ber hoy nai kintu balance theke kete gese",
+     "description": "Amader ekjon customer ATM theke taka tulte gele machine taka dey nai, kintu account theke BDT 10,000 kete nise. E-3021 error ashche switch log e. Eta kivabe thik korbo bujhte partesi na."
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "bug",
+     "priority": "critical",
+     "title": "Cash not dispensed ATM e, কিন্তু account debit হয়ে গেছে",
+     "description": "ATM transaction এ cash dispense হয়নি কিন্তু customer এর account থেকে amount debit হয়ে গেছে। E-3021 log এ আছে। আজ সকাল থেকে ৫ জন একই complain করেছে, please urgent check করুন।"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "ATM cahs not dispnsed but acount debitd",
+     "description": "Custmer says ATM did not give the cash but his acount was debitd BDT 10,000. We see E-3021 in the swtich log. Pls chek urgently."
+    }
+   ]
+  },
+  {
+   "group_id": "cards-g02",
+   "label": "Authentication",
+   "product": "Card Management",
+   "module": "Card PIN",
+   "error_code": "E-2210",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "Card PIN change rejected with E-2210",
+     "description": "When a customer tries to change the debit card PIN from the branch card module, the system rejects the new PIN with E-2210 even though it meets the 4-digit rule. This started after the release v2.4.1."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "কার্ডের পিন পরিবর্তন করা যাচ্ছে না",
+     "description": "শাখা থেকে গ্রাহকের ডেবিট কার্ডের পিন পরিবর্তন করতে গেলে E-2210 এরর আসছে। নতুন পিন ৪ ডিজিটের হলেও সিস্টেম গ্রহণ করছে না। v2.4.1 আপডেটের পর থেকে এই সমস্যা।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "Card PIN change korte gele E-2210 dekhay",
+     "description": "Branch theke customer er card PIN change korte gele E-2210 error dey. Notun PIN 4 digit er tai kono problem thaka uchit na. v2.4.1 deploy er por theke hocche."
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "PIN change e E-2210 error, কারণ বোঝা যাচ্ছে না",
+     "description": "Debit card এর PIN change করার সময় E-2210 আসছে। New PIN valid format এ আছে, তবুও reject হচ্ছে। v2.4.1 এর পর থেকে সব branch এ একই problem।"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "Cant chnage card PIN, erorr E-2210",
+     "description": "Customre tries to chnage his card PIN in the card module and it is rejcted with E-2210. Format is correct 4 digits. Hapened after v2.4.1."
+    }
+   ]
+  },
+  {
+   "group_id": "cards-g03",
+   "label": "Transaction",
+   "product": "Card Management",
+   "module": "Card Block",
+   "error_code": "E-2305",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "bug",
+     "priority": "critical",
+     "title": "Lost card block request not effective, transactions continue",
+     "description": "A customer reported a lost credit card and we submitted a block request in the portal. The status shows Blocked-Pending with E-2305 and the card was still used at a POS two hours later. Please block it urgently."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "bug",
+     "priority": "critical",
+     "title": "হারানো কার্ড ব্লক হচ্ছে না, লেনদেন চলছে",
+     "description": "গ্রাহক কার্ড হারিয়ে গেছে জানিয়েছেন। আমরা পোর্টালে ব্লক রিকোয়েস্ট দিয়েছি কিন্তু স্ট্যাটাস Blocked-Pending থেকে যাচ্ছে, E-2305 দেখাচ্ছে। দুই ঘণ্টা পরেও পিওএসে লেনদেন হয়েছে।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "bug",
+     "priority": "critical",
+     "title": "Card block hocche na, E-2305 ashche",
+     "description": "Customer er credit card hariye geche, amra block request dilam kintu status Blocked-Pending e atke ache. Ei obosthay card diye POS e transaction hoye geche. Khub urgent."
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "bug",
+     "priority": "critical",
+     "title": "Card block request pending, লস্ট কার্ড দিয়ে POS transaction",
+     "description": "Lost card block করতে গিয়ে E-2305 পাচ্ছি, status pending থেকে active হচ্ছে না। এর মধ্যে POS এ purchase হয়ে গেছে। Immediately look করুন please।"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "bug",
+     "priority": "critical",
+     "title": "Block request for lost card stuck, card stil usable",
+     "description": "We rasied a block for a lost card, it is stuck as Blocked-Pending with E-2305 and the card was usd at a POS afterwards. Pls escalte."
+    }
+   ]
+  },
+  {
+   "group_id": "cards-g04",
+   "label": "Transaction",
+   "product": "Card Management",
+   "module": "Card Activation",
+   "error_code": "E-2301",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "New debit cards fail to activate at branch",
+     "description": "Newly issued debit cards cannot be activated from the card module. The activate button returns E-2301 for all cards of the batch received on 12/11/2026. Customers are waiting at the counter."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "নতুন ডেবিট কার্ড অ্যাক্টিভেট হচ্ছে না",
+     "description": "১২/১১/২০২৬ তারিখে পাওয়া নতুন কার্ডের ব্যাচের কোনোটিই অ্যাক্টিভ করা যাচ্ছে না। অ্যাক্টিভেট চাপলে E-2301 আসে। গ্রাহকরা কাউন্টারে অপেক্ষা করছেন।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "Notun card activate hocche na",
+     "description": "Branch e notun debit card ashchilo, activate korte gele E-2301 dekhay. Ekta batch er shob card e same problem. Customer ra counter e boshe achen."
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "Card activation fail হচ্ছে, E-2301",
+     "description": "নতুন issued card গুলো activate করা যাচ্ছে না, button চাপলেই E-2301 error। Batch টা 12/11/2026 এ receive করেছি। Customer অনেকক্ষণ wait করছে।"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "New cards activaton failing",
+     "description": "Alll the new debit cards from the last batch fail on activaton, the system gives E-2301. Custmers are waiting at the counter, pls help."
+    }
+   ]
+  },
+  {
+   "group_id": "cards-g05",
+   "label": "Transaction",
+   "product": "ATM Switch",
+   "module": "POS Decline",
+   "error_code": "E-3105",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "POS declines despite sufficient balance",
+     "description": "Customers report POS purchases being declined with response code 51 even though the account has sufficient balance. The switch log shows E-3105 and the balance cache appears stale. Several merchants affected."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "পর্যাপ্ত ব্যালেন্স থাকলেও পিওএস ডিক্লাইন",
+     "description": "গ্রাহকের হিসাবে যথেষ্ট টাকা থাকা সত্ত্বেও পিওএস মেশিনে লেনদেন ডিক্লাইন হচ্ছে। সুইচ লগে E-3105 আছে। ব্যালেন্স ক্যাশ পুরোনো দেখাচ্ছে বলে মনে হয়।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "POS e decline hocche jodio balance ache",
+     "description": "Onek customer bolche POS e purchase decline hocche, account e taka thaka sotteo. Switch log e E-3105 ashche. Balance cache old mone hocche."
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "POS transaction decline, balance আছে তবুও",
+     "description": "Customer এর account এ enough balance আছে কিন্তু POS এ decline হচ্ছে। Switch log এ E-3105। কয়েকজন merchant complain করেছে, balance cache stale মনে হচ্ছে।"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "POS decling even when balnce is enough",
+     "description": "Mutiple customers get POS decline although balnce is enough. E-3105 shows in the swtich log. We think the balance cache is stale."
+    }
+   ]
+  },
+  {
+   "group_id": "cards-g06",
+   "label": "Performance",
+   "product": "ATM Switch",
+   "module": "Switch Timeout",
+   "error_code": "E-3300",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "ATM switch timeouts during evening peak",
+     "description": "Between 5 and 8 pm many ATM transactions time out with E-3300. Average response time from the switch goes above 30 seconds. Customers retry and get duplicate attempts. Please investigate capacity."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "সন্ধ্যায় এটিএম সুইচ টাইমআউট হচ্ছে",
+     "description": "বিকাল ৫টা থেকে রাত ৮টা পর্যন্ত অনেক এটিএম লেনদেন E-3300 দিয়ে টাইমআউট হচ্ছে। সুইচের রেসপন্স ৩০ সেকেন্ডের বেশি লাগছে। গ্রাহকরা বারবার চেষ্টা করছেন।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "Shondhyay ATM switch timeout hoy",
+     "description": "Bikel 5 ta theke raat 8 ta porjonto ATM transaction e E-3300 timeout ashe. Switch response onek slow, 30 second er beshi. Customer ra bar bar try kore."
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "ATM switch slow, peak hour এ timeout",
+     "description": "Evening peak এ ATM transaction গুলো E-3300 দিয়ে timeout হয়ে যাচ্ছে। Switch response 30s এর বেশি। Capacity নিয়ে একটু দেখবেন please।"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "ATM swtich timouts in peak hours",
+     "description": "In the evning peak lots of ATM trasactions timeout with E-3300 and the swtich takes over 30 secs to reply. Plese check capcity."
+    }
+   ]
+  },
+  {
+   "group_id": "cards-g07",
+   "label": "Transaction",
+   "product": "Card Management",
+   "module": "Card Statement",
+   "error_code": "E-2410",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "Card statement misses recent transactions",
+     "description": "The monthly credit card statement generated for October does not include the last three days of transactions. The report shows E-2410 in the footer. Customer disputes the outstanding amount of BDT 45,250."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "কার্ড স্টেটমেন্টে সাম্প্রতিক লেনদেন নেই",
+     "description": "অক্টোবর মাসের ক্রেডিট কার্ড স্টেটমেন্টে শেষ তিন দিনের লেনদেন আসেনি। ফুটারে E-2410 লেখা আছে। গ্রাহক BDT 45,250 বকেয়া নিয়ে আপত্তি করছেন।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "Card statement e last 3 diner transaction nai",
+     "description": "October er credit card statement generate korlam, shesh 3 diner transaction dekhay na. Footer e E-2410 likha ache. Customer outstanding BDT 45,250 nie apotti korche."
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "Card statement incomplete, last 3 days missing",
+     "description": "October statement এ শেষ তিন দিনের transaction গুলো নেই, footer এ E-2410। Customer outstanding BDT 45,250 dispute করছে, তাই urgently দরকার।"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "Card statment missing last days",
+     "description": "Octobr credit card statment is missing the last 3 days transactons. Footer shows E-2410 and customer disputes BDT 45,250 due."
+    }
+   ]
+  },
+  {
+   "group_id": "cards-g08",
+   "label": "Transaction",
+   "product": "ATM Switch",
+   "module": "POS Settlement",
+   "error_code": "E-3110",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "Duplicate debit for a single POS purchase",
+     "description": "A customer was debited twice for one POS purchase of BDT 3,200 at the same merchant within a minute. Settlement file shows two entries and E-3110 duplicate warning. Needs reversal of one."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "একটি পিওএস লেনদেনে দুইবার টাকা কাটা",
+     "description": "গ্রাহকের একটি পিওএস কেনাকাটায় ৩,২০০ টাকা দুইবার কাটা হয়েছে, এক মিনিটের মধ্যে। সেটলমেন্ট ফাইলে দুটি এন্ট্রি এবং E-3110 ওয়ার্নিং আছে। একটি রিভার্স করতে হবে।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "POS e ekbar kena kata e duibar debit",
+     "description": "Customer ekta POS purchase e BDT 3,200 duibar debit hoise. Settlement file e duita entry, E-3110 warning ase. Ekta reverse kora dorkar."
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "Double debit on POS purchase, E-3110",
+     "description": "একটা POS purchase এ customer এর account থেকে দুইবার BDT 3,200 কেটেছে। Settlement file এ duplicate entry আর E-3110 warning আছে। One entry reverse করে দিন।"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "Duplcate debt on one POS purchse",
+     "description": "Custmer was charged twise for a single POS purchse of BDT 3,200. Settlment file has two entries with E-3110. Pls reverse one."
+    }
+   ]
+  },
+  {
+   "group_id": "cards-g09",
+   "label": "Authentication",
+   "product": "Card Management",
+   "module": "Card PIN Retry",
+   "error_code": "E-2215",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "support",
+     "priority": "medium",
+     "title": "Card PIN locked after retries but counter not resetting",
+     "description": "After three wrong PIN attempts the card is PIN-blocked. Even after the 24-hour period the retry counter does not reset and E-2215 appears. Please advise how to reset it from the portal."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "support",
+     "priority": "medium",
+     "title": "ভুল পিনের পর কার্ড লক, কাউন্টার রিসেট হচ্ছে না",
+     "description": "তিনবার ভুল পিন দেওয়ার পর কার্ড লক হয়ে গেছে। ২৪ ঘণ্টা পরও রিট্রাই কাউন্টার রিসেট হয়নি, E-2215 আসছে। পোর্টাল থেকে কীভাবে রিসেট করব জানাবেন।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "support",
+     "priority": "medium",
+     "title": "Vul PIN er por card lock, reset hocche na",
+     "description": "3 bar vul PIN dewar por card lock hoye gese. 24 ghonta pore o counter reset hoy nai, E-2215 dekhay. Portal theke kivabe reset korbo?"
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "support",
+     "priority": "low",
+     "title": "PIN retry counter reset হচ্ছে না",
+     "description": "Wrong PIN 3 বার দিলে card lock হয়, 24 hour পরেও E-2215 থাকছে। Portal থেকে reset এর option কোথায় সেটা জানাবেন।"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "support",
+     "priority": "medium",
+     "title": "Card PIN blcoked, counter not reseting",
+     "description": "Card is PIN blcoked after 3 wrong tries and even after 24 hrs the counter wont reset, E-2215 apears. How do we reset it?"
+    }
+   ]
+  },
+  {
+   "group_id": "cards-g10",
+   "label": "Transaction",
+   "product": "Card Management",
+   "module": "International Usage",
+   "error_code": "E-2320",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "International usage enabled but foreign transactions fail",
+     "description": "The customer enabled international usage on the debit card and the status shows Active, yet transactions at foreign merchants are declined with E-2320. Limit is BDT 50,000."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "আন্তর্জাতিক ব্যবহার চালু তবুও বিদেশে লেনদেন ফেইল",
+     "description": "গ্রাহক ডেবিট কার্ডে আন্তর্জাতিক ব্যবহার চালু করেছেন, স্ট্যাটাস Active দেখাচ্ছে, তবুও বিদেশি মার্চেন্টে E-2320 দিয়ে ডিক্লাইন হচ্ছে। লিমিট BDT 50,000।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "International usage on kora, tobu foreign transaction decline",
+     "description": "Customer debit card e international usage on korse, status Active, kintu foreign merchant e E-2320 diye decline hocche. Limit BDT 50,000 deya ache."
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "International transaction decline, status Active আছে",
+     "description": "Card এ international usage enable করা, status Active, তবুও foreign merchant এ E-2320 এ decline। Limit BDT 50,000 set করা আছে।"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "Intrnational card usge enabled but declinng",
+     "description": "Custmer enabld intrnational usage, it shows Active but foreign transacions get declned with E-2320. Limit BDT 50,000."
+    }
+   ]
+  },
+  {
+   "group_id": "cards-g11",
+   "label": "Transaction",
+   "product": "ATM Switch",
+   "module": "ATM Reversal",
+   "error_code": "E-3025",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "support",
+     "priority": "high",
+     "title": "ATM auto-reversal taking more than 7 days",
+     "description": "Failed ATM withdrawals are reversed automatically only after about 7 days, while the policy expects T+1. Pending reversals are logged with E-3025. Please check the reversal job schedule."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "support",
+     "priority": "high",
+     "title": "এটিএম অটো রিভার্সাল ৭ দিনের বেশি লাগছে",
+     "description": "ব্যর্থ এটিএম উত্তোলনের অটো রিভার্সাল হতে প্রায় ৭ দিন লাগছে, অথচ নিয়ম হলো পরের দিন। E-3025 লগে পেন্ডিং দেখাচ্ছে। রিভার্সাল জবের সময়সূচি দেখুন।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "support",
+     "priority": "high",
+     "title": "ATM reversal e onek deri hocche",
+     "description": "Fail howa ATM withdrawal er auto reversal 7 din moto lagche, jekhane T+1 howar kotha. E-3025 pending dekhay. Reversal job ta ektu dekhen."
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "support",
+     "priority": "high",
+     "title": "Auto reversal delay, 7 দিন পর হচ্ছে",
+     "description": "Failed ATM withdrawal এর reversal T+1 এ হওয়ার কথা কিন্তু ৭ দিন লাগছে। Log এ E-3025 pending। Job schedule check করবেন?"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "support",
+     "priority": "high",
+     "title": "ATM reversl taking too long",
+     "description": "Reversls for faild ATM withdrawls take abt 7 days instead of T+1, E-3025 shows pending. Pls chek the job."
+    }
+   ]
+  },
+  {
+   "group_id": "cards-g12",
+   "label": "Transaction",
+   "product": "Card Management",
+   "module": "Card Limit",
+   "error_code": "E-2322",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "Daily ATM limit change not applied",
+     "description": "We increased the daily ATM withdrawal limit of a customer from BDT 50,000 to BDT 100,000 and the portal said success, but the ATM still declines above the old limit. Seen as E-2322 in the audit."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "দৈনিক এটিএম লিমিট পরিবর্তন কার্যকর হচ্ছে না",
+     "description": "গ্রাহকের দৈনিক এটিএম লিমিট ৫০,০০০ থেকে ১,০০,০০০ টাকা করেছি, পোর্টালে সফল দেখিয়েছে, কিন্তু এটিএমে পুরোনো লিমিটেই ডিক্লাইন হচ্ছে। অডিটে E-2322 আছে।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "ATM limit barano holo kintu kaj korche na",
+     "description": "Customer er daily ATM limit BDT 50,000 theke BDT 100,000 korlam, portal e success dekhalo. Kintu ATM e ager limit er upore decline hocche. Audit e E-2322."
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "Card limit update success but ATM old limit apply করছে",
+     "description": "Daily limit 50,000 থেকে 100,000 করেছি, portal এ success message এলো, কিন্তু ATM এ এখনো পুরোনো limit। Audit log এ E-2322 আছে।"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "Limt change not takng effect on ATM",
+     "description": "Incresed daily ATM limt from BDT 50,000 to BDT 100,000, portal says success but ATM stil uses the old limt. E-2322 in audit."
+    }
+   ]
+  },
+  {
+   "group_id": "cards-g13",
+   "label": "Performance",
+   "product": "ATM Switch",
+   "module": "Balance Inquiry",
+   "error_code": "E-3305",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "ATM balance inquiry takes very long",
+     "description": "Balance inquiry at ATMs takes up to 25 seconds and sometimes ends with E-3305. Cash withdrawal on the same machines is normal. Started after the v2.4.1 upgrade."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "এটিএমে ব্যালেন্স ইনকোয়ারি অনেক ধীর",
+     "description": "এটিএমে ব্যালেন্স দেখতে প্রায় ২৫ সেকেন্ড লাগছে, মাঝে মাঝে E-3305 দিয়ে শেষ হয়। একই মেশিনে টাকা তোলা স্বাভাবিক। v2.4.1 আপগ্রেডের পর থেকে।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "ATM e balance inquiry khub slow",
+     "description": "ATM e balance dekhte 25 second moto lage, kokhono kokhono E-3305 diye fail kore. Taka tola normal ache. v2.4.1 upgrade er por theke."
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "Balance inquiry slow, E-3305 মাঝে মাঝে",
+     "description": "ATM balance inquiry এ ~25 sec লাগছে, কখনো E-3305 আসে। Withdrawal normal। v2.4.1 upgrade এর পর থেকে problem।"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "bug",
+     "priority": "medium",
+     "title": "ATM balnce inquiry very slw",
+     "description": "Balnce inquiry on ATMs takes arround 25 secs and sometimes fails with E-3305, withdrawl is fine. Began after v2.4.1."
+    }
+   ]
+  },
+  {
+   "group_id": "cards-g14",
+   "label": "Performance",
+   "product": "Card Management",
+   "module": "Statement Generation",
+   "error_code": "E-2415",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "bug",
+     "priority": "low",
+     "title": "Bulk card statement generation runs for hours",
+     "description": "The month-end bulk card statement job for about 40,000 cards now runs more than six hours and often ends with E-2415, delaying printing and emailing. Last month it finished in under two."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "bug",
+     "priority": "low",
+     "title": "বাল্ক কার্ড স্টেটমেন্ট তৈরিতে অনেক সময়",
+     "description": "মাসের শেষে প্রায় ৪০,০০০ কার্ডের বাল্ক স্টেটমেন্ট জব ছয় ঘণ্টার বেশি চলছে এবং প্রায়ই E-2415 দিয়ে শেষ হচ্ছে। গত মাসে দুই ঘণ্টার কম লেগেছিল।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "bug",
+     "priority": "low",
+     "title": "Month-end card statement job onek time nicche",
+     "description": "Mash shesher bulk card statement job (40,000 card) 6 ghontar beshi cholche, E-2415 diye fail o hocche. Gelo mash e 2 ghontar kom lagse."
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "bug",
+     "priority": "low",
+     "title": "Bulk statement job slow, E-2415 fail",
+     "description": "Month end এ 40,000 card এর statement job ৬ ঘণ্টা+ চলছে, মাঝে E-2415। Last month এ ২ ঘণ্টার কম লেগেছিল, printing delay হচ্ছে।"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "bug",
+     "priority": "low",
+     "title": "Bulk statment job runing for hours",
+     "description": "Month-end bulk card statment job for 40,000 cards runs 6+ hours and offten ends in E-2415. Last month it was under 2 hrs."
+    }
+   ]
+  },
+  {
+   "group_id": "cards-g15",
+   "label": "Transaction",
+   "product": "Card Management",
+   "module": "Card Reissue",
+   "error_code": "E-2330",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "support",
+     "priority": "medium",
+     "title": "Card reissue request stuck in Processing",
+     "description": "A damaged card reissue request was submitted 10 days ago and the status is still Processing with E-2330. The customer has no usable card. Kindly check with the personalization queue."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "support",
+     "priority": "medium",
+     "title": "কার্ড রিইস্যু রিকোয়েস্ট প্রসেসিংয়ে আটকে আছে",
+     "description": "ক্ষতিগ্রস্ত কার্ডের রিইস্যু রিকোয়েস্ট ১০ দিন আগে দেওয়া হয়েছে, স্ট্যাটাস এখনো Processing, E-2330 দেখাচ্ছে। গ্রাহকের কোনো কার্ড ব্যবহারযোগ্য নেই।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "support",
+     "priority": "medium",
+     "title": "Card reissue request Processing e atke ache",
+     "description": "Nosto card er reissue request 10 din age dilam, ekhono Processing, E-2330 dekhay. Customer er hate kono card nai, ektu queue ta dekhben."
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "support",
+     "priority": "medium",
+     "title": "Reissue request stuck, customer এর card নেই",
+     "description": "10 দিন আগে damaged card এর reissue দিয়েছি, status Processing আর E-2330। Customer এর কোনো usable card নেই, personalization queue check করবেন?"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "support",
+     "priority": "medium",
+     "title": "Card reisue stuck in procesing",
+     "description": "Reisue request for a damged card was raised 10 days ago and is stil Processing with E-2330. Custmer has no card, pls check the queue."
+    }
+   ]
+  },
+  {
+   "group_id": "cards-g16",
+   "label": "Authentication",
+   "product": "Card Management",
+   "module": "Green PIN",
+   "error_code": "E-2212",
+   "requests": [
+    {
+     "variant": "English",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "Green PIN OTP not received on customer mobile",
+     "description": "For newly issued cards the Green PIN OTP is not delivered to the registered mobile number, and the portal shows E-2212 after the send attempt. Customers cannot set their first PIN."
+    },
+    {
+     "variant": "Bangla",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "গ্রিন পিনের ওটিপি গ্রাহকের মোবাইলে যাচ্ছে না",
+     "description": "নতুন কার্ডের গ্রিন পিনের ওটিপি নিবন্ধিত মোবাইল নম্বরে পৌঁছাচ্ছে না, পাঠানোর পর পোর্টালে E-2212 দেখাচ্ছে। গ্রাহক প্রথম পিন সেট করতে পারছেন না।"
+    },
+    {
+     "variant": "Banglish",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "Green PIN er OTP mobile e ashche na",
+     "description": "Notun card er Green PIN OTP customer er registered mobile e jachche na, send korar por E-2212 dekhay. Customer first PIN set korte parche na."
+    },
+    {
+     "variant": "Code-switched",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "Green PIN OTP পাঠানো যাচ্ছে না",
+     "description": "নতুন card এর Green PIN এর OTP registered mobile এ যাচ্ছে না, send করলে E-2212। Customer রা first PIN set করতে পারছে না, urgent।"
+    },
+    {
+     "variant": "Typo",
+     "request_type": "bug",
+     "priority": "high",
+     "title": "Green PIN OTP not delivred",
+     "description": "The Green PIN OTP is not delivred to the registerd mobile for new cards, E-2212 apears after sending. Custmers cant set first PIN."
+    }
+   ]
+  }
+ ],
+ "hard_negatives": [
+  {
+   "neg_id": "cards-n01",
+   "near_group": "cards-g01",
+   "label": "Transaction",
+   "product": "ATM Switch",
+   "module": "ATM Withdrawal",
+   "error_code": "E-3021",
+   "variant": "English",
+   "request_type": "change",
+   "priority": "low",
+   "title": "Add cash-not-dispensed alert to ATM monitoring",
+   "description": "Please add an email alert to the operations team whenever an ATM raises E-3021. We do not have a current failure; this is only a monitoring enhancement."
+  },
+  {
+   "neg_id": "cards-n02",
+   "near_group": "cards-g02",
+   "label": "Authentication",
+   "product": "Card Management",
+   "module": "Card PIN",
+   "error_code": "E-2210",
+   "variant": "Banglish",
+   "request_type": "support",
+   "priority": "low",
+   "title": "Card PIN policy ki, E-2210 kon case e ashe",
+   "description": "Amra jante chai E-2210 error kon kon obosthay ashe, kono bug na. Training er jonno PIN rule document lagbe, 4 digit na 6 digit allowed."
+  },
+  {
+   "neg_id": "cards-n03",
+   "near_group": "cards-g03",
+   "label": "Transaction",
+   "product": "Card Management",
+   "module": "Card Block",
+   "error_code": "E-2305",
+   "variant": "Bangla",
+   "request_type": "feature",
+   "priority": "low",
+   "title": "ব্লক করা কার্ড আনব্লক করার অনুমোদন ধাপ",
+   "description": "ব্লক করা কার্ড আনব্লক করার আগে একটি অতিরিক্ত অনুমোদন ধাপ যোগ করার অনুরোধ করছি। ব্লক এখন ঠিকমতো কাজ করছে, শুধু E-2305 লগে অডিট ট্রেইল আরও স্পষ্ট চাই।"
+  },
+  {
+   "neg_id": "cards-n04",
+   "near_group": "cards-g04",
+   "label": "Transaction",
+   "product": "Card Management",
+   "module": "Card Activation",
+   "error_code": "E-2301",
+   "variant": "English",
+   "request_type": "bug",
+   "priority": "medium",
+   "title": "Activation succeeds but SMS confirmation not sent",
+   "description": "Card activation completes correctly and the card works. However the activation confirmation SMS is not sent and E-2301 is logged as a warning only."
+  },
+  {
+   "neg_id": "cards-n05",
+   "near_group": "cards-g05",
+   "label": "Transaction",
+   "product": "ATM Switch",
+   "module": "POS Decline",
+   "error_code": "E-3105",
+   "variant": "Code-switched",
+   "request_type": "support",
+   "priority": "medium",
+   "title": "POS decline কারণ genuine, card expired",
+   "description": "Customer এর POS decline নিয়ে complain ছিল, E-3105 দেখে মনে হয়েছিল system bug। পরে দেখলাম card এর expiry date পার হয়ে গেছে, তাই এটা expected decline।"
+  },
+  {
+   "neg_id": "cards-n06",
+   "near_group": "cards-g06",
+   "label": "Performance",
+   "product": "ATM Switch",
+   "module": "Switch Timeout",
+   "error_code": "E-3300",
+   "variant": "English",
+   "request_type": "bug",
+   "priority": "medium",
+   "title": "Timeouts only on one ATM, network link issue",
+   "description": "E-3300 timeouts occur only on a single remote ATM all day, not during peak hours. Other ATMs on the switch are healthy, so it looks like a branch link problem rather than switch load."
+  },
+  {
+   "neg_id": "cards-n07",
+   "near_group": "cards-g07",
+   "label": "Transaction",
+   "product": "Card Management",
+   "module": "Card Statement",
+   "error_code": "E-2410",
+   "variant": "Typo",
+   "request_type": "bug",
+   "priority": "low",
+   "title": "Statment PDF layout broken",
+   "description": "The card statment PDF opens fine and all transactons are included, but the logo overlaps the header on page 1. E-2410 does not appear."
+  },
+  {
+   "neg_id": "cards-n08",
+   "near_group": "cards-g08",
+   "label": "Transaction",
+   "product": "ATM Switch",
+   "module": "POS Settlement",
+   "error_code": "E-3110",
+   "variant": "Banglish",
+   "request_type": "bug",
+   "priority": "medium",
+   "title": "Settlement file e merchant fee vul hocche",
+   "description": "Duplicate debit nai, kintu POS settlement file e merchant fee 1.5% er jaygay 2% dekhay. E-3110 ashche na, shudhu fee calculation e vul."
+  },
+  {
+   "neg_id": "cards-n09",
+   "near_group": "cards-g09",
+   "label": "Authentication",
+   "product": "Card Management",
+   "module": "Card PIN Retry",
+   "error_code": "E-2215",
+   "variant": "Code-switched",
+   "request_type": "feature",
+   "priority": "low",
+   "title": "PIN retry limit configurable করার request",
+   "description": "বর্তমানে PIN retry limit 3 fixed। Bank অনুযায়ী 3 বা 5 configurable করার feature চাই। এখন retry counter ঠিকমতো reset হচ্ছে, E-2215 ও আসছে না।"
+  },
+  {
+   "neg_id": "cards-n10",
+   "near_group": "cards-g10",
+   "label": "Transaction",
+   "product": "Card Management",
+   "module": "International Usage",
+   "error_code": "E-2320",
+   "variant": "Bangla",
+   "request_type": "bug",
+   "priority": "medium",
+   "title": "আন্তর্জাতিক ব্যবহার চালুর তারিখ ভুল দেখাচ্ছে",
+   "description": "আন্তর্জাতিক ব্যবহার চালু হচ্ছে এবং লেনদেনও হচ্ছে, তবে কার্ড বিস্তারিত পাতায় চালুর তারিখ ভুল দেখাচ্ছে। E-2320 নিয়ে কোনো সমস্যা নেই।"
+  }
+ ],
+ "sensitive_cases": [
+  {
+   "variant": "English",
+   "text": "Customer card 4111 1111 1111 1111 was declined at POS with E-3105 on 12/11/2026 for BDT 50,000, please check SR-1043.",
+   "expected": [
+    {
+     "value": "4111 1111 1111 1111",
+     "type": "CARD"
+    }
+   ],
+   "must_not_mask": [
+    "E-3105",
+    "12/11/2026",
+    "BDT 50,000",
+    "SR-1043"
+   ]
+  },
+  {
+   "variant": "English",
+   "text": "ATM cash not dispensed, Txn ID 7788990011, debit card 5500-0000-0000-0004 charged BDT 10,000 and customer phone is 01712345678.",
+   "expected": [
+    {
+     "value": "5500-0000-0000-0004",
+     "type": "CARD"
+    },
+    {
+     "value": "01712345678",
+     "type": "PHONE"
+    }
+   ],
+   "must_not_mask": [
+    "Txn ID 7788990011",
+    "BDT 10,000"
+   ]
+  },
+  {
+   "variant": "Banglish",
+   "text": "Customer er card number 4000056655665556 block korte hobe, E-2305 ashche, SR-1043 dekhen.",
+   "expected": [
+    {
+     "value": "4000056655665556",
+     "type": "CARD"
+    }
+   ],
+   "must_not_mask": [
+    "E-2305",
+    "SR-1043"
+   ]
+  },
+  {
+   "variant": "Bangla",
+   "text": "গ্রাহকের কার্ড নম্বর 4111-1111-1111-1111 দিয়ে পিন পরিবর্তন করতে গেলে E-2210 আসছে, v2.4.1 এর পর থেকে।",
+   "expected": [
+    {
+     "value": "4111-1111-1111-1111",
+     "type": "CARD"
+    }
+   ],
+   "must_not_mask": [
+    "E-2210",
+    "v2.4.1"
+   ]
+  },
+  {
+   "variant": "English",
+   "text": "Green PIN OTP 482913 was never received by the customer on +8801812345678, error E-2212 shown.",
+   "expected": [
+    {
+     "value": "482913",
+     "type": "OTP"
+    },
+    {
+     "value": "+8801812345678",
+     "type": "PHONE"
+    }
+   ],
+   "must_not_mask": [
+    "E-2212"
+   ]
+  },
+  {
+   "variant": "Code-switched",
+   "text": "Customer বলছে তার ওটিপি ৭৪১৮২৬ এসেছে কিন্তু card PIN set হচ্ছে না, E-2212 আসছে।",
+   "expected": [
+    {
+     "value": "৭৪১৮২৬",
+     "type": "OTP"
+    }
+   ],
+   "must_not_mask": [
+    "E-2212"
+   ]
+  },
+  {
+   "variant": "English",
+   "text": "For reissue verification the customer gave NID 1990123456789 and account 1234567890123, request is stuck with E-2330.",
+   "expected": [
+    {
+     "value": "1990123456789",
+     "type": "NID"
+    },
+    {
+     "value": "1234567890123",
+     "type": "ACCOUNT"
+    }
+   ],
+   "must_not_mask": [
+    "E-2330"
+   ]
+  },
+  {
+   "variant": "Bangla",
+   "text": "কার্ড রিইস্যুর জন্য গ্রাহকের এনআইডি ১৯৮৫৪৫৬৭৮৯০১২৩৪৫৬ এবং হিসাব নম্বর 20501234567 দিয়েছেন, রিকোয়েস্ট ১২/১১/২০২৬ থেকে আটকে আছে।",
+   "expected": [
+    {
+     "value": "১৯৮৫৪৫৬৭৮৯০১২৩৪৫৬",
+     "type": "NID"
+    },
+    {
+     "value": "20501234567",
+     "type": "ACCOUNT"
+    }
+   ],
+   "must_not_mask": [
+    "১২/১১/২০২৬"
+   ]
+  },
+  {
+   "variant": "Typo",
+   "text": "Custmer shared his card 4111111111111111 and PIN code 5821 over phone, we need to chnage the PIN, E-2210 apears.",
+   "expected": [
+    {
+     "value": "4111111111111111",
+     "type": "CARD"
+    },
+    {
+     "value": "5821",
+     "type": "OTP"
+    }
+   ],
+   "must_not_mask": [
+    "E-2210"
+   ]
+  },
+  {
+   "variant": "Banglish",
+   "text": "Statement er jonno customer email rahim.cust@example.test dise, ar mobile 01912345678, E-2410 error ashche.",
+   "expected": [
+    {
+     "value": "rahim.cust@example.test",
+     "type": "EMAIL"
+    },
+    {
+     "value": "01912345678",
+     "type": "PHONE"
+    }
+   ],
+   "must_not_mask": [
+    "E-2410"
+   ]
+  },
+  {
+   "variant": "Code-switched",
+   "text": "Customer এর NID 1234567890 আর a/c 4401234567890 দিয়ে limit change করতে চেয়েছিলাম, BDT 100,000 set হয়নি, E-2322।",
+   "expected": [
+    {
+     "value": "1234567890",
+     "type": "NID"
+    },
+    {
+     "value": "4401234567890",
+     "type": "ACCOUNT"
+    }
+   ],
+   "must_not_mask": [
+    "BDT 100,000",
+    "E-2322"
+   ]
+  },
+  {
+   "variant": "English",
+   "text": "Duplicate POS debit on card 4111 1111 1111 1111, Order no 55671, Txn ID 9988776655, settlement warning E-3110, contact support@example.com.",
+   "expected": [
+    {
+     "value": "4111 1111 1111 1111",
+     "type": "CARD"
+    },
+    {
+     "value": "support@example.com",
+     "type": "EMAIL"
+    }
+   ],
+   "must_not_mask": [
+    "Order no 55671",
+    "Txn ID 9988776655",
+    "E-3110"
+   ]
+  }
+ ]
+}

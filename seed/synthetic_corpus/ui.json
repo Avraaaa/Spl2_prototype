@@ -1,0 +1,211 @@
+{
+  "area": "ui",
+  "groups": [
+    {
+      "group_id": "ui-g01", "label": "User Interface", "product": "Internet Banking", "module": "Statement", "error_code": "E-3101",
+      "requests": [
+        {"variant": "English", "request_type": "bug", "priority": "medium", "title": "Bangla narration shows as empty boxes in online statement", "description": "Since the v2.4.1 front-end update, the Bangla text in the transaction narration column of the online statement renders as square boxes. English narration is fine. Seen on Chrome and Edge on Windows."},
+        {"variant": "Bangla", "request_type": "bug", "priority": "medium", "title": "স্টেটমেন্টে বাংলা লেখা ভেঙে যাচ্ছে", "description": "ইন্টারনেট ব্যাংকিংয়ের স্টেটমেন্ট পেজে বাংলা বর্ণনা ঠিকমতো দেখা যাচ্ছে না, যুক্তাক্ষরগুলো ভেঙে আলাদা হয়ে যাচ্ছে। গ্রাহকরা বারবার অভিযোগ করছেন। দ্রুত দেখার অনুরোধ রইল।"},
+        {"variant": "Banglish", "request_type": "bug", "priority": "low", "title": "Statement e Bangla font ulta-palta dekhay", "description": "Amader customer ra bolche statement page e Bangla likha gula bhenge jacche, juktakkhor ashe na thikmoto. E-3101 code ta console e dekha jacche. Please font ta ektu dekhben."},
+        {"variant": "Code-switched", "request_type": "bug", "priority": "medium", "title": "Statement page এর Bangla text corrupt হয়ে যাচ্ছে", "description": "Online statement এ narration column এর বাংলা অক্ষর ভেঙে যাচ্ছে, কিন্তু English text একদম ঠিক আছে। মনে হচ্ছে web font load হচ্ছে না। Branch থেকে ৩টা complaint এসেছে এই সপ্তাহে, E-3101 দেখাচ্ছে।"},
+        {"variant": "Typo", "request_type": "bug", "priority": "medium", "title": "Bangle font not rendring in statment", "description": "Custmer reports that Bangla charcters in the statment narration are broken and shown as boxs. Happenig on all browsres we tested. Code E-3101 in the consle."}
+      ]
+    },
+    {
+      "group_id": "ui-g02", "label": "User Interface", "product": "Mobile App", "module": "Fund Transfer", "error_code": null,
+      "requests": [
+        {"variant": "English", "request_type": "bug", "priority": "high", "title": "Transfer form cut off on 5-inch screens", "description": "On phones with small screens (around 5 inches, 720x1280) the Confirm button of the fund transfer screen sits below the fold and the page cannot scroll. Customers on older Android devices cannot complete transfers. Reported by three branches."},
+        {"variant": "Bangla", "request_type": "bug", "priority": "high", "title": "ছোট ফোনে ট্রান্সফার স্ক্রিনের বোতাম দেখা যায় না", "description": "মোবাইল অ্যাপে ফান্ড ট্রান্সফারের ফর্মটি ছোট স্ক্রিনের ফোনে পুরোটা আসে না। নিচের কনফার্ম বোতামটি স্ক্রিনের বাইরে চলে যায় এবং স্ক্রল করা যায় না। পুরনো অ্যান্ড্রয়েড ফোনের গ্রাহকদের লেনদেন আটকে আছে।"},
+        {"variant": "Banglish", "request_type": "bug", "priority": "medium", "title": "Choto phone e transfer page er layout nosto", "description": "App er fund transfer screen choto phone e thik moto ashe na. Confirm button niche chole jai, scroll o hoy na. Purano Android phone er customer ra khub complain korche."},
+        {"variant": "Code-switched", "request_type": "bug", "priority": "high", "title": "Small screen device এ transfer layout broken", "description": "Fund Transfer screen এ amount field আর confirm button overlap করছে ছোট display তে। Landscape এ গেলে একদম scroll হয় না। Customer রা বলছে app এ transfer করতে পারছে না।"},
+        {"variant": "Typo", "request_type": "bug", "priority": "high", "title": "Layuot broken on smal phones", "description": "The tranfer screen on the mobile app is cut of on smal screens. Confrim button is not visble and scroling dosent work. Mutiple customers affectd."}
+      ]
+    },
+    {
+      "group_id": "ui-g03", "label": "User Interface", "product": "Internet Banking", "module": "Fund Transfer", "error_code": "E-3120",
+      "requests": [
+        {"variant": "English", "request_type": "bug", "priority": "high", "title": "Submit button does nothing after entering beneficiary", "description": "In the fund transfer page, clicking Submit after selecting a saved beneficiary has no effect: no spinner, no error. A page refresh and re-entry sometimes works. The browser console logs E-3120."},
+        {"variant": "Bangla", "request_type": "bug", "priority": "high", "title": "সাবমিট বোতামে ক্লিক করলে কিছুই হয় না", "description": "সংরক্ষিত প্রাপক বেছে নেওয়ার পর সাবমিট চাপলে কোনো সাড়া আসে না। না কোনো মেসেজ, না লোডিং। রিফ্রেশ করলে মাঝে মাঝে কাজ করে।"},
+        {"variant": "Banglish", "request_type": "bug", "priority": "medium", "title": "Submit button click korleo kichu hocche na", "description": "Beneficiary select kore Submit dile page ta kono response dey na. Kokhono kokhono refresh dile hoy. E-3120 error ta console e ashche."},
+        {"variant": "Code-switched", "request_type": "bug", "priority": "high", "title": "Transfer submit button unresponsive", "description": "Saved beneficiary select করার পর Submit button এ click করলে কিছুই হচ্ছে না, loading indicator ও আসে না। Firefox এ বেশি হচ্ছে। Console এ E-3120 log হচ্ছে।"},
+        {"variant": "Typo", "request_type": "bug", "priority": "high", "title": "Buton not respnding on transfar page", "description": "After selectng beneficary the Submit buton gives no respons. No error shwn to the user. Seen with E-3120 in browser logs."}
+      ]
+    },
+    {
+      "group_id": "ui-g04", "label": "User Interface", "product": "Internet Banking", "module": "Statement", "error_code": null,
+      "requests": [
+        {"variant": "English", "request_type": "bug", "priority": "medium", "title": "Date picker selects the wrong day", "description": "In the statement date range filter, choosing the 5th of a month highlights and submits the 4th. It seems to be a timezone offset issue in the calendar widget. Customers get statements for the wrong period."},
+        {"variant": "Bangla", "request_type": "bug", "priority": "medium", "title": "ক্যালেন্ডারে তারিখ বেছে নিলে আগের দিন চলে যায়", "description": "স্টেটমেন্টের তারিখ ফিল্টারে ৫ তারিখ সিলেক্ট করলে ৪ তারিখ ধরা হচ্ছে। এতে গ্রাহক ভুল সময়ের স্টেটমেন্ট পাচ্ছেন।"},
+        {"variant": "Banglish", "request_type": "bug", "priority": "medium", "title": "Date picker e ek din age date jachche", "description": "Statement filter e 5 tarikh dile 4 tarikh er statement ashe. Calendar widget e timezone er shomoshya mone hoy. Customer ra bhul statement pacche."},
+        {"variant": "Code-switched", "request_type": "bug", "priority": "low", "title": "Calendar picker এ date shift হচ্ছে", "description": "Statement এর from-date select করলে এক দিন আগের date set হয়ে যাচ্ছে। Month এর শেষ তারিখে সমস্যা বেশি। Mobile browser এও একই।"},
+        {"variant": "Typo", "request_type": "bug", "priority": "medium", "title": "Calender pickes wrong date", "description": "When a custmer selcts 5th in the date range the system submitts 4th. Looks like a timezon issue in the datepiker. Wrong statment period is returnd."}
+      ]
+    },
+    {
+      "group_id": "ui-g05", "label": "User Interface", "product": "Mobile App", "module": "Settings", "error_code": null,
+      "requests": [
+        {"variant": "English", "request_type": "bug", "priority": "low", "title": "Language toggle reverts to English after restart", "description": "A customer switches the app language to Bangla from Settings, but after closing and reopening the app it is back to English. The preference seems not to be persisted. Reproduced on Android 13."},
+        {"variant": "Bangla", "request_type": "bug", "priority": "low", "title": "অ্যাপ বন্ধ করে খুললে ভাষা আবার ইংরেজি হয়ে যায়", "description": "সেটিংস থেকে বাংলা ভাষা বেছে নেওয়ার পরও অ্যাপ বন্ধ করে আবার খুললে ইংরেজি দেখাচ্ছে। গ্রাহকরা প্রতিবার ভাষা বদলাতে বিরক্ত হচ্ছেন।"},
+        {"variant": "Banglish", "request_type": "bug", "priority": "low", "title": "Language Bangla set kore o abar English hoye jay", "description": "Settings theke Bangla select korlam kintu app bondho kore abar khulle English dekhay. Preference save hocche na mone hoy. Android 13 e dekha gese."},
+        {"variant": "Code-switched", "request_type": "bug", "priority": "medium", "title": "Language toggle persist করছে না", "description": "Bangla language select করার পর login করলে screen আবার English এ ফিরে যায়। কিছু label বাংলা থাকে আর কিছু English, mixed দেখায়।"},
+        {"variant": "Typo", "request_type": "bug", "priority": "low", "title": "Langauge togle resets", "description": "User chages language to Bangla in setings but after restrat the app shows Englsh again. Preferance not saved."}
+      ]
+    },
+    {
+      "group_id": "ui-g06", "label": "User Interface", "product": "Internet Banking", "module": "Login", "error_code": null,
+      "requests": [
+        {"variant": "English", "request_type": "change", "priority": "medium", "title": "Screen reader cannot read login form labels", "description": "A visually impaired customer reports that the screen reader announces the username and password fields as 'edit text' without labels. Please add proper aria-label attributes and visible focus outlines. This is also needed for our accessibility commitment."},
+        {"variant": "Bangla", "request_type": "change", "priority": "medium", "title": "দৃষ্টিপ্রতিবন্ধী গ্রাহকদের জন্য লগইন পেজ সহজ করা", "description": "স্ক্রিন রিডার ব্যবহারকারী গ্রাহকরা লগইন ফর্মের ঘরগুলোর নাম শুনতে পান না। অনুগ্রহ করে লেবেল ও ফোকাস চিহ্ন যুক্ত করুন এবং রঙের কনট্রাস্ট বাড়ান।"},
+        {"variant": "Banglish", "request_type": "feature", "priority": "low", "title": "Screen reader support ar contrast thik korar request", "description": "Amader ekjon customer dristi protibondhi, screen reader diye login field gula bujhte parchen na. Label ar focus outline dorkar, sathe text er contrast o ektu barate hobe."},
+        {"variant": "Code-switched", "request_type": "change", "priority": "medium", "title": "Accessibility improve করা দরকার login page এ", "description": "Login form এ aria labels নেই, tab key দিয়ে navigate করলে কোন field এ আছি বোঝা যায় না। Contrast ratio ও কম। Central bank এর guideline অনুযায়ী ঠিক করা দরকার।"},
+        {"variant": "Typo", "request_type": "change", "priority": "medium", "title": "Accesibility problem for blind users on login", "description": "Screen reeder users cant hear the labels of the login fileds. Pleese add aria labels, focus outline and better colour contrst."}
+      ]
+    },
+    {
+      "group_id": "ui-g07", "label": "User Interface", "product": "Internet Banking", "module": "Beneficiary", "error_code": null,
+      "requests": [
+        {"variant": "English", "request_type": "bug", "priority": "medium", "title": "Beneficiary dropdown truncates long names", "description": "In the beneficiary dropdown, names longer than about 20 characters are cut off without ellipsis, so customers with similar names cannot tell them apart. Hovering shows nothing. Needs a wider list or tooltip."},
+        {"variant": "Bangla", "request_type": "bug", "priority": "medium", "title": "প্রাপকের তালিকায় লম্বা নাম কেটে যাচ্ছে", "description": "ড্রপডাউনে ২০ অক্ষরের বেশি নাম কেটে যায়, ফলে একই রকম নামের প্রাপকদের আলাদা করা যায় না। টুলটিপও আসে না।"},
+        {"variant": "Banglish", "request_type": "bug", "priority": "low", "title": "Beneficiary list e boro naam kete jay", "description": "Dropdown e 20 akkhor er beshi naam hole kete jay, tai ek rokom naam er beneficiary alada kora jay na. Hover korleo kichu dekhay na."},
+        {"variant": "Code-switched", "request_type": "bug", "priority": "low", "title": "Beneficiary dropdown এ name truncate হচ্ছে", "description": "Long name গুলো dropdown এ cut হয়ে যায়, ellipsis ও নেই। Customer ভুল beneficiary select করার ঝুঁকি আছে।"},
+        {"variant": "Typo", "request_type": "bug", "priority": "medium", "title": "Dropdwon cuts beneficery names", "description": "Names longr than twenty chars are trucated in the benefeciary dropdown with no tooltip. Custmers may pick the wrong person."}
+      ]
+    },
+    {
+      "group_id": "ui-g08", "label": "User Interface", "product": "Internet Banking", "module": "Session", "error_code": "E-3150",
+      "requests": [
+        {"variant": "English", "request_type": "bug", "priority": "high", "title": "Session timeout popup cannot be dismissed", "description": "The 'session about to expire' modal appears but the Stay Logged In button does nothing, and the modal overlays the page so nothing else can be clicked. Users are forced to close the tab. E-3150 appears in logs."},
+        {"variant": "Bangla", "request_type": "bug", "priority": "high", "title": "সেশন শেষ হওয়ার পপআপ বন্ধ করা যায় না", "description": "সেশন শেষ হওয়ার সতর্কবার্তার পপআপে 'লগইন থাকুন' বোতাম কাজ করে না এবং পুরো পেজ ঢেকে থাকে। ট্যাব বন্ধ করা ছাড়া উপায় থাকে না। লগে E-3150 আসছে।"},
+        {"variant": "Banglish", "request_type": "bug", "priority": "medium", "title": "Session popup close hocche na", "description": "Session expire er warning modal ashe kintu Stay Logged In button kaj kore na. Pura page cover kore rakhe, tab bondho kora chara upay nai. E-3150."},
+        {"variant": "Code-switched", "request_type": "bug", "priority": "high", "title": "Timeout modal stuck হয়ে থাকে", "description": "Session timeout warning modal এ button কাজ করছে না, overlay সরছে না। User রা বাধ্য হয়ে browser tab close করছে। E-3150 error log এ দেখা যায়।"},
+        {"variant": "Typo", "request_type": "bug", "priority": "high", "title": "Sesion popup stuck on screeen", "description": "The timout warning modal stays and the stay-loged-in buton does not work. Page is blokced. E-3150 in logs."}
+      ]
+    },
+    {
+      "group_id": "ui-g09", "label": "User Interface", "product": "Mobile App", "module": "Dashboard", "error_code": null,
+      "requests": [
+        {"variant": "English", "request_type": "bug", "priority": "medium", "title": "Dark mode makes balance text unreadable", "description": "With the phone set to dark mode, the account balance and recent transaction text is dark grey on a dark background, nearly invisible. Light mode is fine. Please fix the theme colours."},
+        {"variant": "Bangla", "request_type": "bug", "priority": "medium", "title": "ডার্ক মোডে ব্যালান্সের লেখা দেখা যায় না", "description": "ফোন ডার্ক মোডে থাকলে অ্যাপের ব্যালান্স ও সাম্প্রতিক লেনদেনের লেখা কালচে ধূসর হয়ে ব্যাকগ্রাউন্ডের সাথে মিশে যায়। লাইট মোডে সমস্যা নেই।"},
+        {"variant": "Banglish", "request_type": "bug", "priority": "low", "title": "Dark mode e balance dekha jay na", "description": "Phone dark mode e thakle app er balance ar transaction text gula background er sathe mishe jay. Light mode e thik ache. Colour ta thik korte hobe."},
+        {"variant": "Code-switched", "request_type": "bug", "priority": "medium", "title": "Dark theme এ text visible হচ্ছে না", "description": "Dashboard এর balance আর recent transaction এর text dark mode এ প্রায় দেখাই যায় না। শুধু Samsung ফোনে নয়, সব device এ একই।"},
+        {"variant": "Typo", "request_type": "bug", "priority": "medium", "title": "Dark mood text invisble", "description": "In dark mode the balence and transction text are gray on black and hard to read. Ligth mode works fine."}
+      ]
+    },
+    {
+      "group_id": "ui-g10", "label": "User Interface", "product": "Internet Banking", "module": "Receipt", "error_code": null,
+      "requests": [
+        {"variant": "English", "request_type": "bug", "priority": "medium", "title": "Printed transfer receipt is cropped on the right", "description": "When customers print the fund transfer receipt, the right margin is cut off and the amount column is missing. PDF download looks fine. Probably a print stylesheet problem."},
+        {"variant": "Bangla", "request_type": "bug", "priority": "medium", "title": "রসিদ প্রিন্ট করলে ডান পাশ কেটে যায়", "description": "ট্রান্সফারের রসিদ প্রিন্ট দিলে ডান দিকের অংশ কেটে যায় এবং টাকার পরিমাণের কলাম আসে না। পিডিএফ ডাউনলোড ঠিক আছে।"},
+        {"variant": "Banglish", "request_type": "bug", "priority": "low", "title": "Receipt print e daan dik kete jay", "description": "Transfer receipt print korle daan pasher amount column ta ashe na. PDF download thik ache, shudhu print e shomoshya."},
+        {"variant": "Code-switched", "request_type": "bug", "priority": "low", "title": "Print receipt এ layout broken", "description": "Receipt print করলে right side crop হয়ে যায়, amount দেখা যায় না। Print stylesheet এর issue মনে হচ্ছে, A4 paper এ test করেছি।"},
+        {"variant": "Typo", "request_type": "bug", "priority": "low", "title": "Reciept print croped", "description": "Printng the transfar receipt cuts the amout column on the right. Pdf downlaod is ok."}
+      ]
+    },
+    {
+      "group_id": "ui-g11", "label": "User Interface", "product": "Mobile App", "module": "OTP Entry", "error_code": null,
+      "requests": [
+        {"variant": "English", "request_type": "bug", "priority": "high", "title": "Full keyboard shown for OTP field instead of numeric pad", "description": "On the OTP confirmation screen the app opens the full alphabetic keyboard, and the input accepts letters. Customers mistype and get locked out. It should open the numeric keypad only."},
+        {"variant": "Bangla", "request_type": "bug", "priority": "medium", "title": "ওটিপি ঘরে শুধু সংখ্যার কিপ্যাড আসছে না", "description": "ওটিপি দেওয়ার স্ক্রিনে সম্পূর্ণ কিবোর্ড খুলছে এবং অক্ষরও লেখা যাচ্ছে। গ্রাহকরা ভুল লিখে বারবার ব্যর্থ হচ্ছেন। শুধু নম্বর কিপ্যাড আসা উচিত।"},
+        {"variant": "Banglish", "request_type": "bug", "priority": "medium", "title": "OTP field e number pad ashe na", "description": "OTP dewar screen e pura keyboard khule jay, letter o type kora jay. Customer ra bhul likhe kharap hoye jacche. Shudhu numeric keypad ashar kotha."},
+        {"variant": "Code-switched", "request_type": "bug", "priority": "high", "title": "OTP input এ numeric keypad দেখাচ্ছে না", "description": "Mobile app এর OTP screen এ alphabet keyboard খুলছে, text ও accept করছে। iOS এ ঠিক আছে কিন্তু Android এ সমস্যা।"},
+        {"variant": "Typo", "request_type": "bug", "priority": "medium", "title": "Wrong keybord for OTP entery", "description": "The OTP screen opens the fulll alphabet keybord and accepts leters. Custmers mistype. Needs numeric pad only."}
+      ]
+    },
+    {
+      "group_id": "ui-g12", "label": "User Interface", "product": "Internet Banking", "module": "Dashboard", "error_code": "E-3180",
+      "requests": [
+        {"variant": "English", "request_type": "bug", "priority": "medium", "title": "Balance widget spins forever on dashboard", "description": "After login the account balance widget shows a loading spinner indefinitely while the other widgets render. Reloading sometimes fixes it. The console shows E-3180 from the widget script."},
+        {"variant": "Bangla", "request_type": "bug", "priority": "medium", "title": "ড্যাশবোর্ডে ব্যালান্স শুধু ঘুরতেই থাকে", "description": "লগইনের পর ব্যালান্স উইজেটে লোডিং চিহ্ন ঘুরতেই থাকে, অন্য অংশগুলো ঠিকঠাক আসে। রিলোড দিলে মাঝে মাঝে ঠিক হয়। কনসোলে E-3180 দেখাচ্ছে।"},
+        {"variant": "Banglish", "request_type": "bug", "priority": "medium", "title": "Dashboard balance widget loading e atke thake", "description": "Login er por balance widget e spinner ghurtei thake, baki widget gula ashe. Reload dile kokhono thik hoy. Console e E-3180."},
+        {"variant": "Code-switched", "request_type": "bug", "priority": "low", "title": "Balance widget infinite loading", "description": "Dashboard এ balance box এ spinner চলতেই থাকে, কোনো error message নেই। E-3180 browser console এ আসছে, শুধু widget script এ।"},
+        {"variant": "Typo", "request_type": "bug", "priority": "medium", "title": "Balence widgit never loads", "description": "The balence widget keeps spining after login while others load. Console show E-3180. Relaod sometimes helps."}
+      ]
+    },
+    {
+      "group_id": "ui-g13", "label": null, "emerging_topic": "qr-payments", "product": "Mobile App", "module": "QR Scan", "error_code": null,
+      "requests": [
+        {"variant": "English", "request_type": "bug", "priority": "high", "title": "Bangla QR codes from merchants fail to scan", "description": "Our customers are trying to pay at shops using the Bangla QR displayed by merchants, but the app camera never recognises it and shows 'Invalid QR'. English QR codes from the same shops work. We need support for this payment method."},
+        {"variant": "Bangla", "request_type": "bug", "priority": "high", "title": "দোকানের বাংলা কিউআর কোড স্ক্যান হয় না", "description": "গ্রাহকরা দোকানে মার্চেন্টের বাংলা কিউআর কোড স্ক্যান করে পেমেন্ট করতে চাইলে অ্যাপ 'অবৈধ কিউআর' দেখায়। একই দোকানের অন্য কিউআর কাজ করে। কিউআর পেমেন্টের সুবিধা ঠিকমতো চালু করা দরকার।"},
+        {"variant": "Banglish", "request_type": "bug", "priority": "medium", "title": "Merchant QR scan korle Invalid QR dekhay", "description": "Dokan e merchant er Bangla QR scan korte gele app Invalid QR dekhay. Onno QR gula kaj kore. Amader QR payment er jonno alada support lagbe."},
+        {"variant": "Code-switched", "request_type": "bug", "priority": "high", "title": "QR payment scan fail হচ্ছে merchant এ", "description": "Merchant এর QR code scan করলে camera detect করে না, তারপর 'Invalid QR' আসে। কিছু QR কাজ করে, কিছু করে না। Customer রা shop এ payment করতে পারছে না।"},
+        {"variant": "Typo", "request_type": "bug", "priority": "high", "title": "Merchent QR scan failng", "description": "Custmers cant pay at shops using the merchent QR code, the app says Invalid QR. Some QRs work and others dont. Need QR paymnet support fixed."}
+      ]
+    },
+    {
+      "group_id": "ui-g14", "label": null, "emerging_topic": "qr-payments", "product": "Core Banking", "module": "Merchant Settlement", "error_code": null,
+      "requests": [
+        {"variant": "English", "request_type": "support", "priority": "high", "title": "Merchants not receiving QR sale proceeds on time", "description": "Several merchants who accept QR payments say that daily sales have not been credited to their accounts for two days. Customers were debited. We need to know where the QR settlement batch is stuck."},
+        {"variant": "Bangla", "request_type": "support", "priority": "high", "title": "মার্চেন্টরা কিউআর বিক্রির টাকা পাচ্ছেন না", "description": "কিউআর পেমেন্ট নেওয়া কয়েকজন মার্চেন্ট জানাচ্ছেন দুই দিন ধরে বিক্রির টাকা তাদের হিসাবে জমা হয়নি, অথচ গ্রাহকদের হিসাব থেকে কাটা হয়ে গেছে। সেটেলমেন্টে সমস্যা কোথায় জানাবেন।"},
+        {"variant": "Banglish", "request_type": "support", "priority": "high", "title": "QR settlement merchant er account e jachche na", "description": "Merchant ra bolche 2 din dhore QR diye ja bikri hoise ta account e ashe nai. Customer er taka kete geche. Settlement batch kothay atke ache ektu dekhen."},
+        {"variant": "Code-switched", "request_type": "support", "priority": "critical", "title": "QR merchant settlement delayed", "description": "Merchant দের daily QR settlement credit হচ্ছে না গত দুই দিন। Customer side এ debit হয়ে গেছে। Batch job এর status জানা দরকার, merchant রা branch এ এসে চাপ দিচ্ছে।"},
+        {"variant": "Typo", "request_type": "support", "priority": "high", "title": "QR setlement not credted to merchants", "description": "Merchents say their QR sales of the last two days are not credted. Custmers were already debted. Pleas check the settlment batch."}
+      ]
+    },
+    {
+      "group_id": "ui-g15", "label": null, "emerging_topic": "qr-payments", "product": "Internet Banking", "module": "Merchant QR Generation", "error_code": null,
+      "requests": [
+        {"variant": "English", "request_type": "feature", "priority": "medium", "title": "Let merchants generate and download their own QR code", "description": "Small merchants asked whether they can generate a static QR code for their shop from internet banking and download it as a printable PNG. At the moment the branch has to prepare it manually, which takes days."},
+        {"variant": "Bangla", "request_type": "feature", "priority": "medium", "title": "মার্চেন্ট নিজেই কিউআর কোড তৈরি করতে পারুক", "description": "ছোট ব্যবসায়ীরা জানতে চাচ্ছেন ইন্টারনেট ব্যাংকিং থেকে নিজের দোকানের কিউআর কোড তৈরি করে প্রিন্টযোগ্য ছবি হিসেবে নামানো যাবে কি না। এখন শাখাকে হাতে করে বানাতে হয়, কয়েক দিন লেগে যায়।"},
+        {"variant": "Banglish", "request_type": "feature", "priority": "low", "title": "Merchant nijei QR code banate chay", "description": "Dokandar ra internet banking theke nijer QR code generate kore PNG download korte chay. Ekhon branch ke hate banate hoy, onek shomoy lage."},
+        {"variant": "Code-switched", "request_type": "feature", "priority": "medium", "title": "QR code generation feature for shop owners", "description": "Merchant রা portal থেকে static QR generate আর print করতে পারলে ভালো হতো। এখন branch এ request দিয়ে ৩-৪ দিন অপেক্ষা করতে হয়। Logo সহ হলে আরও ভালো।"},
+        {"variant": "Typo", "request_type": "feature", "priority": "medium", "title": "Requst for merchent QR genration", "description": "Shop owners want to genrate there own QR code from the portal and dowload a printabel image. Currently branch prepars it manualy."}
+      ]
+    },
+    {
+      "group_id": "ui-g16", "label": null, "emerging_topic": "qr-payments", "product": "Mobile App", "module": "Dynamic QR", "error_code": null,
+      "requests": [
+        {"variant": "English", "request_type": "bug", "priority": "high", "title": "Dynamic QR amount differs from the bill amount", "description": "At a retail counter the merchant generates a dynamic QR for the bill total, but after scanning, our app pre-fills a different amount, sometimes missing the decimal part. Customers pay the wrong value."},
+        {"variant": "Bangla", "request_type": "bug", "priority": "high", "title": "ডায়নামিক কিউআর স্ক্যানে টাকার পরিমাণ ভুল আসে", "description": "দোকানে বিলের পরিমাণ দিয়ে ডায়নামিক কিউআর বানানো হলেও স্ক্যান করার পর অ্যাপে অন্য পরিমাণ বসে যায়, কখনো দশমিকের অংশ বাদ পড়ে। গ্রাহক ভুল টাকা পরিশোধ করছেন।"},
+        {"variant": "Banglish", "request_type": "bug", "priority": "high", "title": "QR scan korle amount bhul boshe", "description": "Dokan e bill er amount diye dynamic QR banano hoy, kintu scan korle app e onno amount ashe, dosomik ongsho miss hoy. Customer bhul taka pay kore."},
+        {"variant": "Code-switched", "request_type": "bug", "priority": "medium", "title": "Dynamic QR এর amount mismatch", "description": "Merchant এর generated QR scan করলে amount field এ ভুল value বসছে, decimal point এর পর digit গুলো হারিয়ে যায়। Retail shop এ complaint বাড়ছে।"},
+        {"variant": "Typo", "request_type": "bug", "priority": "high", "title": "Dynmic QR shows wrong amout", "description": "After scaning a dynamc QR the prefiled amount is diffrent from the bill and decimals are droped. Customers pay incorect values."}
+      ]
+    },
+    {
+      "group_id": "ui-g17", "label": null, "emerging_topic": "qr-payments", "product": "Mobile App", "module": "QR Scan", "error_code": null,
+      "requests": [
+        {"variant": "English", "request_type": "bug", "priority": "medium", "title": "QR scanner camera stays black on some Android phones", "description": "When customers open the Scan to Pay screen to pay a merchant QR, the camera preview stays black on a few Android models even though permission was granted. Manual QR entry is not available as a fallback."},
+        {"variant": "Bangla", "request_type": "bug", "priority": "medium", "title": "কিউআর স্ক্যানের ক্যামেরা কালো দেখায়", "description": "মার্চেন্টকে পেমেন্ট করতে 'স্ক্যান টু পে' খুললে কিছু অ্যান্ড্রয়েড ফোনে ক্যামেরা কালো থাকে, অথচ অনুমতি দেওয়া আছে। হাতে কোড লেখার কোনো বিকল্পও নেই।"},
+        {"variant": "Banglish", "request_type": "bug", "priority": "medium", "title": "Scan to Pay te camera kalo hoye thake", "description": "Merchant ke pay korte Scan to Pay khulle kichu Android phone e camera kalo screen dekhay, permission deya ache tobu. Manually code dewar option o nai."},
+        {"variant": "Code-switched", "request_type": "bug", "priority": "medium", "title": "Scan to Pay camera black screen", "description": "QR payment এর জন্য camera খুললে কিছু Android device এ black screen আসে। Permission granted আছে। Customer রা merchant এ pay করতে পারছে না, manual entry option ও নেই।"},
+        {"variant": "Typo", "request_type": "bug", "priority": "medium", "title": "Camra black in scan to pya", "description": "The camra preview is black in the QR scan screen on some Andriod phones even with permision given. No manul entry fallbak."}
+      ]
+    },
+    {
+      "group_id": "ui-g18", "label": null, "emerging_topic": "qr-payments", "product": "Core Banking", "module": "QR Refund", "error_code": null,
+      "requests": [
+        {"variant": "English", "request_type": "feature", "priority": "medium", "title": "Need a refund flow for wrongly paid QR merchant payments", "description": "When a customer scans a merchant QR and pays twice by mistake there is no standard way to refund. Branch staff reverse it manually after merchant confirmation. Can DataSoft add a merchant-initiated QR refund process?"},
+        {"variant": "Bangla", "request_type": "feature", "priority": "medium", "title": "কিউআর পেমেন্ট ফেরতের নিয়ম চালু করা", "description": "গ্রাহক ভুল করে মার্চেন্টের কিউআরে দুইবার পেমেন্ট করলে ফেরত দেওয়ার কোনো নির্ধারিত প্রক্রিয়া নেই। শাখা মার্চেন্টের নিশ্চিতকরণের পর হাতে রিভার্স করে। মার্চেন্ট থেকে রিফান্ড শুরুর সুবিধা দরকার।"},
+        {"variant": "Banglish", "request_type": "feature", "priority": "low", "title": "QR payment refund er system dorkar", "description": "Customer bhul kore merchant QR e duibar pay korle refund dewar kono system nai. Branch merchant er confirmation niye hate reverse kore. Merchant nijei refund suru korte parle bhalo hoto."},
+        {"variant": "Code-switched", "request_type": "feature", "priority": "medium", "title": "Merchant QR payment refund process", "description": "Duplicate QR payment হলে refund করার কোনো system নেই, branch কে manually reverse করতে হয়। Merchant confirm করলে auto refund initiate করার feature চাই।"},
+        {"variant": "Typo", "request_type": "feature", "priority": "medium", "title": "Refnd for dupliate QR payments", "description": "If a custmer pays a merchent QR twice there is no standrd refnd process. Branch reveres manualy. Please add a merchent initiated refund."}
+      ]
+    }
+  ],
+  "hard_negatives": [
+    {"neg_id": "ui-n01", "near_group": "ui-g01", "label": "User Interface", "product": "Internet Banking", "module": "Statement", "error_code": "E-3101", "variant": "English", "request_type": "support", "priority": "low", "title": "Statement PDF fonts look different from the web view", "description": "The downloaded statement PDF uses a different font than the web page, but all Bangla text is complete and readable. We only want to know whether the font can be matched to the bank brand guideline."},
+    {"neg_id": "ui-n02", "near_group": "ui-g02", "label": "Performance", "product": "Mobile App", "module": "Fund Transfer", "error_code": null, "variant": "Banglish", "request_type": "bug", "priority": "medium", "title": "Transfer screen khulte onek somoy lage", "description": "Layout ekdom thik ache choto phone e o, kintu Fund Transfer screen khulte 12-15 second lage. Server response slow mone hocche, UI e kono shomoshya nai."},
+    {"neg_id": "ui-n03", "near_group": "ui-g03", "label": "Transaction", "product": "Internet Banking", "module": "Fund Transfer", "error_code": "E-3120", "variant": "English", "request_type": "bug", "priority": "high", "title": "Submit works but transfer is rejected with E-3120", "description": "The Submit button responds normally and the confirmation screen appears, but the backend rejects the transfer with E-3120 because the beneficiary limit is exceeded. This is a limit configuration issue, not a button problem."},
+    {"neg_id": "ui-n04", "near_group": "ui-g04", "label": "Database", "product": "Reports", "module": "Statement", "error_code": null, "variant": "Code-switched", "request_type": "bug", "priority": "medium", "title": "Statement এ ভুল date এর transaction আসছে", "description": "Date picker ঠিক আছে, selected date ঠিকই যাচ্ছে। কিন্তু backend query তে value date আর posting date mix হওয়ায় 5 তারিখের statement এ 4 তারিখের কিছু transaction আসছে।"},
+    {"neg_id": "ui-n05", "near_group": "ui-g05", "label": "Authentication", "product": "Mobile App", "module": "Settings", "error_code": null, "variant": "Typo", "request_type": "bug", "priority": "medium", "title": "Langauge change logs out the user", "description": "Changing the language in setings logs the custmer out and asks for the password again. The language itself is saved corectly, the problem is the unexpected sesion end."},
+    {"neg_id": "ui-n06", "near_group": "ui-g08", "label": "Authentication", "product": "Internet Banking", "module": "Session", "error_code": "E-3150", "variant": "Bangla", "request_type": "bug", "priority": "high", "title": "E-3150 দিয়ে সেশন ৩ মিনিটেই শেষ হয়ে যায়", "description": "সেশন টাইমআউটের পপআপ ঠিকমতো আসে ও বোতামও কাজ করে, কিন্তু সার্ভারে সেশনের মেয়াদ ৩ মিনিটে নেমে যাচ্ছে এবং E-3150 দিয়ে গ্রাহক লগআউট হচ্ছেন। কনফিগারেশন যাচাই দরকার।"},
+    {"neg_id": "ui-n07", "near_group": "ui-g11", "label": "Authentication", "product": "Mobile App", "module": "OTP Entry", "error_code": null, "variant": "English", "request_type": "bug", "priority": "high", "title": "OTP SMS arrives after the code has expired", "description": "The OTP screen and numeric keypad behave properly, but the SMS reaches customers four minutes late and the code is already expired. This is a delivery delay, not an input problem."},
+    {"neg_id": "ui-n08", "near_group": "ui-g12", "label": "Performance", "product": "Internet Banking", "module": "Dashboard", "error_code": "E-3180", "variant": "Banglish", "request_type": "bug", "priority": "high", "title": "E-3180 asha shoho dashboard puro dhime", "description": "Balance widget ashe thikmoto, spinner atke thake na. Kintu shokal 10 tar por E-3180 shoho pura dashboard e 20 second er moddhe load hoy. Database query slow mone hocche."},
+    {"neg_id": "ui-n09", "near_group": "ui-g13", "label": "Transaction", "product": "Mobile App", "module": "QR Scan", "error_code": null, "variant": "Code-switched", "request_type": "bug", "priority": "high", "title": "Card transfer এ ভুল debit, QR এর সাথে সম্পর্ক নেই", "description": "QR scan একদম ঠিকভাবে কাজ করছে। কিন্তু একই customer এর NPSB transfer এ দুইবার debit হয়েছে, transaction status pending দেখাচ্ছে। এটা QR এর বিষয় নয়, NPSB reconciliation দেখা দরকার।"},
+    {"neg_id": "ui-n10", "near_group": "ui-g14", "label": "Database", "product": "Core Banking", "module": "Merchant Settlement", "error_code": null, "variant": "English", "request_type": "support", "priority": "medium", "title": "Merchant settlement report totals do not match ledger", "description": "Merchant settlement credits arrive on time, but the monthly settlement report shows a total that is BDT 1,200 lower than the general ledger. The report query seems to skip reversed entries."}
+  ],
+  "sensitive_cases": [
+    {"variant": "English", "text": "Customer says the OTP 482915 was never used but the app showed Invalid QR on the confirmation screen, ref SR-1043.", "expected": [{"value": "482915", "type": "OTP"}], "must_not_mask": ["SR-1043"]},
+    {"variant": "Bangla", "text": "গ্রাহকের ওটিপি ৭৩৯২০৫ দেওয়ার পরও বাটন কাজ করেনি, ত্রুটি কোড E-3120।", "expected": [{"value": "৭৩৯২০৫", "type": "OTP"}], "must_not_mask": ["E-3120"]},
+    {"variant": "Banglish", "text": "Customer er card 4111 1111 1111 1111 diye QR payment korte gele Invalid QR dekhay, BDT 50,000 limit er moddhe.", "expected": [{"value": "4111 1111 1111 1111", "type": "CARD"}], "must_not_mask": ["BDT 50,000"]},
+    {"variant": "Code-switched", "text": "Merchant এর account 1234567890123 এ QR settlement আসেনি, Txn ID 7788990011 দেখে একটু check করবেন।", "expected": [{"value": "1234567890123", "type": "ACCOUNT"}], "must_not_mask": ["Txn ID 7788990011"]},
+    {"variant": "Typo", "text": "Custmer NID 1990123456789 was entred in the profile page but the Bangla name is shwn as boxes after v2.4.1 update.", "expected": [{"value": "1990123456789", "type": "NID"}], "must_not_mask": ["v2.4.1"]},
+    {"variant": "English", "text": "Please email the screenshot to officer.ui@example.test and call the branch at 01712345678 about the date picker problem dated 12/11/2026.", "expected": [{"value": "officer.ui@example.test", "type": "EMAIL"}, {"value": "01712345678", "type": "PHONE"}], "must_not_mask": ["12/11/2026"]},
+    {"variant": "Bangla", "text": "জাতীয় পরিচয়পত্র ১৯৮৫৪৩২১০৯৮৭৬ দিয়ে লগইন করার সময় স্ক্রিন রিডার লেবেল পড়েনি, ইমেইল user.help@example.com।", "expected": [{"value": "১৯৮৫৪৩২১০৯৮৭৬", "type": "NID"}, {"value": "user.help@example.com", "type": "EMAIL"}], "must_not_mask": []},
+    {"variant": "Banglish", "text": "Customer er hisab 20012345678 theke transfer korte gele Submit button kaj kore na, E-3120. Phone +8801812345678.", "expected": [{"value": "20012345678", "type": "ACCOUNT"}, {"value": "+8801812345678", "type": "PHONE"}], "must_not_mask": ["E-3120"]},
+    {"variant": "Code-switched", "text": "Card 5555-5555-5555-4444 দিয়ে QR scan এ amount BDT 1,250.50 এর জায়গায় BDT 1,250 দেখাচ্ছে, order no 40021 reference এ আছে।", "expected": [{"value": "5555-5555-5555-4444", "type": "CARD"}], "must_not_mask": ["BDT 1,250.50", "BDT 1,250", "order no 40021"]},
+    {"variant": "Typo", "text": "The OTP is 5532 and the custmer a/c 000123456789012 could not close the session popup, E-3150 shown.", "expected": [{"value": "5532", "type": "OTP"}, {"value": "000123456789012", "type": "ACCOUNT"}], "must_not_mask": ["E-3150"]},
+    {"variant": "English", "text": "Merchant contact 01912345678 and merchant email shop.owner@example.com asked why QR settlement for Txn ID 9988776655 is delayed since 20/11/2026.", "expected": [{"value": "01912345678", "type": "PHONE"}, {"value": "shop.owner@example.com", "type": "EMAIL"}], "must_not_mask": ["Txn ID 9988776655", "20/11/2026"]},
+    {"variant": "Bangla", "text": "গ্রাহকের কার্ড নম্বর 4012888888881881 দিয়ে লেনদেন করার সময় অ্যাপ ভার্সন v2.4.1 এ লেআউট ভেঙে গেছে, মোবাইল ০১৫১২৩৪৫৬৭৮।", "expected": [{"value": "4012888888881881", "type": "CARD"}, {"value": "০১৫১২৩৪৫৬৭৮", "type": "PHONE"}], "must_not_mask": ["v2.4.1"]}
+  ]
+}

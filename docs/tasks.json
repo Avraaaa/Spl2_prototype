@@ -931,6 +931,45 @@
         "NEW tests: progress lines emitted with counts and no description text (caplog); backfill warning when no embedder; --embed-locally uses the injected fake embedder. For the runner, a small node test or a --self-test flag that checks the CRLF-warning filter and timestamp prefix. Do not edit existing tests.",
         "scripts/dev.mjs loads a git-ignored .env at the repo root if present (Node process.loadEnvFile or a tiny parser; no new dependency) before spawning api/web/manage/test, with real process env taking precedence; it never prints values, only the loaded variable NAMES. Gates/test runs must not depend on .env (tests stay hermetic: the runner and test command ignore RESEND_API_KEY, e.g. by clearing it for the test subprocess)."
       ]
+    },
+    {
+      "id": "P7-T12",
+      "phase": 7,
+      "title": "Realistic synthetic corpus for seed_synthetic and per-type masking report",
+      "req": [
+        "E-01",
+        "E-02",
+        "E-03",
+        "E-05",
+        "E-06",
+        "E-08",
+        "E-09",
+        "E-11",
+        "E-12"
+      ],
+      "depends_on": [
+        "P7-T11"
+      ],
+      "allow": [
+        "services/api/domains/search/",
+        "services/api/domains/issues/management/",
+        "services/api/tests/",
+        "seed/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "seed/synthetic_corpus/*.json (committed, format in seed/synthetic_corpus/README.md: 82 incident groups x 5 language variants = 410 requests, 50 hard negatives, 60 sensitive cases, a null-label emerging topic qr-payments) is the data source for seed_synthetic. Do not edit the corpus files except to fix a parse error. Replace the template generator: create one request per corpus entry through the normal services (masking, audit, history apply), distribute groups across both demo banks deterministically by --seed (each group stays within ONE bank so ground-truth duplicates are same-tenant), keep status/date/workflow distribution from P7-T9. --count limits the number of groups (keep tests fast). Ground truth in the manifest: group ids, hard negative near_group, label, emerging_topic, and per sensitive case the expected values+types and must_not_mask.",
+        "Sensitive cases are inserted as request descriptions (or comments) so masking runs through the real path.",
+        "compare_features: masking report broken down per type (OTP, CARD, ACCOUNT, NID, EMAIL, PHONE) with TP/FN, plus false positives listing which must_not_mask substrings were altered; ranking broken down per language variant and separately for hard negatives (rate at which a hard negative is ranked above the true duplicate); label metrics exclude null-label (emerging) requests; topic metric checks whether the qr-payments requests form a proposed cluster.",
+        "Write the comparison markdown with these tables. Keep P7-T11 progress logging in the commands.",
+        "NEW tests with a small --count and fake embedder: loader validates the corpus schema, groups never split across banks, per-type masking keys present, hard-negative metric present. Do not edit existing tests."
+      ]
     }
   ]
 }
