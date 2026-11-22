@@ -688,6 +688,38 @@
         "Synthetic English+Bangla seed fixtures and evaluation tests showing similar-request ranking and label suggestions work for Bangla and mixed text (keyword fallback tokenizes Bangla correctly).",
         "Frontend: labelled form controls, keyboard focus states, aria-live for errors, layouts usable at 360px; add unit tests for any pure helpers."
       ]
+    },
+    {
+      "id": "P7-T3b",
+      "phase": 7,
+      "title": "Attachment quarantine fixes: legacy backfill, non-UTF-8 safety, every-action comment tests",
+      "req": [
+        "EX-05",
+        "N-21"
+      ],
+      "depends_on": [
+        "P7-T4"
+      ],
+      "allow": [
+        "services/api/",
+        "services/ml/",
+        "apps/web/src/",
+        "contracts/",
+        "seed/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "A data migration rescans existing attachments still marked with the legacy unscanned status, using the same local scanner, and sets them to CLEAN or REJECTED, so previously valid files stay downloadable. The migration is reversible as a no-op.",
+        "Text attachments that are not valid UTF-8 never cause a 500: decode with errors=replace or skip text masking, and the upload is atomic (no attachment row left behind if processing fails).",
+        "REJECTED attachments are hidden from attachment listings for client users other than the uploader, and their stored file content is deleted once marked REJECTED; the metadata row stays for audit.",
+        "NEW test file(s) only: a parametrized test that every workflow action (submit, accept, reject, assign, deliver, verify pass, verify fail, close, reopen) accepts an optional comment and stores it masked with the history event; a 423 download test for QUARANTINED/REJECTED; a non-UTF-8 upload test; a legacy-backfill migration test; cross-tenant download denial still holds."
+      ]
     }
   ]
 }

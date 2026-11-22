@@ -114,3 +114,4 @@ P7-T6: Banglish normalization and embedding model comparison harness (E-02,E-03,
 
 ## Exit rules
 A phase is complete only if every listed task is marked passed by the runner, all independent test gates pass, no critical finding is unresolved and a human can reproduce the demo with synthetic records. Never interpret this as authorization for production banking data.
+P7-T3b: Attachment quarantine fixes (EX-05,N-21), from the P7-T3 review follow-ups. Acceptance: data migration rescans legacy "unscanned" attachments to CLEAN/REJECTED; non-UTF-8 text uploads never 500 and uploads are atomic; REJECTED files' content deleted and hidden from other client users' listings (metadata kept for audit); NEW tests for comments on every workflow action, 423 on non-CLEAN download, non-UTF-8 upload, backfill, cross-tenant denial. Scope: do not edit existing tests. Gate: the task gates in docs/tasks.json.
