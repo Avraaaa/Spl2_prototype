@@ -280,7 +280,7 @@
         "apps/web/src/features/tenants/",
         "contracts/",
         "apps/web/src/features/admin/",
-        "apps/web/src/App.tsx",
+        "apps/web/src/app/App.tsx",
         "docs/email-setup.md"
       ],
       "gates": [
