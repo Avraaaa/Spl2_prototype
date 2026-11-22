@@ -274,12 +274,14 @@
       "depends_on": [
         "P3-T2"
       ],
-      "blocked_until": "Owner configures email (deferred by owner decision 2026-11-14)",
       "allow": [
         "services/api/",
         "apps/web/src/features/auth/",
         "apps/web/src/features/tenants/",
-        "contracts/"
+        "contracts/",
+        "apps/web/src/features/admin/",
+        "apps/web/src/App.tsx",
+        "docs/email-setup.md"
       ],
       "gates": [
         "node scripts/validate-repo.mjs",
@@ -287,6 +289,15 @@
         "node scripts/check-contract.mjs",
         "node scripts/dev.mjs lint",
         "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "Email provider: Resend via its SMTP relay using Django's built-in SMTP backend (host smtp.resend.com, port 587 STARTTLS, username resend, password from RESEND_API_KEY). No new dependencies, no paid-API SDK. Settings read only from environment variables: RESEND_API_KEY, EMAIL_FROM (verified sender), EMAIL_REPLY_TO optional, PORTAL_BASE_URL for links. When RESEND_API_KEY is unset, fall back to the console backend and log a single startup warning (no secret values ever logged). Never read or write .env files; document the variables in NEW docs/email-setup.md (how to create a Resend API key, verify a domain, set the variables, send a test email via a new management command send_test_email --to <addr>).",
+        "N-02: organization official contact email (required for new organizations; data migration backfills existing rows with a placeholder flagged for the admin to edit; admin UI shows and edits it).",
+        "EX-04/N-01: temporary credentials are delivered only to the user's registered email through the existing transactional outbox. When real email is configured, temporary_password is NOT returned in admin API responses and the admin UI shows credentials sent to <masked email>. To keep existing protected tests valid, the one-time temporary_password may still be returned ONLY when email is not configured (console fallback), with an explicit delivery: console flag; tests must prove it is absent when email is configured.",
+        "Self-service forgot-password: one-time, hashed, expiring (configurable, default 30 min) reset link emailed via outbox; single use; invalidated by a later reset; rate-limited; response identical whether or not the account exists. Reset page in the web app (login screen link). Account events recorded.",
+        "N-22: existing notification emails (account creation, submission, intake decisions, date changes, comments, delivery, verification, closure, reopening) go through the same configured backend; failures are retried by the existing worker and stay visible to the admin (credentials pending state).",
+        "Email bodies: plain text + simple HTML, no credentials in logs, outbox payload stores no plaintext password beyond what the send needs (encrypt or generate setup link at send time; prefer setup link over plaintext password).",
+        "NEW tests only (locmem backend, never real network): no credential in API responses/logs when configured, reset link single-use/expiry/invalidation/rate-limit/no account enumeration, two-bank isolation, Resend settings selection from env, send_test_email uses the configured backend. Do not edit existing tests."
       ]
     },
     {
@@ -846,7 +857,8 @@
         "Text includes synthetic OTPs, card, account, NID numbers and emails plus must-not-mask lookalikes (error codes, versions, labelled transaction ids); expected masks recorded in the manifest. Creation goes through the normal services so masking, audit and history apply.",
         "After seeding it runs the existing embedding backfill (local model when present, else reports skipped).",
         "New command compare_features reads the manifest and live DB and reports per tenant and language variant: duplicate HitRate@5/MRR@5/nDCG@5 for lexical vs dense vs hybrid (SKIPPED when no embedder), label accuracy@1/coverage/abstention, topic cluster purity, masking precision/recall; writes JSON plus a short markdown summary to a path argument. Tenant isolation: no cross-bank candidates.",
-        "NEW tests with a small --count and fake embedder: determinism, reset only removes generated rows, two-bank isolation, manifest consistency, compare_features output keys. Do not edit existing tests."
+        "NEW tests with a small --count and fake embedder: determinism, reset only removes generated rows, two-bank isolation, manifest consistency, compare_features output keys. Do not edit existing tests.",
+        "Masking follow-up from P7-T8 review: TRANSACTION_REFERENCE protection must only shield the single reference token right after the keyword (e.g. Txn ID 123456789012), not later phone/card/account numbers in the same text; use a collision-free sentinel instead of __TRANSACTION_REFERENCE_n__ plain replace; remove the duplicated Bangla NID keyword. NEW tests for these."
       ]
     },
     {
