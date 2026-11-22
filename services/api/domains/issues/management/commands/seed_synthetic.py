@@ -18,6 +18,7 @@ from domains.issues import services, workflow
 from domains.issues.models import Issue, IssueEvent
 from domains.products.models import Module, Product
 from domains.search.models import EmbeddingJob, IssueLabelSelection, Label
+from domains.search.progress import ProgressReporter
 from domains.tenants.models import Organization
 
 VARIANTS = ("English", "Bangla", "Banglish", "Code-switched", "Typo")
@@ -84,6 +85,9 @@ class Command(BaseCommand):
         parser.add_argument("--reset", action="store_true")
         parser.add_argument("--allow", action="store_true")
         parser.add_argument("--skip-embeddings", action="store_true")
+        parser.add_argument("--embed-locally", action="store_true")
+        parser.add_argument("--progress-every", type=int, default=25)
+        parser.add_argument("--log-file")
 
     def handle(self, *args, **options):
         configured_hosts = set(settings.ALLOWED_HOSTS)
@@ -93,6 +97,8 @@ class Command(BaseCommand):
         if not settings.DEBUG and not options["allow"]:
             raise CommandError("seed_synthetic requires DEBUG or the explicit --allow flag.")
         count = options["count"]
+        if options["progress_every"] < 1:
+            raise CommandError("--progress-every must be positive")
         if count < 2 or count > 500:
             raise CommandError("--count must be between 2 and 500.")
         manifest_path = Path(options["manifest"])
@@ -115,23 +121,35 @@ class Command(BaseCommand):
                 json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
             )
             if not options["skip_embeddings"]:
-                self._backfill_embeddings()
+                self._backfill_embeddings(
+                    options["embed_locally"], options["progress_every"], options["log_file"]
+                )
             self.stdout.write(f"Synthetic dataset already contains {len(existing)} requests.")
             return
 
         with transaction.atomic():
-            rows = self._generate(count, options["seed"])
+            rows = self._generate(
+                count, options["seed"], options["progress_every"], options["log_file"]
+            )
             manifest = self._manifest(rows, options["seed"])
         manifest_path.parent.mkdir(parents=True, exist_ok=True)
         manifest_path.write_text(
             json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
         )
         if not options["skip_embeddings"]:
-            self._backfill_embeddings()
+            self._backfill_embeddings(
+                options["embed_locally"], options["progress_every"], options["log_file"]
+            )
         self.stdout.write(f"Generated {len(rows)} synthetic requests; manifest: {manifest_path}")
 
-    def _backfill_embeddings(self):
-        call_command("backfill_embeddings", verbosity=0)
+    def _backfill_embeddings(self, embed_locally=False, progress_every=25, log_file=None):
+        call_command(
+            "backfill_embeddings",
+            embed_locally=embed_locally,
+            progress_every=progress_every,
+            log_file=log_file,
+            verbosity=0,
+        )
         pending = EmbeddingJob.objects.filter(issue__is_synthetic=True, status="pending").count()
         if pending:
             self.stdout.write(
@@ -166,7 +184,7 @@ class Command(BaseCommand):
             raise CommandError("Run seed_demo first; a synthetic DataSoft operator is required.")
         return banks, officers, staff
 
-    def _generate(self, count, seed):
+    def _generate(self, count, seed, progress_every=25, log_file=None):
         banks, officers, staff = self._actors()
         product, _ = Product.objects.get_or_create(name="Synthetic Feature Lab")
         module, _ = Module.objects.get_or_create(product=product, name="Synthetic Request Module")
@@ -179,6 +197,8 @@ class Command(BaseCommand):
         }
         generated = []
         epoch = timezone.now()
+        progress = ProgressReporter("generating requests", count, progress_every, log_file)
+        progress.start()
         for index in range(count):
             code = "NWD" if index % 2 == 0 else "RSD"
             officer = officers[code]
@@ -241,6 +261,8 @@ class Command(BaseCommand):
             if index % 17 == 0:
                 create_comment(issue=issue, author=officer, body="Synthetic comment; OTP 315624.")
             generated.append(issue)
+            progress.item(index + 1)
+        progress.finish()
         return generated
 
     @staticmethod

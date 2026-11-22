@@ -21,6 +21,7 @@ from domains.search.evaluation import (
     topic_cluster_purity,
 )
 from domains.search.models import IssueLabelSelection, Label
+from domains.search.progress import ProgressReporter
 from domains.search.services import cluster_recent_unidentified, label_suggestions
 
 TOKEN = re.compile(r"[\w\u0980-\u09ff]+", re.UNICODE)
@@ -55,6 +56,8 @@ class Command(BaseCommand):
         parser.add_argument("--manifest", default="seed/p7t9_synthetic_manifest.json")
         parser.add_argument("--output", default="seed/p7t9_feature_comparison.json")
         parser.add_argument("--embedder-path", default=os.getenv("ML_MODELS_DIR"))
+        parser.add_argument("--progress-every", type=int, default=25)
+        parser.add_argument("--log-file")
 
     def handle(self, *args, **options):
         root = Path.cwd()
@@ -79,7 +82,11 @@ class Command(BaseCommand):
             raise CommandError("No tagged manifest requests exist in the live database.")
         embedder_path = options["embedder_path"] or (root / "models")
         embedder = self._load_embedder(embedder_path)
-        result = self._compare(records, issues, embedder)
+        if options["progress_every"] < 1:
+            raise CommandError("--progress-every must be positive")
+        result = self._compare(
+            records, issues, embedder, options["progress_every"], options["log_file"]
+        )
         output = Path(options["output"])
         if not output.is_absolute():
             output = root / output
@@ -94,7 +101,7 @@ class Command(BaseCommand):
         return _load_embedder(path)
 
     @classmethod
-    def _compare(cls, records, issues, embedder):
+    def _compare(cls, records, issues, embedder, progress_every=25, log_file=None):
         candidates_by_tenant = defaultdict(list)
         for issue in issues.values():
             candidates_by_tenant[issue.organization_id].append(issue)
@@ -104,7 +111,13 @@ class Command(BaseCommand):
         tenants = {}
         cross_bank_candidates = 0
         labels = list(Label.objects.filter(is_active=True).order_by("pk"))
-        for record in records:
+        progress = ProgressReporter(
+            "ranking lexical and dense", len(records), progress_every, log_file
+        )
+        labels_progress = ProgressReporter("labels", len(records), progress_every, log_file)
+        progress.start()
+        labels_progress.start()
+        for done, record in enumerate(records, start=1):
             query = issues[record["issue_id"]]
             candidates = [
                 row
@@ -186,6 +199,10 @@ class Command(BaseCommand):
                     }
                 )
             tenants[record["tenant"]] = query.organization
+            progress.item(done)
+            labels_progress.item(done)
+        progress.finish()
+        labels_progress.finish()
         ranking_result = {}
         for mode in ("lexical", "dense", "hybrid"):
             by_variant = {}
@@ -216,7 +233,9 @@ class Command(BaseCommand):
         }
         topic_clusters = []
         topic_by_tenant = {}
-        for tenant, organization in tenants.items():
+        progress = ProgressReporter("topics", len(tenants), progress_every, log_file)
+        progress.start()
+        for done, (tenant, organization) in enumerate(tenants.items(), start=1):
             proposals = cluster_recent_unidentified(
                 Issue.objects.filter(organization=organization, is_synthetic=True)
             )
@@ -228,8 +247,12 @@ class Command(BaseCommand):
                 "cluster_count": len(clusters),
                 "purity": topic_cluster_purity(clusters, topic_ids),
             }
+            progress.item(done)
+        progress.finish()
         mask_totals = {"true_positive": 0, "false_positive": 0, "false_negative": 0}
-        for record in records:
+        progress = ProgressReporter("masking", len(records), progress_every, log_file)
+        progress.start()
+        for done, record in enumerate(records, start=1):
             issue = issues[record["issue_id"]]
             expected = set(record.get("mask_categories", []))
             detected = {
@@ -238,6 +261,8 @@ class Command(BaseCommand):
             mask_totals["true_positive"] += len(expected & detected)
             mask_totals["false_positive"] += len(detected - expected)
             mask_totals["false_negative"] += len(expected - detected)
+            progress.item(done)
+        progress.finish()
         tp, fp, fn = (
             mask_totals[key] for key in ("true_positive", "false_positive", "false_negative")
         )

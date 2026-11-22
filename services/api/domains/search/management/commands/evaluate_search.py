@@ -21,6 +21,7 @@ from domains.search.evaluation import (
     validate_fixture,
 )
 from domains.search.models import Label
+from domains.search.progress import ProgressReporter
 from domains.search.services import _ml_embeddings, label_suggestions
 
 
@@ -37,9 +38,13 @@ class Command(BaseCommand):
         )
         parser.add_argument("--normalization", action="store_true")
         parser.add_argument("--fusion", choices=("rrf", "lexical", "dense"), default="rrf")
+        parser.add_argument("--progress-every", type=int, default=25)
+        parser.add_argument("--log-file")
 
     def handle(self, *args, **options):
         root = Path.cwd()
+        if options["progress_every"] < 1:
+            raise ValueError("--progress-every must be positive")
         models_dir = Path(options["models_dir"]) if options["models_dir"] else root / "models"
         fixture = json.loads((root / "seed/search_evaluation.json").read_text(encoding="utf-8"))
         fixture_summary = validate_fixture(fixture)
@@ -99,7 +104,14 @@ class Command(BaseCommand):
         metric_rows = {item["name"]: [] for item in configurations}
         language_rows = {}
         latency_seconds = {item["name"]: [] for item in configurations if item["mode"] != "lexical"}
-        for sample in fixture["queries"]:
+        progress = ProgressReporter(
+            "ranking lexical and dense",
+            len(fixture["queries"]),
+            options["progress_every"],
+            options["log_file"],
+        )
+        progress.start()
+        for done, sample in enumerate(fixture["queries"], start=1):
             candidates = sample["candidates"]
             grades = [item["grade"] for item in candidates]
             ranks_by_name = self._rank_configurations(
@@ -110,6 +122,8 @@ class Command(BaseCommand):
                 language_rows.setdefault(sample["language"], {}).setdefault(name, []).append(row)
             for name, row in metrics.items():
                 metric_rows[name].append(row)
+            progress.item(done)
+        progress.finish()
         aggregate = {
             name: {
                 key: round(sum(row[key] for row in values) / len(values), 4) for key in values[0]
@@ -133,7 +147,11 @@ class Command(BaseCommand):
         }
         label_rows = []
         labels = list(Label.objects.filter(is_active=True).order_by("pk"))
-        for sample in fixture["queries"]:
+        progress = ProgressReporter(
+            "labels", len(fixture["queries"]), options["progress_every"], options["log_file"]
+        )
+        progress.start()
+        for done, sample in enumerate(fixture["queries"], start=1):
             suggestions = label_suggestions(
                 title=sample.get("title", sample["text"]),
                 description=sample["text"],
@@ -149,10 +167,16 @@ class Command(BaseCommand):
                     "threshold": 0.0,
                 }
             )
+            progress.item(done)
+        progress.finish()
         label_report = label_metrics(label_rows)
         topic_report = {"status": "SKIPPED", "reason": "no local embedder available"}
         if configured_model is not None:
             topic_samples = fixture["queries"]
+            progress = ProgressReporter(
+                "topics", len(topic_samples), options["progress_every"], options["log_file"]
+            )
+            progress.start()
             topic_texts = [f"passage: {sample['text']}" for sample in topic_samples]
             topic_vectors = (
                 configured_model["embedder"].encode(topic_texts, normalize_embeddings=True).tolist()
@@ -171,6 +195,9 @@ class Command(BaseCommand):
                     {str(index): sample["topic_id"] for index, sample in enumerate(topic_samples)},
                 ),
             }
+            for done in range(1, len(topic_samples) + 1):
+                progress.item(done)
+            progress.finish()
         manifest = {
             "models_dir": str(models_dir),
             "model_id": options["embedder_id"],

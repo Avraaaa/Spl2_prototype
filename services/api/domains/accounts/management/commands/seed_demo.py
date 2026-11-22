@@ -15,6 +15,7 @@ from domains.issues import workflow
 from domains.issues.models import Issue, IssueStatus
 from domains.issues.services import create_draft, submit
 from domains.products.models import Module, Product
+from domains.search.progress import ProgressReporter
 from domains.tenants.models import Organization, OrganizationKind
 
 DEMO_PASSWORD = "Demo-Pass-2026!"  # synthetic, local-only; printed for the demo operator
@@ -34,17 +35,28 @@ USERS: list[tuple[str, str, str, list[Role]]] = [
 class Command(BaseCommand):
     help = "Create synthetic demo banks and users (idempotent, DEBUG only)."
 
+    def add_arguments(self, parser):
+        parser.add_argument("--progress-every", type=int, default=25)
+        parser.add_argument("--log-file")
+
     @transaction.atomic
     def handle(self, *args: Any, **options: Any) -> None:
         if not settings.DEBUG:
             raise CommandError("seed_demo only runs with DJANGO_DEBUG=1 (synthetic local data).")
+        if options["progress_every"] < 1:
+            raise CommandError("--progress-every must be positive")
         services.ensure_datasoft_organization()
         for name, code in BANKS:
             Organization.objects.get_or_create(
                 code=code, defaults={"name": name, "kind": OrganizationKind.BANK}
             )
-        for username, code, full_name, roles in USERS:
+        progress = ProgressReporter(
+            "creating demo users", len(USERS), options["progress_every"], options["log_file"]
+        )
+        progress.start()
+        for done, (username, code, full_name, roles) in enumerate(USERS, start=1):
             if User.objects.filter(username=username).exists():
+                progress.item(done)
                 continue
             user = services.create_user_unchecked(
                 organization=Organization.objects.get(code=code),
@@ -57,6 +69,8 @@ class Command(BaseCommand):
             user.save(update_fields=["password"])
             user.account.must_change_password = False
             user.account.save(update_fields=["must_change_password"])
+            progress.item(done)
+        progress.finish()
         product, _ = Product.objects.get_or_create(name="Synthetic Service Core")
         Module.objects.get_or_create(product=product, name="Test Ledger")
         for code in ("NWD", "RSD"):

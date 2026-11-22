@@ -126,3 +126,9 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] The contact_email_placeholder flag is stored but only set explicitly. It is not recomputed if contact_email is later blanked through other paths.
 - [ ] [follow-up] `_send_temporary_credential` deletes pending and failed outbox rows with filters on the user's own keys. This is safe, but the idempotent get_or_create means a re-created key could silently skip.
 - [ ] [follow-up] The test for the configured-email path is now inside override_settings, but it does not assert that no console fallback occurs after the worker runs.
+
+## P7-T11 — 2026-11-22
+- [ ] [follow-up] Review was a light pass: gates (validate-repo, makemigrations check, check-contract, lint, test) all exit 0, and I only skimmed the progress.py diff and the changed management commands. I did not read each command's changes line by line.
+- [ ] [follow-up] The runner self-test (test_agent_runner_self_test_checks_crlf_warning_filter) is no longer in services/api/tests/test_p7_t11_progress.py, and nothing in the file references agent-runner or crlf. The remaining tests are the progress, backfill warning and seed-local backfill tests.
+- [ ] [follow-up] ProgressReporter.warning duplicates the body of _log, apart from the logger level. It could share one helper. This is style only.
+- [ ] [follow-up] ProgressReporter opens its log file in __init__ and closes it only in finish(). If a command fails mid-run the file handle stays open until the process exits. This is minor.
