@@ -110,3 +110,11 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] addTopicLabelRetrySafe finds an existing label by name only. If the admin has an unrelated label with the same name, the topic is accepted without creating a new label. This is a minor edge case.
 - [ ] [follow-up] The partial-state flag for topic labels is kept in sessionStorage under a single key. It tracks one topic at a time and is not tenant-scoped, which is harmless here because only DataSoft Admin sees this page.
 - [ ] [follow-up] The audit summary parsing relies on guessed backend field names such as first_invalid_record_id and first_invalid_record_time. If the backend omits them, the UI shows 'ID not provided'. This degrades gracefully.
+
+## P7-T9 — 2026-11-22
+- [ ] No blocking defects found. All five gates exit 0. Both orchestrator-noted fixes are in place: seed_synthetic.py uses distinct values (account 123456789012 is masked, Txn ID 778899001122 is the lookalike), and compare_features always sets status OK on ran configurations and SKIPPED with a reason otherwise. Tenant scoping holds: candidates are grouped per organization and cross_bank_candidates is reported. The review was static, so the Python tests were not run by me.
+- [ ] [follow-up] compare_features.py:189-213: the ranking block is convoluted. Dense and hybrid are built and then overwritten when embedder is None, and the SKIPPED branch at 203-206 is dead code.
+- [ ] [follow-up] compare_features.py:81 calls self._load_embedder(...), which wraps the module-level function. This is redundant indirection only.
+- [ ] [follow-up] The masking comparison in compare_features detects categories by marker substring in the stored description. It measures the seeded text, not a live mask_sensitive pass, so it can miss regressions that differ from what was stored.
+- [ ] [follow-up] The sentinel in mask_sensitive now uses the invisible U+2063 character plus a nonce. If an input contains stray U+2063 characters the behavior is untested.
+- [ ] [follow-up] Test coverage still relies on the seed-time lookalike (Txn ID 123456789012 in the masking tests), and there is no test for the cross-tenant ranking boundary in compare_features beyond the reported counter.

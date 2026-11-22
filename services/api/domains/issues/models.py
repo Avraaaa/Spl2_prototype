@@ -38,6 +38,8 @@ class Issue(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="issues")
     # The primary key comes from PostgreSQL's sequence; reference is assigned once after insert.
     reference = models.CharField(max_length=32, unique=True, null=True, blank=True)
+    is_synthetic = models.BooleanField(default=False, db_index=True)
+    synthetic_key = models.CharField(max_length=64, blank=True, db_index=True)
     title = models.CharField(max_length=200, blank=True)
     description = models.TextField(blank=True)
     acceptance_criteria = models.TextField(blank=True)

@@ -1,6 +1,7 @@
 """Bank-owned draft writes and the officer's atomic submission action."""
 
 import re
+import uuid
 from functools import partial
 
 from django.contrib.auth.models import User
@@ -55,9 +56,9 @@ EMAIL_ADDRESS = re.compile(
 )
 NID_KEYWORDS = re.compile(
     r"(?i)(?:\bnid\b|\bnational\s+id\b|"
-    r"জাতীয়\s*পরিচয়পত্র|"
-    r"জাতীয়\s*পরিচয়পত্র|"
-    r"এনআইডি)"
+    r"\u099c\u09be\u09a4\u09c0(?:\u09af\u09bc|\u09df)\s*"
+    r"\u09aa\u09b0\u09bf\u099a(?:\u09af\u09bc|\u09df)\u09aa\u09a4\u09cd\u09b0|"
+    r"\u098f\u09a8\u0986\u0987\u09a1\u09bf)"
 )
 NID_DIGITS = re.compile(
     r"(?<![\w\u0980-\u09ff])(?:[0-9\u09e6-\u09ef][ -]?){9,16}"
@@ -137,9 +138,12 @@ def mask_sensitive(value: str) -> str:
     value = EMAIL_ADDRESS.sub("[EMAIL]", value)
     value = _mask_nid_in_context(value)
     protected_references: dict[str, str] = {}
+    sentinel_nonce = uuid.uuid4().hex
+    while sentinel_nonce in value:
+        sentinel_nonce = uuid.uuid4().hex
 
     def protect_reference(match: re.Match[str]) -> str:
-        marker = f"__TRANSACTION_REFERENCE_{len(protected_references)}__"
+        marker = f"\u2063{sentinel_nonce}:{len(protected_references)}\u2063"
         protected_references[marker] = match.group()
         return marker
 
