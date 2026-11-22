@@ -734,7 +734,9 @@
         "E-13",
         "E-14",
         "E-18",
-        "N-18"
+        "N-18",
+        "N-11",
+        "EX-10"
       ],
       "depends_on": [
         "P7-T3b"
@@ -758,7 +760,9 @@
         "Issue detail: a Show original button for users holding the unmasked-original permission calling /api/issues/{id}/original/ (audited server-side); hidden otherwise.",
         "N-18: Issue gets an optional acceptance_criteria text field (masked like description, editable in draft, shown to the Verifier next to the delivery note when verifying). Backward compatible: optional, existing tests untouched.",
         "E-05: confirmed labels (IssueLabelSelection) are exposed read-only on the issue serializer and shown on issue detail and list; DataSoft can filter the issue list by label.",
-        "Frontend unit tests (vitest) for new pure helpers; NEW backend test files for acceptance_criteria masking, labels on serializer with two-bank isolation. Do not edit existing tests. Readable components, no 1000-char JSX lines."
+        "Frontend unit tests (vitest) for new pure helpers; NEW backend test files for acceptance_criteria masking, labels on serializer with two-bank isolation. Do not edit existing tests. Readable components, no 1000-char JSX lines.",
+        "N-11: the request form lets the Officer mark the request as Recurring of an earlier same-organization request (existing recurring_of field; picker limited to the user's own organization, ideally closed requests), and issue detail shows the recurring link.",
+        "EX-10 visual bug: the required-field asterisk in draft form labels wraps onto its own line, so paired columns (Title/Description, Product/Module) misalign. Keep the asterisk inline with the label text."
       ]
     }
   ]
