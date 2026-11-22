@@ -803,6 +803,51 @@
         "evaluate_search also reports label suggestion accuracy@1, coverage and abstention rate (with the per-tenant thresholds) on a synthetic labelled fixture, and runs vector topic clustering on a synthetic fixture of at least 20 embedded unlabelled requests, reporting cluster purity against fixture topic ids.",
         "Write results into the experiment manifest. NEW tests only (fake embedder) asserting: SKIPPED instead of silent fallback, label metrics present, fixture size/variant counts."
       ]
+    },
+    {
+      "id": "P7-T9",
+      "phase": 7,
+      "title": "Large synthetic demo dataset and live feature comparison",
+      "req": [
+        "E-01",
+        "E-02",
+        "E-03",
+        "E-04",
+        "E-05",
+        "E-08",
+        "E-09",
+        "E-11",
+        "N-23",
+        "N-24",
+        "N-25"
+      ],
+      "depends_on": [
+        "P7-T8"
+      ],
+      "allow": [
+        "services/api/",
+        "services/ml/",
+        "apps/web/src/",
+        "contracts/",
+        "seed/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "New management command seed_synthetic (refuses to run unless DEBUG or an explicit --allow flag; never in production) that deterministically (--seed, default fixed) generates 300-500 clearly synthetic requests across the two demo banks plus a --reset option that removes only its own generated rows (tagged).",
+        "Data covers every status (draft to closed/reopened) with realistic created/submitted/delivery dates incl. overdue cases, products/modules, assignees, comments, delivery notes, verification failures.",
+        "Duplicate groups: clusters describing the same incident in English, Bangla, Banglish, code-switched and typo variants, plus hard negatives (same module or error code, different problem). Ground truth (group ids) stored in a generated JSON manifest, not in user-visible fields.",
+        "Labels: a portion has confirmed labels (Authentication, Transaction, Performance, Database, User Interface); a batch of unlabelled requests forms an emerging topic not covered by existing labels.",
+        "Text includes synthetic OTPs, card, account, NID numbers and emails plus must-not-mask lookalikes (error codes, versions, labelled transaction ids); expected masks recorded in the manifest. Creation goes through the normal services so masking, audit and history apply.",
+        "After seeding it runs the existing embedding backfill (local model when present, else reports skipped).",
+        "New command compare_features reads the manifest and live DB and reports per tenant and language variant: duplicate HitRate@5/MRR@5/nDCG@5 for lexical vs dense vs hybrid (SKIPPED when no embedder), label accuracy@1/coverage/abstention, topic cluster purity, masking precision/recall; writes JSON plus a short markdown summary to a path argument. Tenant isolation: no cross-bank candidates.",
+        "NEW tests with a small --count and fake embedder: determinism, reset only removes generated rows, two-bank isolation, manifest consistency, compare_features output keys. Do not edit existing tests."
+      ]
     }
   ]
 }
