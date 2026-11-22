@@ -1,13 +1,2408 @@
 {
-  "revision": "synthetic-p7t6-v1",
+  "revision": "synthetic-p7t8-v1",
   "split": "incident-first-held-out-synthetic",
   "split_by": "incident",
   "augmentation_applied_after_split": true,
   "queries": [
-    {"incident": "transfer-timeout", "language": "English", "text": "transfer times out after confirmation", "candidates": [{"incident": "transfer-timeout", "text": "payment transfer timeout after confirmation", "grade": 2}, {"incident": "receipt-missing", "text": "transfer screen does not show receipt", "grade": 1}, {"incident": "fee-display", "text": "same E105 transfer module shows wrong fee", "grade": 0}]},
-    {"incident": "bangla-transfer-delay", "language": "Bangla", "text": "লেনদেন নিশ্চিত করার পর আটকে যায়", "candidates": [{"incident": "bangla-transfer-delay", "text": "নিশ্চিত করার পর লেনদেন আটকে থাকে", "grade": 2}, {"incident": "bangla-receipt", "text": "লেনদেনের রসিদ দেখা যায় না", "grade": 1}, {"incident": "bangla-fee", "text": "লেনদেন মডিউলে ভুল ফি দেখায়", "grade": 0}]},
-    {"incident": "transfer-timeout", "language": "Banglish", "text": "transfer confirm korle timeout ashche", "candidates": [{"incident": "transfer-timeout", "text": "transfer confirm korar por timeout ashe", "grade": 2}, {"incident": "receipt-missing", "text": "transfer receipt show kore na", "grade": 1}, {"incident": "fee-display", "text": "same E105 transfer module e fee vul", "grade": 0}]},
-    {"incident": "transfer-timeout", "language": "Code-switched", "text": "transfer confirm korle timeout হচ্ছে", "candidates": [{"incident": "transfer-timeout", "text": "transfer confirm korar por timeout হচ্ছে", "grade": 2}, {"incident": "receipt-missing", "text": "transfer receipt দেখা যায় না", "grade": 1}, {"incident": "fee-display", "text": "same E105 transfer module e fee ভুল", "grade": 0}]},
-    {"incident": "transfer-timeout", "language": "Typo", "text": "transfar confirm korle timeuot ashche", "candidates": [{"incident": "transfer-timeout", "text": "transfer confirm korar por timeout ashtese", "grade": 2}, {"incident": "receipt-missing", "text": "transfer receipt show kore na", "grade": 1}, {"incident": "fee-display", "text": "same E105 transfer module e fee vul", "grade": 0}]}
+    {
+      "incident": "transfer-timeout",
+      "language": "English",
+      "text": "transfer times out after confirmation",
+      "candidates": [
+        {
+          "incident": "transfer-timeout",
+          "text": "transfer times out after confirmation; related occurrence 1",
+          "grade": 2
+        },
+        {
+          "incident": "transfer-timeout",
+          "text": "Similar symptom: transfer times out after confirmation",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-0",
+          "text": "Same module, different failure print stalls code X310",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-0",
+          "text": "beneficiary save fails validation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-0-b",
+          "text": "account search ignores branch",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-0-c",
+          "text": "session expires during approval",
+          "grade": 0
+        }
+      ],
+      "topic_id": "transfer-timeout",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "receipt-missing",
+      "language": "English",
+      "text": "payment receipt disappears after transfer",
+      "candidates": [
+        {
+          "incident": "receipt-missing",
+          "text": "payment receipt disappears after transfer; related occurrence 2",
+          "grade": 2
+        },
+        {
+          "incident": "receipt-missing",
+          "text": "Similar symptom: payment receipt disappears after transfer",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-1",
+          "text": "Same module, different failure approval is rejected code X311",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-1",
+          "text": "dashboard chart never loads",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-1-b",
+          "text": "fee total is wrong on transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-1-c",
+          "text": "database report is slow",
+          "grade": 0
+        }
+      ],
+      "topic_id": "receipt-missing",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "authentication-reset",
+      "language": "English",
+      "text": "login fails after password reset",
+      "candidates": [
+        {
+          "incident": "authentication-reset",
+          "text": "login fails after password reset; related occurrence 3",
+          "grade": 2
+        },
+        {
+          "incident": "authentication-reset",
+          "text": "Similar symptom: login fails after password reset",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-2",
+          "text": "Same module, different failure incorrect alert appears code X312",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-2",
+          "text": "scheduled payment runs twice",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-2-b",
+          "text": "session expires during approval",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-2-c",
+          "text": "transfer times out after confirmation",
+          "grade": 0
+        }
+      ],
+      "topic_id": "authentication-reset",
+      "expected_label": "Authentication",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "balance-refresh",
+      "language": "English",
+      "text": "balance is stale after deposit",
+      "candidates": [
+        {
+          "incident": "balance-refresh",
+          "text": "balance is stale after deposit; related occurrence 4",
+          "grade": 2
+        },
+        {
+          "incident": "balance-refresh",
+          "text": "Similar symptom: balance is stale after deposit",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-3",
+          "text": "Same module, different failure filter has no effect code X313",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-3",
+          "text": "account search ignores branch",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-3-b",
+          "text": "database report is slow",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-3-c",
+          "text": "payment receipt disappears after transfer",
+          "grade": 0
+        }
+      ],
+      "topic_id": "balance-refresh",
+      "expected_label": "Database",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "statement-export",
+      "language": "English",
+      "text": "statement export returns blank file",
+      "candidates": [
+        {
+          "incident": "statement-export",
+          "text": "statement export returns blank file; related occurrence 5",
+          "grade": 2
+        },
+        {
+          "incident": "statement-export",
+          "text": "Similar symptom: statement export returns blank file",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-4",
+          "text": "Same module, different failure print stalls code X314",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-4",
+          "text": "fee total is wrong on transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-4-b",
+          "text": "transfer times out after confirmation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-4-c",
+          "text": "login fails after password reset",
+          "grade": 0
+        }
+      ],
+      "topic_id": "statement-export",
+      "expected_label": "Database",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "beneficiary-validation",
+      "language": "English",
+      "text": "beneficiary save fails validation",
+      "candidates": [
+        {
+          "incident": "beneficiary-validation",
+          "text": "beneficiary save fails validation; related occurrence 6",
+          "grade": 2
+        },
+        {
+          "incident": "beneficiary-validation",
+          "text": "Similar symptom: beneficiary save fails validation",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-5",
+          "text": "Same module, different failure approval is rejected code X315",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-5",
+          "text": "session expires during approval",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-5-b",
+          "text": "payment receipt disappears after transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-5-c",
+          "text": "balance is stale after deposit",
+          "grade": 0
+        }
+      ],
+      "topic_id": "beneficiary-validation",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "dashboard-render",
+      "language": "English",
+      "text": "dashboard chart never loads",
+      "candidates": [
+        {
+          "incident": "dashboard-render",
+          "text": "dashboard chart never loads; related occurrence 7",
+          "grade": 2
+        },
+        {
+          "incident": "dashboard-render",
+          "text": "Similar symptom: dashboard chart never loads",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-6",
+          "text": "Same module, different failure incorrect alert appears code X316",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-6",
+          "text": "database report is slow",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-6-b",
+          "text": "login fails after password reset",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-6-c",
+          "text": "statement export returns blank file",
+          "grade": 0
+        }
+      ],
+      "topic_id": "dashboard-render",
+      "expected_label": "User Interface",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "scheduled-duplicate",
+      "language": "English",
+      "text": "scheduled payment runs twice",
+      "candidates": [
+        {
+          "incident": "scheduled-duplicate",
+          "text": "scheduled payment runs twice; related occurrence 8",
+          "grade": 2
+        },
+        {
+          "incident": "scheduled-duplicate",
+          "text": "Similar symptom: scheduled payment runs twice",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-7",
+          "text": "Same module, different failure filter has no effect code X317",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-7",
+          "text": "transfer times out after confirmation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-7-b",
+          "text": "balance is stale after deposit",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-7-c",
+          "text": "beneficiary save fails validation",
+          "grade": 0
+        }
+      ],
+      "topic_id": "scheduled-duplicate",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "account-search",
+      "language": "English",
+      "text": "account search ignores branch",
+      "candidates": [
+        {
+          "incident": "account-search",
+          "text": "account search ignores branch; related occurrence 9",
+          "grade": 2
+        },
+        {
+          "incident": "account-search",
+          "text": "Similar symptom: account search ignores branch",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-8",
+          "text": "Same module, different failure print stalls code X318",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-8",
+          "text": "payment receipt disappears after transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-8-b",
+          "text": "statement export returns blank file",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-8-c",
+          "text": "dashboard chart never loads",
+          "grade": 0
+        }
+      ],
+      "topic_id": "account-search",
+      "expected_label": "User Interface",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "fee-display",
+      "language": "English",
+      "text": "fee total is wrong on transfer",
+      "candidates": [
+        {
+          "incident": "fee-display",
+          "text": "fee total is wrong on transfer; related occurrence 10",
+          "grade": 2
+        },
+        {
+          "incident": "fee-display",
+          "text": "Similar symptom: fee total is wrong on transfer",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-9",
+          "text": "Same module, different failure approval is rejected code X319",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-9",
+          "text": "login fails after password reset",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-9-b",
+          "text": "beneficiary save fails validation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-9-c",
+          "text": "scheduled payment runs twice",
+          "grade": 0
+        }
+      ],
+      "topic_id": "fee-display",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "approval-session",
+      "language": "English",
+      "text": "session expires during approval",
+      "candidates": [
+        {
+          "incident": "approval-session",
+          "text": "session expires during approval; related occurrence 11",
+          "grade": 2
+        },
+        {
+          "incident": "approval-session",
+          "text": "Similar symptom: session expires during approval",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-10",
+          "text": "Same module, different failure incorrect alert appears code X320",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-10",
+          "text": "balance is stale after deposit",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-10-b",
+          "text": "dashboard chart never loads",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-10-c",
+          "text": "account search ignores branch",
+          "grade": 0
+        }
+      ],
+      "topic_id": "approval-session",
+      "expected_label": "Authentication",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "report-latency",
+      "language": "English",
+      "text": "database report is slow",
+      "candidates": [
+        {
+          "incident": "report-latency",
+          "text": "database report is slow; related occurrence 12",
+          "grade": 2
+        },
+        {
+          "incident": "report-latency",
+          "text": "Similar symptom: database report is slow",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-11",
+          "text": "Same module, different failure filter has no effect code X321",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-11",
+          "text": "statement export returns blank file",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-11-b",
+          "text": "scheduled payment runs twice",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-11-c",
+          "text": "fee total is wrong on transfer",
+          "grade": 0
+        }
+      ],
+      "topic_id": "report-latency",
+      "expected_label": "Performance",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "transfer-timeout",
+      "language": "Bangla",
+      "text": "নিশ্চিত করার পর লেনদেন আটকে যায়",
+      "candidates": [
+        {
+          "incident": "transfer-timeout",
+          "text": "নিশ্চিত করার পর লেনদেন আটকে যায়; related occurrence 1",
+          "grade": 2
+        },
+        {
+          "incident": "transfer-timeout",
+          "text": "Similar symptom: নিশ্চিত করার পর লেনদেন আটকে যায়",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-0",
+          "text": "Same module, different failure print stalls code X310",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-0",
+          "text": "beneficiary save fails validation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-0-b",
+          "text": "account search ignores branch",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-0-c",
+          "text": "session expires during approval",
+          "grade": 0
+        }
+      ],
+      "topic_id": "transfer-timeout",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "receipt-missing",
+      "language": "Bangla",
+      "text": "লেনদেনের রসিদ দেখা যায় না",
+      "candidates": [
+        {
+          "incident": "receipt-missing",
+          "text": "লেনদেনের রসিদ দেখা যায় না; related occurrence 2",
+          "grade": 2
+        },
+        {
+          "incident": "receipt-missing",
+          "text": "Similar symptom: লেনদেনের রসিদ দেখা যায় না",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-1",
+          "text": "Same module, different failure approval is rejected code X311",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-1",
+          "text": "dashboard chart never loads",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-1-b",
+          "text": "fee total is wrong on transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-1-c",
+          "text": "database report is slow",
+          "grade": 0
+        }
+      ],
+      "topic_id": "receipt-missing",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "authentication-reset",
+      "language": "Bangla",
+      "text": "পাসওয়ার্ড বদলানোর পর লগইন ব্যর্থ",
+      "candidates": [
+        {
+          "incident": "authentication-reset",
+          "text": "পাসওয়ার্ড বদলানোর পর লগইন ব্যর্থ; related occurrence 3",
+          "grade": 2
+        },
+        {
+          "incident": "authentication-reset",
+          "text": "Similar symptom: পাসওয়ার্ড বদলানোর পর লগইন ব্যর্থ",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-2",
+          "text": "Same module, different failure incorrect alert appears code X312",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-2",
+          "text": "scheduled payment runs twice",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-2-b",
+          "text": "session expires during approval",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-2-c",
+          "text": "transfer times out after confirmation",
+          "grade": 0
+        }
+      ],
+      "topic_id": "authentication-reset",
+      "expected_label": "Authentication",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "balance-refresh",
+      "language": "Bangla",
+      "text": "হালনাগাদ হলেও ব্যালেন্স বদলায় না",
+      "candidates": [
+        {
+          "incident": "balance-refresh",
+          "text": "হালনাগাদ হলেও ব্যালেন্স বদলায় না; related occurrence 4",
+          "grade": 2
+        },
+        {
+          "incident": "balance-refresh",
+          "text": "Similar symptom: হালনাগাদ হলেও ব্যালেন্স বদলায় না",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-3",
+          "text": "Same module, different failure filter has no effect code X313",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-3",
+          "text": "account search ignores branch",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-3-b",
+          "text": "database report is slow",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-3-c",
+          "text": "payment receipt disappears after transfer",
+          "grade": 0
+        }
+      ],
+      "topic_id": "balance-refresh",
+      "expected_label": "Database",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "statement-export",
+      "language": "Bangla",
+      "text": "বিবরণী রপ্তানি করলে ফাইল ফাঁকা থাকে",
+      "candidates": [
+        {
+          "incident": "statement-export",
+          "text": "বিবরণী রপ্তানি করলে ফাইল ফাঁকা থাকে; related occurrence 5",
+          "grade": 2
+        },
+        {
+          "incident": "statement-export",
+          "text": "Similar symptom: বিবরণী রপ্তানি করলে ফাইল ফাঁকা থাকে",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-4",
+          "text": "Same module, different failure print stalls code X314",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-4",
+          "text": "fee total is wrong on transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-4-b",
+          "text": "transfer times out after confirmation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-4-c",
+          "text": "login fails after password reset",
+          "grade": 0
+        }
+      ],
+      "topic_id": "statement-export",
+      "expected_label": "Database",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "beneficiary-validation",
+      "language": "Bangla",
+      "text": "সুবিধাভোগীর তথ্য সংরক্ষণ হয় না",
+      "candidates": [
+        {
+          "incident": "beneficiary-validation",
+          "text": "সুবিধাভোগীর তথ্য সংরক্ষণ হয় না; related occurrence 6",
+          "grade": 2
+        },
+        {
+          "incident": "beneficiary-validation",
+          "text": "Similar symptom: সুবিধাভোগীর তথ্য সংরক্ষণ হয় না",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-5",
+          "text": "Same module, different failure approval is rejected code X315",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-5",
+          "text": "session expires during approval",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-5-b",
+          "text": "payment receipt disappears after transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-5-c",
+          "text": "balance is stale after deposit",
+          "grade": 0
+        }
+      ],
+      "topic_id": "beneficiary-validation",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "dashboard-render",
+      "language": "Bangla",
+      "text": "ড্যাশবোর্ড খুলতে অনেক সময় লাগে",
+      "candidates": [
+        {
+          "incident": "dashboard-render",
+          "text": "ড্যাশবোর্ড খুলতে অনেক সময় লাগে; related occurrence 7",
+          "grade": 2
+        },
+        {
+          "incident": "dashboard-render",
+          "text": "Similar symptom: ড্যাশবোর্ড খুলতে অনেক সময় লাগে",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-6",
+          "text": "Same module, different failure incorrect alert appears code X316",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-6",
+          "text": "database report is slow",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-6-b",
+          "text": "login fails after password reset",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-6-c",
+          "text": "statement export returns blank file",
+          "grade": 0
+        }
+      ],
+      "topic_id": "dashboard-render",
+      "expected_label": "User Interface",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "scheduled-duplicate",
+      "language": "Bangla",
+      "text": "অনুমোদনের সময় একই অনুরোধ দুবার আসে",
+      "candidates": [
+        {
+          "incident": "scheduled-duplicate",
+          "text": "অনুমোদনের সময় একই অনুরোধ দুবার আসে; related occurrence 8",
+          "grade": 2
+        },
+        {
+          "incident": "scheduled-duplicate",
+          "text": "Similar symptom: অনুমোদনের সময় একই অনুরোধ দুবার আসে",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-7",
+          "text": "Same module, different failure filter has no effect code X317",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-7",
+          "text": "transfer times out after confirmation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-7-b",
+          "text": "balance is stale after deposit",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-7-c",
+          "text": "beneficiary save fails validation",
+          "grade": 0
+        }
+      ],
+      "topic_id": "scheduled-duplicate",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "account-search",
+      "language": "Bangla",
+      "text": "শাখা নির্বাচন করে হিসাব খুঁজে পাওয়া যায় না",
+      "candidates": [
+        {
+          "incident": "account-search",
+          "text": "শাখা নির্বাচন করে হিসাব খুঁজে পাওয়া যায় না; related occurrence 9",
+          "grade": 2
+        },
+        {
+          "incident": "account-search",
+          "text": "Similar symptom: শাখা নির্বাচন করে হিসাব খুঁজে পাওয়া যায় না",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-8",
+          "text": "Same module, different failure print stalls code X318",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-8",
+          "text": "payment receipt disappears after transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-8-b",
+          "text": "statement export returns blank file",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-8-c",
+          "text": "dashboard chart never loads",
+          "grade": 0
+        }
+      ],
+      "topic_id": "account-search",
+      "expected_label": "User Interface",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "fee-display",
+      "language": "Bangla",
+      "text": "লেনদেনের আগে ভুল ফি দেখায়",
+      "candidates": [
+        {
+          "incident": "fee-display",
+          "text": "লেনদেনের আগে ভুল ফি দেখায়; related occurrence 10",
+          "grade": 2
+        },
+        {
+          "incident": "fee-display",
+          "text": "Similar symptom: লেনদেনের আগে ভুল ফি দেখায়",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-9",
+          "text": "Same module, different failure approval is rejected code X319",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-9",
+          "text": "login fails after password reset",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-9-b",
+          "text": "beneficiary save fails validation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-9-c",
+          "text": "scheduled payment runs twice",
+          "grade": 0
+        }
+      ],
+      "topic_id": "fee-display",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "approval-session",
+      "language": "Bangla",
+      "text": "অনুমোদনের সেশন মাঝপথে শেষ হয়",
+      "candidates": [
+        {
+          "incident": "approval-session",
+          "text": "অনুমোদনের সেশন মাঝপথে শেষ হয়; related occurrence 11",
+          "grade": 2
+        },
+        {
+          "incident": "approval-session",
+          "text": "Similar symptom: অনুমোদনের সেশন মাঝপথে শেষ হয়",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-10",
+          "text": "Same module, different failure incorrect alert appears code X320",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-10",
+          "text": "balance is stale after deposit",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-10-b",
+          "text": "dashboard chart never loads",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-10-c",
+          "text": "account search ignores branch",
+          "grade": 0
+        }
+      ],
+      "topic_id": "approval-session",
+      "expected_label": "Authentication",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "report-latency",
+      "language": "Bangla",
+      "text": "প্রতিবেদন তৈরি করতে বেশি সময় লাগে",
+      "candidates": [
+        {
+          "incident": "report-latency",
+          "text": "প্রতিবেদন তৈরি করতে বেশি সময় লাগে; related occurrence 12",
+          "grade": 2
+        },
+        {
+          "incident": "report-latency",
+          "text": "Similar symptom: প্রতিবেদন তৈরি করতে বেশি সময় লাগে",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-11",
+          "text": "Same module, different failure filter has no effect code X321",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-11",
+          "text": "statement export returns blank file",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-11-b",
+          "text": "scheduled payment runs twice",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-11-c",
+          "text": "fee total is wrong on transfer",
+          "grade": 0
+        }
+      ],
+      "topic_id": "report-latency",
+      "expected_label": "Performance",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "transfer-timeout",
+      "language": "Banglish",
+      "text": "confirm korar por transfer atke jay",
+      "candidates": [
+        {
+          "incident": "transfer-timeout",
+          "text": "confirm korar por transfer atke jay; related occurrence 1",
+          "grade": 2
+        },
+        {
+          "incident": "transfer-timeout",
+          "text": "Similar symptom: confirm korar por transfer atke jay",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-0",
+          "text": "Same module, different failure print stalls code X310",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-0",
+          "text": "beneficiary save fails validation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-0-b",
+          "text": "account search ignores branch",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-0-c",
+          "text": "session expires during approval",
+          "grade": 0
+        }
+      ],
+      "topic_id": "transfer-timeout",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "receipt-missing",
+      "language": "Banglish",
+      "text": "transfer er por receipt dekha jay na",
+      "candidates": [
+        {
+          "incident": "receipt-missing",
+          "text": "transfer er por receipt dekha jay na; related occurrence 2",
+          "grade": 2
+        },
+        {
+          "incident": "receipt-missing",
+          "text": "Similar symptom: transfer er por receipt dekha jay na",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-1",
+          "text": "Same module, different failure approval is rejected code X311",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-1",
+          "text": "dashboard chart never loads",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-1-b",
+          "text": "fee total is wrong on transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-1-c",
+          "text": "database report is slow",
+          "grade": 0
+        }
+      ],
+      "topic_id": "receipt-missing",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "authentication-reset",
+      "language": "Banglish",
+      "text": "password reset er por login fail",
+      "candidates": [
+        {
+          "incident": "authentication-reset",
+          "text": "password reset er por login fail; related occurrence 3",
+          "grade": 2
+        },
+        {
+          "incident": "authentication-reset",
+          "text": "Similar symptom: password reset er por login fail",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-2",
+          "text": "Same module, different failure incorrect alert appears code X312",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-2",
+          "text": "scheduled payment runs twice",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-2-b",
+          "text": "session expires during approval",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-2-c",
+          "text": "transfer times out after confirmation",
+          "grade": 0
+        }
+      ],
+      "topic_id": "authentication-reset",
+      "expected_label": "Authentication",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "balance-refresh",
+      "language": "Banglish",
+      "text": "deposit er por balance purono",
+      "candidates": [
+        {
+          "incident": "balance-refresh",
+          "text": "deposit er por balance purono; related occurrence 4",
+          "grade": 2
+        },
+        {
+          "incident": "balance-refresh",
+          "text": "Similar symptom: deposit er por balance purono",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-3",
+          "text": "Same module, different failure filter has no effect code X313",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-3",
+          "text": "account search ignores branch",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-3-b",
+          "text": "database report is slow",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-3-c",
+          "text": "payment receipt disappears after transfer",
+          "grade": 0
+        }
+      ],
+      "topic_id": "balance-refresh",
+      "expected_label": "Database",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "statement-export",
+      "language": "Banglish",
+      "text": "statement download blank file dey",
+      "candidates": [
+        {
+          "incident": "statement-export",
+          "text": "statement download blank file dey; related occurrence 5",
+          "grade": 2
+        },
+        {
+          "incident": "statement-export",
+          "text": "Similar symptom: statement download blank file dey",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-4",
+          "text": "Same module, different failure print stalls code X314",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-4",
+          "text": "fee total is wrong on transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-4-b",
+          "text": "transfer times out after confirmation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-4-c",
+          "text": "login fails after password reset",
+          "grade": 0
+        }
+      ],
+      "topic_id": "statement-export",
+      "expected_label": "Database",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "beneficiary-validation",
+      "language": "Banglish",
+      "text": "beneficiary save korte fail",
+      "candidates": [
+        {
+          "incident": "beneficiary-validation",
+          "text": "beneficiary save korte fail; related occurrence 6",
+          "grade": 2
+        },
+        {
+          "incident": "beneficiary-validation",
+          "text": "Similar symptom: beneficiary save korte fail",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-5",
+          "text": "Same module, different failure approval is rejected code X315",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-5",
+          "text": "session expires during approval",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-5-b",
+          "text": "payment receipt disappears after transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-5-c",
+          "text": "balance is stale after deposit",
+          "grade": 0
+        }
+      ],
+      "topic_id": "beneficiary-validation",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "dashboard-render",
+      "language": "Banglish",
+      "text": "dashboard chart load hoy na",
+      "candidates": [
+        {
+          "incident": "dashboard-render",
+          "text": "dashboard chart load hoy na; related occurrence 7",
+          "grade": 2
+        },
+        {
+          "incident": "dashboard-render",
+          "text": "Similar symptom: dashboard chart load hoy na",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-6",
+          "text": "Same module, different failure incorrect alert appears code X316",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-6",
+          "text": "database report is slow",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-6-b",
+          "text": "login fails after password reset",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-6-c",
+          "text": "statement export returns blank file",
+          "grade": 0
+        }
+      ],
+      "topic_id": "dashboard-render",
+      "expected_label": "User Interface",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "scheduled-duplicate",
+      "language": "Banglish",
+      "text": "scheduled payment duibar hoy",
+      "candidates": [
+        {
+          "incident": "scheduled-duplicate",
+          "text": "scheduled payment duibar hoy; related occurrence 8",
+          "grade": 2
+        },
+        {
+          "incident": "scheduled-duplicate",
+          "text": "Similar symptom: scheduled payment duibar hoy",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-7",
+          "text": "Same module, different failure filter has no effect code X317",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-7",
+          "text": "transfer times out after confirmation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-7-b",
+          "text": "balance is stale after deposit",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-7-c",
+          "text": "beneficiary save fails validation",
+          "grade": 0
+        }
+      ],
+      "topic_id": "scheduled-duplicate",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "account-search",
+      "language": "Banglish",
+      "text": "branch diye account search hoy na",
+      "candidates": [
+        {
+          "incident": "account-search",
+          "text": "branch diye account search hoy na; related occurrence 9",
+          "grade": 2
+        },
+        {
+          "incident": "account-search",
+          "text": "Similar symptom: branch diye account search hoy na",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-8",
+          "text": "Same module, different failure print stalls code X318",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-8",
+          "text": "payment receipt disappears after transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-8-b",
+          "text": "statement export returns blank file",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-8-c",
+          "text": "dashboard chart never loads",
+          "grade": 0
+        }
+      ],
+      "topic_id": "account-search",
+      "expected_label": "User Interface",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "fee-display",
+      "language": "Banglish",
+      "text": "transfer fee vul dekhay",
+      "candidates": [
+        {
+          "incident": "fee-display",
+          "text": "transfer fee vul dekhay; related occurrence 10",
+          "grade": 2
+        },
+        {
+          "incident": "fee-display",
+          "text": "Similar symptom: transfer fee vul dekhay",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-9",
+          "text": "Same module, different failure approval is rejected code X319",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-9",
+          "text": "login fails after password reset",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-9-b",
+          "text": "beneficiary save fails validation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-9-c",
+          "text": "scheduled payment runs twice",
+          "grade": 0
+        }
+      ],
+      "topic_id": "fee-display",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "approval-session",
+      "language": "Banglish",
+      "text": "approval er somoy session sesh",
+      "candidates": [
+        {
+          "incident": "approval-session",
+          "text": "approval er somoy session sesh; related occurrence 11",
+          "grade": 2
+        },
+        {
+          "incident": "approval-session",
+          "text": "Similar symptom: approval er somoy session sesh",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-10",
+          "text": "Same module, different failure incorrect alert appears code X320",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-10",
+          "text": "balance is stale after deposit",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-10-b",
+          "text": "dashboard chart never loads",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-10-c",
+          "text": "account search ignores branch",
+          "grade": 0
+        }
+      ],
+      "topic_id": "approval-session",
+      "expected_label": "Authentication",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "report-latency",
+      "language": "Banglish",
+      "text": "database report slow hoy",
+      "candidates": [
+        {
+          "incident": "report-latency",
+          "text": "database report slow hoy; related occurrence 12",
+          "grade": 2
+        },
+        {
+          "incident": "report-latency",
+          "text": "Similar symptom: database report slow hoy",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-11",
+          "text": "Same module, different failure filter has no effect code X321",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-11",
+          "text": "statement export returns blank file",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-11-b",
+          "text": "scheduled payment runs twice",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-11-c",
+          "text": "fee total is wrong on transfer",
+          "grade": 0
+        }
+      ],
+      "topic_id": "report-latency",
+      "expected_label": "Performance",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "transfer-timeout",
+      "language": "Code-switched",
+      "text": "confirmation-এর পর transfer আটকে যায়",
+      "candidates": [
+        {
+          "incident": "transfer-timeout",
+          "text": "confirmation-এর পর transfer আটকে যায়; related occurrence 1",
+          "grade": 2
+        },
+        {
+          "incident": "transfer-timeout",
+          "text": "Similar symptom: confirmation-এর পর transfer আটকে যায়",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-0",
+          "text": "Same module, different failure print stalls code X310",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-0",
+          "text": "beneficiary save fails validation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-0-b",
+          "text": "account search ignores branch",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-0-c",
+          "text": "session expires during approval",
+          "grade": 0
+        }
+      ],
+      "topic_id": "transfer-timeout",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "receipt-missing",
+      "language": "Code-switched",
+      "text": "লেনদেনের receipt দেখা যাচ্ছে না",
+      "candidates": [
+        {
+          "incident": "receipt-missing",
+          "text": "লেনদেনের receipt দেখা যাচ্ছে না; related occurrence 2",
+          "grade": 2
+        },
+        {
+          "incident": "receipt-missing",
+          "text": "Similar symptom: লেনদেনের receipt দেখা যাচ্ছে না",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-1",
+          "text": "Same module, different failure approval is rejected code X311",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-1",
+          "text": "dashboard chart never loads",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-1-b",
+          "text": "fee total is wrong on transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-1-c",
+          "text": "database report is slow",
+          "grade": 0
+        }
+      ],
+      "topic_id": "receipt-missing",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "authentication-reset",
+      "language": "Code-switched",
+      "text": "password reset-এর পর login হচ্ছে না",
+      "candidates": [
+        {
+          "incident": "authentication-reset",
+          "text": "password reset-এর পর login হচ্ছে না; related occurrence 3",
+          "grade": 2
+        },
+        {
+          "incident": "authentication-reset",
+          "text": "Similar symptom: password reset-এর পর login হচ্ছে না",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-2",
+          "text": "Same module, different failure incorrect alert appears code X312",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-2",
+          "text": "scheduled payment runs twice",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-2-b",
+          "text": "session expires during approval",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-2-c",
+          "text": "transfer times out after confirmation",
+          "grade": 0
+        }
+      ],
+      "topic_id": "authentication-reset",
+      "expected_label": "Authentication",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "balance-refresh",
+      "language": "Code-switched",
+      "text": "refresh হলেও balance update হচ্ছে না",
+      "candidates": [
+        {
+          "incident": "balance-refresh",
+          "text": "refresh হলেও balance update হচ্ছে না; related occurrence 4",
+          "grade": 2
+        },
+        {
+          "incident": "balance-refresh",
+          "text": "Similar symptom: refresh হলেও balance update হচ্ছে না",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-3",
+          "text": "Same module, different failure filter has no effect code X313",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-3",
+          "text": "account search ignores branch",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-3-b",
+          "text": "database report is slow",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-3-c",
+          "text": "payment receipt disappears after transfer",
+          "grade": 0
+        }
+      ],
+      "topic_id": "balance-refresh",
+      "expected_label": "Database",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "statement-export",
+      "language": "Code-switched",
+      "text": "statement export করলে ফাইল empty থাকে",
+      "candidates": [
+        {
+          "incident": "statement-export",
+          "text": "statement export করলে ফাইল empty থাকে; related occurrence 5",
+          "grade": 2
+        },
+        {
+          "incident": "statement-export",
+          "text": "Similar symptom: statement export করলে ফাইল empty থাকে",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-4",
+          "text": "Same module, different failure print stalls code X314",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-4",
+          "text": "fee total is wrong on transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-4-b",
+          "text": "transfer times out after confirmation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-4-c",
+          "text": "login fails after password reset",
+          "grade": 0
+        }
+      ],
+      "topic_id": "statement-export",
+      "expected_label": "Database",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "beneficiary-validation",
+      "language": "Code-switched",
+      "text": "beneficiary details save হচ্ছে না",
+      "candidates": [
+        {
+          "incident": "beneficiary-validation",
+          "text": "beneficiary details save হচ্ছে না; related occurrence 6",
+          "grade": 2
+        },
+        {
+          "incident": "beneficiary-validation",
+          "text": "Similar symptom: beneficiary details save হচ্ছে না",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-5",
+          "text": "Same module, different failure approval is rejected code X315",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-5",
+          "text": "session expires during approval",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-5-b",
+          "text": "payment receipt disappears after transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-5-c",
+          "text": "balance is stale after deposit",
+          "grade": 0
+        }
+      ],
+      "topic_id": "beneficiary-validation",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "dashboard-render",
+      "language": "Code-switched",
+      "text": "dashboard load হতে অনেক সময় লাগে",
+      "candidates": [
+        {
+          "incident": "dashboard-render",
+          "text": "dashboard load হতে অনেক সময় লাগে; related occurrence 7",
+          "grade": 2
+        },
+        {
+          "incident": "dashboard-render",
+          "text": "Similar symptom: dashboard load হতে অনেক সময় লাগে",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-6",
+          "text": "Same module, different failure incorrect alert appears code X316",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-6",
+          "text": "database report is slow",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-6-b",
+          "text": "login fails after password reset",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-6-c",
+          "text": "statement export returns blank file",
+          "grade": 0
+        }
+      ],
+      "topic_id": "dashboard-render",
+      "expected_label": "User Interface",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "scheduled-duplicate",
+      "language": "Code-switched",
+      "text": "approval screen-এ duplicate request আসে",
+      "candidates": [
+        {
+          "incident": "scheduled-duplicate",
+          "text": "approval screen-এ duplicate request আসে; related occurrence 8",
+          "grade": 2
+        },
+        {
+          "incident": "scheduled-duplicate",
+          "text": "Similar symptom: approval screen-এ duplicate request আসে",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-7",
+          "text": "Same module, different failure filter has no effect code X317",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-7",
+          "text": "transfer times out after confirmation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-7-b",
+          "text": "balance is stale after deposit",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-7-c",
+          "text": "beneficiary save fails validation",
+          "grade": 0
+        }
+      ],
+      "topic_id": "scheduled-duplicate",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "account-search",
+      "language": "Code-switched",
+      "text": "account search-এ branch filter কাজ করে না",
+      "candidates": [
+        {
+          "incident": "account-search",
+          "text": "account search-এ branch filter কাজ করে না; related occurrence 9",
+          "grade": 2
+        },
+        {
+          "incident": "account-search",
+          "text": "Similar symptom: account search-এ branch filter কাজ করে না",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-8",
+          "text": "Same module, different failure print stalls code X318",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-8",
+          "text": "payment receipt disappears after transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-8-b",
+          "text": "statement export returns blank file",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-8-c",
+          "text": "dashboard chart never loads",
+          "grade": 0
+        }
+      ],
+      "topic_id": "account-search",
+      "expected_label": "User Interface",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "fee-display",
+      "language": "Code-switched",
+      "text": "transfer-এর আগে fee ভুল দেখায়",
+      "candidates": [
+        {
+          "incident": "fee-display",
+          "text": "transfer-এর আগে fee ভুল দেখায়; related occurrence 10",
+          "grade": 2
+        },
+        {
+          "incident": "fee-display",
+          "text": "Similar symptom: transfer-এর আগে fee ভুল দেখায়",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-9",
+          "text": "Same module, different failure approval is rejected code X319",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-9",
+          "text": "login fails after password reset",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-9-b",
+          "text": "beneficiary save fails validation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-9-c",
+          "text": "scheduled payment runs twice",
+          "grade": 0
+        }
+      ],
+      "topic_id": "fee-display",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "approval-session",
+      "language": "Code-switched",
+      "text": "approval session হঠাৎ expire হয়",
+      "candidates": [
+        {
+          "incident": "approval-session",
+          "text": "approval session হঠাৎ expire হয়; related occurrence 11",
+          "grade": 2
+        },
+        {
+          "incident": "approval-session",
+          "text": "Similar symptom: approval session হঠাৎ expire হয়",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-10",
+          "text": "Same module, different failure incorrect alert appears code X320",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-10",
+          "text": "balance is stale after deposit",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-10-b",
+          "text": "dashboard chart never loads",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-10-c",
+          "text": "account search ignores branch",
+          "grade": 0
+        }
+      ],
+      "topic_id": "approval-session",
+      "expected_label": "Authentication",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "report-latency",
+      "language": "Code-switched",
+      "text": "report generate ???? ??? slow",
+      "candidates": [
+        {
+          "incident": "report-latency",
+          "text": "report generate ???? ??? slow; related occurrence 12",
+          "grade": 2
+        },
+        {
+          "incident": "report-latency",
+          "text": "Similar symptom: report generate ???? ??? slow",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-11",
+          "text": "Same module, different failure filter has no effect code X321",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-11",
+          "text": "statement export returns blank file",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-11-b",
+          "text": "scheduled payment runs twice",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-11-c",
+          "text": "fee total is wrong on transfer",
+          "grade": 0
+        }
+      ],
+      "topic_id": "report-latency",
+      "expected_label": "Performance",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "transfer-timeout",
+      "language": "Typo",
+      "text": "transfar times out aftr confirm",
+      "candidates": [
+        {
+          "incident": "transfer-timeout",
+          "text": "transfar times out aftr confirm; related occurrence 1",
+          "grade": 2
+        },
+        {
+          "incident": "transfer-timeout",
+          "text": "Similar symptom: transfar times out aftr confirm",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-0",
+          "text": "Same module, different failure print stalls code X310",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-0",
+          "text": "beneficiary save fails validation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-0-b",
+          "text": "account search ignores branch",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-0-c",
+          "text": "session expires during approval",
+          "grade": 0
+        }
+      ],
+      "topic_id": "transfer-timeout",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "receipt-missing",
+      "language": "Typo",
+      "text": "payment reciept disapears after transfer",
+      "candidates": [
+        {
+          "incident": "receipt-missing",
+          "text": "payment reciept disapears after transfer; related occurrence 2",
+          "grade": 2
+        },
+        {
+          "incident": "receipt-missing",
+          "text": "Similar symptom: payment reciept disapears after transfer",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-1",
+          "text": "Same module, different failure approval is rejected code X311",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-1",
+          "text": "dashboard chart never loads",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-1-b",
+          "text": "fee total is wrong on transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-1-c",
+          "text": "database report is slow",
+          "grade": 0
+        }
+      ],
+      "topic_id": "receipt-missing",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "authentication-reset",
+      "language": "Typo",
+      "text": "logn fails after pasword reset",
+      "candidates": [
+        {
+          "incident": "authentication-reset",
+          "text": "logn fails after pasword reset; related occurrence 3",
+          "grade": 2
+        },
+        {
+          "incident": "authentication-reset",
+          "text": "Similar symptom: logn fails after pasword reset",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-2",
+          "text": "Same module, different failure incorrect alert appears code X312",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-2",
+          "text": "scheduled payment runs twice",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-2-b",
+          "text": "session expires during approval",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-2-c",
+          "text": "transfer times out after confirmation",
+          "grade": 0
+        }
+      ],
+      "topic_id": "authentication-reset",
+      "expected_label": "Authentication",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "balance-refresh",
+      "language": "Typo",
+      "text": "balnce is stale after depost",
+      "candidates": [
+        {
+          "incident": "balance-refresh",
+          "text": "balnce is stale after depost; related occurrence 4",
+          "grade": 2
+        },
+        {
+          "incident": "balance-refresh",
+          "text": "Similar symptom: balnce is stale after depost",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-3",
+          "text": "Same module, different failure filter has no effect code X313",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-3",
+          "text": "account search ignores branch",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-3-b",
+          "text": "database report is slow",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-3-c",
+          "text": "payment receipt disappears after transfer",
+          "grade": 0
+        }
+      ],
+      "topic_id": "balance-refresh",
+      "expected_label": "Database",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "statement-export",
+      "language": "Typo",
+      "text": "statment export returns blank flie",
+      "candidates": [
+        {
+          "incident": "statement-export",
+          "text": "statment export returns blank flie; related occurrence 5",
+          "grade": 2
+        },
+        {
+          "incident": "statement-export",
+          "text": "Similar symptom: statment export returns blank flie",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-4",
+          "text": "Same module, different failure print stalls code X314",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-4",
+          "text": "fee total is wrong on transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-4-b",
+          "text": "transfer times out after confirmation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-4-c",
+          "text": "login fails after password reset",
+          "grade": 0
+        }
+      ],
+      "topic_id": "statement-export",
+      "expected_label": "Database",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "beneficiary-validation",
+      "language": "Typo",
+      "text": "beneficary save fails validaton",
+      "candidates": [
+        {
+          "incident": "beneficiary-validation",
+          "text": "beneficary save fails validaton; related occurrence 6",
+          "grade": 2
+        },
+        {
+          "incident": "beneficiary-validation",
+          "text": "Similar symptom: beneficary save fails validaton",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-5",
+          "text": "Same module, different failure approval is rejected code X315",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-5",
+          "text": "session expires during approval",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-5-b",
+          "text": "payment receipt disappears after transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-5-c",
+          "text": "balance is stale after deposit",
+          "grade": 0
+        }
+      ],
+      "topic_id": "beneficiary-validation",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank A"
+    },
+    {
+      "incident": "dashboard-render",
+      "language": "Typo",
+      "text": "dashbord chart never laods",
+      "candidates": [
+        {
+          "incident": "dashboard-render",
+          "text": "dashbord chart never laods; related occurrence 7",
+          "grade": 2
+        },
+        {
+          "incident": "dashboard-render",
+          "text": "Similar symptom: dashbord chart never laods",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-6",
+          "text": "Same module, different failure incorrect alert appears code X316",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-6",
+          "text": "database report is slow",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-6-b",
+          "text": "login fails after password reset",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-6-c",
+          "text": "statement export returns blank file",
+          "grade": 0
+        }
+      ],
+      "topic_id": "dashboard-render",
+      "expected_label": "User Interface",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "scheduled-duplicate",
+      "language": "Typo",
+      "text": "scheduld payment runs twise",
+      "candidates": [
+        {
+          "incident": "scheduled-duplicate",
+          "text": "scheduld payment runs twise; related occurrence 8",
+          "grade": 2
+        },
+        {
+          "incident": "scheduled-duplicate",
+          "text": "Similar symptom: scheduld payment runs twise",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-7",
+          "text": "Same module, different failure filter has no effect code X317",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-7",
+          "text": "transfer times out after confirmation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-7-b",
+          "text": "balance is stale after deposit",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-7-c",
+          "text": "beneficiary save fails validation",
+          "grade": 0
+        }
+      ],
+      "topic_id": "scheduled-duplicate",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "account-search",
+      "language": "Typo",
+      "text": "account serch ignores brnch",
+      "candidates": [
+        {
+          "incident": "account-search",
+          "text": "account serch ignores brnch; related occurrence 9",
+          "grade": 2
+        },
+        {
+          "incident": "account-search",
+          "text": "Similar symptom: account serch ignores brnch",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-8",
+          "text": "Same module, different failure print stalls code X318",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-8",
+          "text": "payment receipt disappears after transfer",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-8-b",
+          "text": "statement export returns blank file",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-8-c",
+          "text": "dashboard chart never loads",
+          "grade": 0
+        }
+      ],
+      "topic_id": "account-search",
+      "expected_label": "User Interface",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "fee-display",
+      "language": "Typo",
+      "text": "fee total is worng on transfer",
+      "candidates": [
+        {
+          "incident": "fee-display",
+          "text": "fee total is worng on transfer; related occurrence 10",
+          "grade": 2
+        },
+        {
+          "incident": "fee-display",
+          "text": "Similar symptom: fee total is worng on transfer",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-9",
+          "text": "Same module, different failure approval is rejected code X319",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-9",
+          "text": "login fails after password reset",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-9-b",
+          "text": "beneficiary save fails validation",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-9-c",
+          "text": "scheduled payment runs twice",
+          "grade": 0
+        }
+      ],
+      "topic_id": "fee-display",
+      "expected_label": "Transaction",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "approval-session",
+      "language": "Typo",
+      "text": "sesion expires during aproval",
+      "candidates": [
+        {
+          "incident": "approval-session",
+          "text": "sesion expires during aproval; related occurrence 11",
+          "grade": 2
+        },
+        {
+          "incident": "approval-session",
+          "text": "Similar symptom: sesion expires during aproval",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-10",
+          "text": "Same module, different failure incorrect alert appears code X320",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-10",
+          "text": "balance is stale after deposit",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-10-b",
+          "text": "dashboard chart never loads",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-10-c",
+          "text": "account search ignores branch",
+          "grade": 0
+        }
+      ],
+      "topic_id": "approval-session",
+      "expected_label": "Authentication",
+      "tenant": "Synthetic Bank B"
+    },
+    {
+      "incident": "report-latency",
+      "language": "Typo",
+      "text": "databse report is slwo",
+      "candidates": [
+        {
+          "incident": "report-latency",
+          "text": "databse report is slwo; related occurrence 12",
+          "grade": 2
+        },
+        {
+          "incident": "report-latency",
+          "text": "Similar symptom: databse report is slwo",
+          "grade": 1
+        },
+        {
+          "incident": "hard-negative-11",
+          "text": "Same module, different failure filter has no effect code X321",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-11",
+          "text": "statement export returns blank file",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-11-b",
+          "text": "scheduled payment runs twice",
+          "grade": 0
+        },
+        {
+          "incident": "unrelated-11-c",
+          "text": "fee total is wrong on transfer",
+          "grade": 0
+        }
+      ],
+      "topic_id": "report-latency",
+      "expected_label": "Performance",
+      "tenant": "Synthetic Bank B"
+    }
   ]
 }

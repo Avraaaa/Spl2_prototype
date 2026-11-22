@@ -96,3 +96,11 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] The 'Add as label' action runs two sequential calls (create label, then accept topic) with no rollback. If the second call fails, the label exists but the topic stays 'proposed'.
 - [ ] [follow-up] Show original reveals the unmasked text in the page, and the backend audits each view. The UI could add a confirmation step or hide the text again.
 - [ ] [follow-up] Backend tests for acceptance_criteria masking, the label filter and cross-tenant scoping exist in test_p7_t7_issue_metadata.py. Adding UI component tests for the new admin page and the Show original button would be worthwhile.
+
+## P7-T8 — 2026-11-22
+- [ ] [follow-up] TRANSACTION_REFERENCE protection in mask_sensitive shields the text after 'txn id', 'order no' and similar from card, account and phone masking. A phone or card number written right after those words would stay unmasked. Limit the protected token to a non-numeric-only or short reference pattern.
+- [ ] [follow-up] The reference placeholder markers (__TRANSACTION_REFERENCE_n__) are restored by plain string replace. User text that contains a literal marker could be substituted. This is very low impact, but use a collision-free sentinel.
+- [ ] [follow-up] evaluate_search label scoring reads Label.objects across all tenants and uses threshold 0.0. This is an offline management command on synthetic data, so there is no endpoint leak. It does not truly measure per-tenant label behavior or abstention, so add tenant-scoped labels and a real threshold later.
+- [ ] [follow-up] When no local embedder is available, the dense and hybrid configurations are skipped and listed under skipped_configurations. This is correct, but the command prints a full JSON manifest that includes local paths.
+- [ ] [follow-up] NID_KEYWORDS repeats the same Bangla alternative twice. Remove the duplicate.
+- [ ] [follow-up] NID masking only applies when a keyword appears within 80 characters. A bare Bangla-digit NID with no keyword is not masked. This is a deliberate precision tradeoff, so document it.

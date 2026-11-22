@@ -48,6 +48,25 @@ ACCOUNT_NUMBER = re.compile(
     r"(?:[^0-9\r\n]{0,24})(?:\d[ -]?){7,19}\d(?!\d)"
 )
 PHONE_NUMBER = re.compile(r"(?<!\d)(?:\+?8801|01)[ -]?\d{3}[ -]?\d{3}[ -]?\d{2,3}(?!\d)")
+EMAIL_ADDRESS = re.compile(
+    r"(?i)(?<![\w.+-])[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@"
+    r"[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?"
+    r"(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+"
+)
+NID_KEYWORDS = re.compile(
+    r"(?i)(?:\bnid\b|\bnational\s+id\b|"
+    r"জাতীয়\s*পরিচয়পত্র|"
+    r"জাতীয়\s*পরিচয়পত্র|"
+    r"এনআইডি)"
+)
+NID_DIGITS = re.compile(
+    r"(?<![\w\u0980-\u09ff])(?:[0-9\u09e6-\u09ef][ -]?){9,16}"
+    r"[0-9\u09e6-\u09ef](?![\w\u0980-\u09ff])"
+)
+TRANSACTION_REFERENCE = re.compile(
+    r"(?i)\b(?:txn\s*(?:id|no\.?|number)|transaction\s*(?:id|no\.?|number)|"
+    r"order\s*(?:no\.?|number|id))\s*[:#-]?\s*(?:[A-Z0-9-]{1,})"
+)
 MAX_CUSTOM_PATTERN_SCAN = 20_000
 
 
@@ -83,6 +102,18 @@ def _replace_with_configured_value(_match: re.Match[str], *, replacement: str) -
     return replacement
 
 
+def _mask_nid_in_context(value: str) -> str:
+    keywords = [match.span() for match in NID_KEYWORDS.finditer(value)]
+
+    def replace_digits(match: re.Match[str]) -> str:
+        start, end = match.span()
+        if any(max(left - end, start - right) <= 80 for left, right in keywords):
+            return "[NID]"
+        return match.group()
+
+    return NID_DIGITS.sub(replace_digits, value)
+
+
 def mask_sensitive(value: str) -> str:
     """Mask common sensitive values before persistence; human review is still needed."""
     from .models import MaskingPattern
@@ -103,10 +134,23 @@ def mask_sensitive(value: str) -> str:
     value = prefix + suffix
     # Mandatory detectors run after administrator rules so custom masking can
     # replace a complete token first, while built-in protections always run.
+    value = EMAIL_ADDRESS.sub("[EMAIL]", value)
+    value = _mask_nid_in_context(value)
+    protected_references: dict[str, str] = {}
+
+    def protect_reference(match: re.Match[str]) -> str:
+        marker = f"__TRANSACTION_REFERENCE_{len(protected_references)}__"
+        protected_references[marker] = match.group()
+        return marker
+
+    value = TRANSACTION_REFERENCE.sub(protect_reference, value)
     value = CARD_DIGITS.sub("[CARD REDACTED]", value)
     value = ACCOUNT_NUMBER.sub("[ACCOUNT_NUMBER]", value)
     value = PHONE_NUMBER.sub("[PHONE_NUMBER]", value)
-    return SENTENCE_TEXT.sub(_mask_otp_in_sentence, value)
+    value = SENTENCE_TEXT.sub(_mask_otp_in_sentence, value)
+    for marker, reference in protected_references.items():
+        value = value.replace(marker, reference)
+    return value
 
 
 def mask_extracted_text(value: str) -> str:
@@ -138,6 +182,8 @@ def mask_sensitive_with_detections(value: str) -> tuple[str, list[str]]:
     masked = mask_sensitive(value)
     categories: list[str] = []
     markers = (
+        ("[EMAIL]", "email"),
+        ("[NID]", "nid"),
         ("[CARD REDACTED]", "card"),
         ("[ACCOUNT_NUMBER]", "account"),
         ("[PHONE_NUMBER]", "phone"),
