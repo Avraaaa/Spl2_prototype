@@ -848,6 +848,42 @@
         "New command compare_features reads the manifest and live DB and reports per tenant and language variant: duplicate HitRate@5/MRR@5/nDCG@5 for lexical vs dense vs hybrid (SKIPPED when no embedder), label accuracy@1/coverage/abstention, topic cluster purity, masking precision/recall; writes JSON plus a short markdown summary to a path argument. Tenant isolation: no cross-bank candidates.",
         "NEW tests with a small --count and fake embedder: determinism, reset only removes generated rows, two-bank isolation, manifest consistency, compare_features output keys. Do not edit existing tests."
       ]
+    },
+    {
+      "id": "P7-T10",
+      "phase": 7,
+      "title": "Frontend polish for P7-T7 review follow-ups",
+      "req": [
+        "E-08",
+        "E-14",
+        "E-18",
+        "EX-10"
+      ],
+      "depends_on": [
+        "P7-T7"
+      ],
+      "allow": [
+        "apps/web/src/features/tenants/",
+        "apps/web/src/features/issues/IssueListPage.tsx",
+        "apps/web/src/features/issues/IssueDetailPage.tsx",
+        "apps/web/src/features/issues/",
+        "apps/web/src/styles/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "FRONTEND ONLY: do not modify services/, contracts/ or seed/ (another task is editing the backend in parallel).",
+        "Audit verify result shown as a formatted panel (ok/broken badge, records checked, first broken record id/time) instead of raw JSON; topic proposal representatives shown as a readable list of request reference + snippet + top terms instead of a JSON dump.",
+        "Add as label is retry-safe: if label creation succeeded but accepting the topic failed, a retry reuses the existing label (look it up by name) instead of creating a duplicate, and the UI shows the partial state clearly.",
+        "Label filter options in IssueListPage come from the labels endpoint (/api/search/labels/) instead of fetching all issues.",
+        "Show original asks for confirmation before revealing and offers Hide original.",
+        "NEW vitest component/unit tests for the formatted audit result, topic representatives rendering, retry-safe add-as-label helper, and Show original confirm/hide. Do not edit existing tests. Readable components."
+      ]
     }
   ]
 }
