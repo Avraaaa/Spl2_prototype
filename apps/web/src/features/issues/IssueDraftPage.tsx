@@ -96,6 +96,7 @@ function DraftForm({ existing }: { existing?: Issue }) {
   const qc = useQueryClient();
   const products = useProducts();
   const related = useIssues({ status: 'SUBMITTED' });
+  const recurring = useIssues({ status: 'CLOSED' });
   const [draft, setDraft] = useState<Draft>(() => (existing ? draftFromIssue(existing) : blankDraft()));
   const [stored, setStored] = useState<Stored | null>(existing ? { id: existing.id, version: existing.version ?? 1 } : null);
   const [errors, setErrors] = useState<DraftErrors>({});
@@ -142,6 +143,7 @@ function DraftForm({ existing }: { existing?: Issue }) {
       const fields = {
         title: draft.title ?? '',
         description: draft.description ?? '',
+        acceptance_criteria: draft.acceptance_criteria ?? '',
         environment: draft.environment ?? '',
         steps_to_reproduce: draft.steps_to_reproduce ?? '',
         expected_result: draft.expected_result ?? '',
@@ -288,6 +290,17 @@ function DraftForm({ existing }: { existing?: Issue }) {
           />
         </Field>
         <Field {...field('description', 'Description')}>{text('description', 4)}</Field>
+        <Field {...field('acceptance_criteria', 'Acceptance criteria')}>
+          <textarea
+            id="draft-acceptance_criteria"
+            {...fieldAccessibility('acceptance_criteria', errors.acceptance_criteria)}
+            rows={3}
+            maxLength={20000}
+            value={draft.acceptance_criteria ?? ''}
+            onChange={event => set('acceptance_criteria', event.target.value)}
+            placeholder="What should the Issue Verifier confirm?"
+          />
+        </Field>
         <div className="privacy-review-actions">
           <button type="button" className="btn small ghost" onClick={() => { setMaskReviewOpen(true); maskPreview.mutate(); }} disabled={maskPreview.isPending}>
             {maskPreview.isPending ? 'Checking privacy…' : 'Review privacy masking'}
@@ -439,6 +452,19 @@ function DraftForm({ existing }: { existing?: Issue }) {
                   {r.reference} — {r.title}
                 </option>
               ))}
+          </select>
+        </Field>
+        <Field {...field('recurring_of', 'Recurring request of')}>
+          <select
+            id="draft-recurring_of"
+            {...fieldAccessibility('recurring_of', errors.recurring_of)}
+            value={draft.recurring_of ?? ''}
+            onChange={event => set('recurring_of', event.target.value ? Number(event.target.value) : null)}
+          >
+            <option value="">Not a recurring request</option>
+            {(recurring.data ?? []).filter(row => row.id !== stored?.id && (!existing || row.created_at < existing.created_at)).map(row => (
+              <option key={row.id} value={row.id}>{row.reference} — {row.title}</option>
+            ))}
           </select>
         </Field>
         {draft.request_type === 'BUG' && (

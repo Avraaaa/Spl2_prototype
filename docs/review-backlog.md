@@ -88,3 +88,11 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] The legacy-rescan migration treats an attachment whose file is missing or unreadable as REJECTED. That is the safe default, but it is irreversible: the reverse operation is a noop and rejected content is deleted.
 - [ ] [follow-up] The download view for text files calls `attachment.file.open("rb").read()` without closing the handle. This was already present before this change.
 - [ ] [follow-up] The ML embedding failure is silently swallowed with a bare `except Exception`. Logging it would help.
+
+## P7-T7 — 2026-11-22
+- [ ] [follow-up] Label filter dropdown in IssueListPage is built from an unfiltered fetch of all issues (useIssues({}, staff)), which is inefficient and only offers labels already present in the loaded list. Use the labels endpoint instead.
+- [ ] [follow-up] Recurring-request selector lists all CLOSED issues and filters client-side. The server's recurring_of validation is the authority, so this is not a leak, but the list could be narrowed server-side.
+- [ ] [follow-up] The audit verify result is shown as raw JSON, and topic representatives as a raw JSON dump, in the intelligence admin page. Both would be better as formatted views.
+- [ ] [follow-up] The 'Add as label' action runs two sequential calls (create label, then accept topic) with no rollback. If the second call fails, the label exists but the topic stays 'proposed'.
+- [ ] [follow-up] Show original reveals the unmasked text in the page, and the backend audits each view. The UI could add a confirmation step or hide the text again.
+- [ ] [follow-up] Backend tests for acceptance_criteria masking, the label filter and cross-tenant scoping exist in test_p7_t7_issue_metadata.py. Adding UI component tests for the new admin page and the Show original button would be worthwhile.

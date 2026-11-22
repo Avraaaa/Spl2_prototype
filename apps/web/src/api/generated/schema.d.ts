@@ -1129,6 +1129,10 @@ export interface components {
         CommentWriteRequest: {
             body: string;
         };
+        ConfirmedLabel: {
+            id: number;
+            name: string;
+        };
         DashboardCounts: {
             total: number;
             by_status: {
@@ -1251,6 +1255,7 @@ export interface components {
             reference?: string | null;
             title?: string;
             description?: string;
+            acceptance_criteria?: string;
             request_type?: components["schemas"]["RequestTypeEnum"] | components["schemas"]["BlankEnum"];
             product?: number | null;
             module?: number | null;
@@ -1265,6 +1270,7 @@ export interface components {
             recurring_of?: number | null;
             readonly recurring_of_reference: string | null;
             readonly recurring_of_title: string | null;
+            readonly confirmed_label: components["schemas"]["ConfirmedLabel"] | null;
             readonly recurring_requests: number[];
             organization: number;
             readonly organization_name: string;
@@ -1329,6 +1335,7 @@ export interface components {
         IssueWriteRequest: {
             title?: string;
             description?: string;
+            acceptance_criteria?: string;
             request_type?: components["schemas"]["RequestTypeEnum"];
             product?: number | null;
             module?: number | null;
@@ -1448,6 +1455,7 @@ export interface components {
         PatchedIssueDraftEditRequest: {
             title?: string;
             description?: string;
+            acceptance_criteria?: string;
             request_type?: components["schemas"]["RequestTypeEnum"];
             product?: number | null;
             module?: number | null;
@@ -1510,6 +1518,7 @@ export interface components {
              */
             readonly is_active: boolean;
             must_change_password: boolean;
+            readonly can_view_unmasked_original: boolean;
             /** Format: date-time */
             readonly last_login: string | null;
             /** Format: date-time */
@@ -2263,6 +2272,7 @@ export interface operations {
         parameters: {
             query?: {
                 assignee?: string;
+                label?: number;
                 ordering?: string;
                 organization?: number;
                 overdue?: boolean;

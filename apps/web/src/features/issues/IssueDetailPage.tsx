@@ -38,6 +38,7 @@ function Details({ row }: { row: Issue }) {
     <section className="card stack" aria-label="Details">
       <h3>Details</h3>
       <p className="prewrap">{row.description || 'No description yet.'}</p>
+      {row.confirmed_label && <p><strong>Confirmed label:</strong> <span className="chip">{row.confirmed_label.name}</span></p>}
       {row.request_type === 'BUG' && (
         <Facts>
           <Fact label="Environment">{row.environment || '—'}</Fact>
@@ -77,6 +78,12 @@ function Delivery({ row }: { row: Issue }) {
         <Fact label="Assigned to">{row.assignee_name ?? 'Not assigned'}</Fact>
         <Fact label="Last status update">{row.last_status_at ? formatDateTime(row.last_status_at) : 'Not yet'}</Fact>
       </Facts>
+      {row.acceptance_criteria && (
+        <div className="acceptance-criteria" aria-label="Acceptance criteria">
+          <h4>Agreed acceptance criteria</h4>
+          <p className="prewrap">{row.acceptance_criteria}</p>
+        </div>
+      )}
       {row.delivery_note && (
         <div>
           <h4>Latest delivery note</h4>
@@ -248,6 +255,7 @@ export function IssueDetailPage({ me }: { me: PortalUser }) {
   if (issue.isError || !issue.data) return <ErrorState error={issue.error ?? new Error('Request unavailable')} />;
   const row = issue.data;
   const staff = isStaff(me);
+  const canViewOriginal = me.can_view_unmasked_original;
   return (
     <section className="stack">
       <header className="issue-head card">
@@ -260,6 +268,7 @@ export function IssueDetailPage({ me }: { me: PortalUser }) {
           <span>{typeLabel(row.request_type)}</span>
           <span className="muted">Created by {row.created_by_name}</span>
         </div>
+        {canViewOriginal && <OriginalTextButton id={id} />}
       </header>
       <IssueReportSignals />
       <div className="detail-layout">
@@ -276,5 +285,33 @@ export function IssueDetailPage({ me }: { me: PortalUser }) {
         </div>
       </div>
     </section>
+  );
+}
+
+function OriginalTextButton({ id }: { id: number }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [original, setOriginal] = useState<components['schemas']['IssueOriginalResponse'] | null>(null);
+  const loadOriginal = async () => {
+    setLoading(true);
+    setError('');
+    const { data, error: apiError } = await api.GET('/api/issues/{id}/original/', { params: { path: { id } } });
+    setLoading(false);
+    if (!data) {
+      setError(errorMessage(apiError));
+      return;
+    }
+    setOriginal(data);
+    setOpen(true);
+  };
+  return (
+    <div className="stack original-review">
+      <button className="btn small" type="button" onClick={() => void loadOriginal()} disabled={loading}>
+        {loading ? 'Loading original…' : 'Show original'}
+      </button>
+      {error && <p role="alert" className="alert error">{error}</p>}
+      {open && original && <aside className="alert info"><strong>Original text</strong><p>{original.title}</p><p className="prewrap">{original.description}</p></aside>}
+    </div>
   );
 }

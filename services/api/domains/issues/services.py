@@ -24,6 +24,7 @@ TEXT_FIELDS = frozenset(
     {
         "title",
         "description",
+        "acceptance_criteria",
         "environment",
         "steps_to_reproduce",
         "expected_result",
@@ -123,6 +124,7 @@ MASKABLE_FIELDS = frozenset(
     {
         "title",
         "description",
+        "acceptance_criteria",
         "environment",
         "steps_to_reproduce",
         "expected_result",

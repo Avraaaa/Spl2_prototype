@@ -11,6 +11,7 @@ const SECTIONS = [
   { to: '/admin/users', label: 'Users & banks' },
   { to: '/admin/products', label: 'Products' },
   { to: '/admin/labels', label: 'Issue labels' },
+  { to: '/admin/intelligence', label: 'Intelligence & privacy' },
   { to: '/admin/settings', label: 'Workflow settings' },
 ];
 

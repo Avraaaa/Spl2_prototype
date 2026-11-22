@@ -548,6 +548,10 @@ paths:
         schema:
           type: string
       - in: query
+        name: label
+        schema:
+          type: integer
+      - in: query
         name: ordering
         schema:
           type: string
@@ -2195,6 +2199,16 @@ components:
           minLength: 1
       required:
       - body
+    ConfirmedLabel:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+      - id
+      - name
     DashboardCounts:
       type: object
       properties:
@@ -2502,6 +2516,8 @@ components:
           maxLength: 200
         description:
           type: string
+        acceptance_criteria:
+          type: string
         request_type:
           oneOf:
           - $ref: '#/components/schemas/RequestTypeEnum'
@@ -2544,6 +2560,11 @@ components:
           readOnly: true
         recurring_of_title:
           type: string
+          nullable: true
+          readOnly: true
+        confirmed_label:
+          allOf:
+          - $ref: '#/components/schemas/ConfirmedLabel'
           nullable: true
           readOnly: true
         recurring_requests:
@@ -2624,6 +2645,7 @@ components:
           readOnly: true
       required:
       - assignee_name
+      - confirmed_label
       - created_at
       - created_by
       - created_by_name
@@ -2719,6 +2741,9 @@ components:
           maxLength: 200
         description:
           type: string
+        acceptance_criteria:
+          type: string
+          maxLength: 20000
         request_type:
           $ref: '#/components/schemas/RequestTypeEnum'
         product:
@@ -3062,6 +3087,9 @@ components:
           maxLength: 200
         description:
           type: string
+        acceptance_criteria:
+          type: string
+          maxLength: 20000
         request_type:
           $ref: '#/components/schemas/RequestTypeEnum'
         product:
@@ -3215,6 +3243,9 @@ components:
             this instead of deleting accounts.
         must_change_password:
           type: boolean
+        can_view_unmasked_original:
+          type: boolean
+          readOnly: true
         last_login:
           type: string
           format: date-time
@@ -3225,6 +3256,7 @@ components:
           format: date-time
           readOnly: true
       required:
+      - can_view_unmasked_original
       - date_joined
       - email
       - full_name

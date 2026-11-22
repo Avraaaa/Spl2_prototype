@@ -179,6 +179,14 @@ export function WorkflowActions({ issue, me }: { issue: Issue; me: PortalUser })
           </label>
         </>
       )}
+      {action === 'verify' && (
+        <aside className="alert info verification-context">
+          <strong>Agreed acceptance criteria</strong>
+          <p className="prewrap">{issue.acceptance_criteria || 'No acceptance criteria were provided.'}</p>
+          <strong>Delivery note</strong>
+          <p className="prewrap">{issue.delivery_note || 'No delivery note is available.'}</p>
+        </aside>
+      )}
       <label>
         Comment (optional)
         <textarea rows={2} value={comment} onChange={event => setComment(event.target.value)} maxLength={5000} />

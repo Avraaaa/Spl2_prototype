@@ -40,6 +40,7 @@ class Issue(models.Model):
     reference = models.CharField(max_length=32, unique=True, null=True, blank=True)
     title = models.CharField(max_length=200, blank=True)
     description = models.TextField(blank=True)
+    acceptance_criteria = models.TextField(blank=True)
     request_type = models.CharField(max_length=10, choices=RequestType.choices, blank=True)
     product = models.ForeignKey(Product, on_delete=models.PROTECT, null=True, blank=True)
     module = models.ForeignKey(Module, on_delete=models.PROTECT, null=True, blank=True)

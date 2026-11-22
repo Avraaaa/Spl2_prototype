@@ -119,8 +119,13 @@ input, select { max-width: 100%; }
 .badge.tone-purple { background: #efe8fb; color: #5b34a6; }
 
 .field { display: grid; gap: 6px; }
-.field > label { font-weight: 600; font-size: .9rem; }
+.field label { display: block; }
 .field .req { color: var(--danger); }
+.topic-row, .metric-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--border); padding: 12px 0; }
+.topic-row h3 { margin: 0; }
+.audit-result { max-height: 320px; overflow: auto; padding: 12px; border-radius: 8px; background: var(--gray-50); white-space: pre-wrap; overflow-wrap: anywhere; }
+.original-review { margin-top: 12px; }
+.verification-context { display: grid; gap: 6px; }
 .field.has-error input, .field.has-error select, .field.has-error textarea { border-color: var(--danger); }
 .field-error { color: var(--danger); font-size: .84rem; }
 .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }

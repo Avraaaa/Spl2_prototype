@@ -7,6 +7,7 @@ export type DraftErrors = Partial<Record<keyof Draft, string>>;
 export const blankDraft = (): Draft => ({
   title: '',
   description: '',
+  acceptance_criteria: '',
   request_type: 'SUPPORT',
   product: null,
   module: null,
@@ -16,6 +17,7 @@ export const blankDraft = (): Draft => ({
   expected_result: '',
   actual_result: '',
   related_request: null,
+  recurring_of: null,
 });
 
 /** Initial form values: blank for a new request, the stored values when editing. */
@@ -23,6 +25,7 @@ export function draftFromIssue(row: Issue): Draft {
   return {
     title: row.title,
     description: row.description,
+    acceptance_criteria: row.acceptance_criteria ?? '',
     request_type: row.request_type || 'SUPPORT',
     product: row.product,
     module: row.module,
@@ -32,12 +35,14 @@ export function draftFromIssue(row: Issue): Draft {
     expected_result: row.expected_result,
     actual_result: row.actual_result,
     related_request: row.related_request,
+    recurring_of: row.recurring_of,
   };
 }
 
 export const FIELD_LABEL: Partial<Record<keyof Draft, string>> = {
   title: 'Title',
   description: 'Description',
+  acceptance_criteria: 'Acceptance criteria',
   product: 'Product',
   environment: 'Environment',
   steps_to_reproduce: 'Steps to reproduce',

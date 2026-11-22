@@ -7,7 +7,7 @@ from rest_framework import serializers
 from domains.tenants.models import Organization
 
 from .roles import Role
-from .services import roles_of
+from .services import is_datasoft_admin, roles_of
 
 
 class OrganizationSummarySerializer(serializers.ModelSerializer[Organization]):
@@ -28,6 +28,7 @@ class PortalUserSerializer(serializers.ModelSerializer[User]):
     organization = OrganizationSummarySerializer(source="account.organization")
     roles = serializers.SerializerMethodField()
     must_change_password = serializers.BooleanField(source="account.must_change_password")
+    can_view_unmasked_original = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -40,6 +41,7 @@ class PortalUserSerializer(serializers.ModelSerializer[User]):
             "roles",
             "is_active",
             "must_change_password",
+            "can_view_unmasked_original",
             "last_login",
             "date_joined",
         ]
@@ -48,6 +50,10 @@ class PortalUserSerializer(serializers.ModelSerializer[User]):
     @extend_schema_field(serializers.ListField(child=serializers.ChoiceField(choices=Role.choices)))
     def get_roles(self, user: User) -> list[str]:
         return roles_of(user)
+
+    @extend_schema_field(serializers.BooleanField)
+    def get_can_view_unmasked_original(self, user: User) -> bool:
+        return is_datasoft_admin(user) or user.has_perm("issues.view_unmasked_original")
 
 
 class UserCreateSerializer(serializers.Serializer[Any]):

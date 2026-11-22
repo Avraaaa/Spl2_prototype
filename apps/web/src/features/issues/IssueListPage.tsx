@@ -36,10 +36,12 @@ const MODES: Record<ListMode, { title: string; subtitle: string; fixed: IssueFil
 export function IssueListPage({ me, mode = 'all' }: { me: PortalUser; mode?: ListMode }) {
   const config = MODES[mode];
   const staff = isStaff(me);
-  const [filters, setFilters] = useState({ status: '', request_type: '', priority: '', search: '', organization: '' });
+  const [filters, setFilters] = useState({ status: '', request_type: '', priority: '', search: '', organization: '', label: '' });
   const fixed = config.fixed;
   const issues = useIssues({ ...filters, ...fixed, status: fixed.status ?? filters.status });
   const banks = useBanks(staff);
+  const allIssues = useIssues({}, staff);
+  const labelOptions = [...new Map((allIssues.data ?? []).flatMap(issue => issue.confirmed_label ? [[issue.confirmed_label.id, issue.confirmed_label.name] as const] : [])).entries()];
   const officer = hasRole(me, 'ISSUE_OFFICER');
   const update = (name: keyof typeof filters, value: string) => setFilters(f => ({ ...f, [name]: value }));
   const showStatusFilter = mode === 'all' || mode === 'mine';
@@ -100,6 +102,12 @@ export function IssueListPage({ me, mode = 'all' }: { me: PortalUser; mode?: Lis
             </option>
           ))}
         </select>
+        {staff && labelOptions.length > 0 && (
+          <select aria-label="Confirmed label" value={filters.label} onChange={e => update('label', e.target.value)}>
+            <option value="">All labels</option>
+            {labelOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+          </select>
+        )}
       </div>
       {issues.isPending && <LoadingState label="Loading requests…" />}
       {issues.isError && <ErrorState error={issues.error} />}
@@ -115,6 +123,7 @@ export function IssueListPage({ me, mode = 'all' }: { me: PortalUser; mode?: Lis
                 <th>Type</th>
                 <th>Priority</th>
                 <th>Status</th>
+                <th>Confirmed label</th>
                 {staff && <th>Assigned to</th>}
                 <th>{mode === 'queue' ? 'Submitted' : 'Created'}</th>
               </tr>
@@ -132,6 +141,7 @@ export function IssueListPage({ me, mode = 'all' }: { me: PortalUser; mode?: Lis
                   <td>
                     <StatusBadge status={issue.status} />
                   </td>
+                  <td>{issue.confirmed_label?.name ?? '—'}</td>
                   {staff && <td>{issue.assignee_name ?? '—'}</td>}
                   <td>{formatDate((mode === 'queue' ? issue.submitted_at : issue.created_at) ?? null)}</td>
                 </tr>

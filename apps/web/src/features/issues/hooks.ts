@@ -13,6 +13,7 @@ export type IssueFilters = {
   assignee?: 'me';
   overdue?: boolean;
   ordering?: 'oldest';
+  label?: string;
 };
 
 /** Drops empty filter values so they are not sent as empty query parameters. */
@@ -20,7 +21,7 @@ export function cleanFilters(filters: IssueFilters) {
   const query: Record<string, string | number | boolean> = {};
   for (const [key, value] of Object.entries(filters)) {
     if (value === '' || value === undefined || value === false) continue;
-    query[key] = key === 'organization' ? Number(value) : value;
+    query[key] = key === 'organization' || key === 'label' ? Number(value) : value;
   }
   return query as {
     status?: string;
@@ -31,6 +32,7 @@ export function cleanFilters(filters: IssueFilters) {
     assignee?: string;
     overdue?: boolean;
     ordering?: string;
+    label?: number;
   };
 }
 

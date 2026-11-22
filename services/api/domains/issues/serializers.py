@@ -5,10 +5,16 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from domains.products.models import Module, Product
+from domains.search.models import IssueLabelSelection
 from domains.tenants.models import OrganizationKind
 from domains.tenants.selectors import authorized_rows, portal_organization
 
 from .models import Issue, IssueEvent, Priority, RequestType, WorkflowSettings
+
+
+class ConfirmedLabelSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
 
 
 class IssueEventSerializer(serializers.ModelSerializer):
@@ -51,6 +57,7 @@ class IssueSerializer(serializers.ModelSerializer):
     related_request_title = serializers.SerializerMethodField()
     recurring_of_reference = serializers.SerializerMethodField()
     recurring_of_title = serializers.SerializerMethodField()
+    confirmed_label = serializers.SerializerMethodField()
 
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_assignee_name(self, obj: Issue) -> str | None:
@@ -71,6 +78,14 @@ class IssueSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_recurring_of_title(self, obj: Issue) -> str | None:
         return obj.recurring_of.title if obj.recurring_of else None
+
+    @extend_schema_field(ConfirmedLabelSerializer(allow_null=True))
+    def get_confirmed_label(self, obj: Issue) -> dict[str, int | str] | None:
+        try:
+            selection = obj.label_selection
+        except IssueLabelSelection.DoesNotExist:
+            return None
+        return {"id": selection.label_id, "name": selection.label.name}
 
     @extend_schema_field(serializers.BooleanField)
     def get_is_overdue(self, obj: Issue) -> bool:
@@ -102,6 +117,7 @@ class IssueSerializer(serializers.ModelSerializer):
             "reference",
             "title",
             "description",
+            "acceptance_criteria",
             "request_type",
             "product",
             "module",
@@ -116,6 +132,7 @@ class IssueSerializer(serializers.ModelSerializer):
             "recurring_of",
             "recurring_of_reference",
             "recurring_of_title",
+            "confirmed_label",
             "recurring_requests",
             "organization",
             "organization_name",
@@ -145,6 +162,7 @@ class IssueSerializer(serializers.ModelSerializer):
 class IssueWriteSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=200, required=False, allow_blank=True)
     description = serializers.CharField(required=False, allow_blank=True)
+    acceptance_criteria = serializers.CharField(required=False, allow_blank=True, max_length=20000)
     request_type = serializers.ChoiceField(choices=RequestType.choices, required=False)
     product = serializers.PrimaryKeyRelatedField(
         queryset=Product.objects.filter(is_active=True), required=False, allow_null=True

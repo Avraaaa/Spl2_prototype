@@ -195,7 +195,7 @@ def visible_rows(user):
         "created_by__account",
         "related_request",
         "recurring_of",
-    ).prefetch_related("events__actor__account")
+    ).prefetch_related("events__actor__account", "label_selection__label")
     organization = portal_organization(user)
     if organization is None:
         return rows.none()
@@ -229,6 +229,7 @@ class IssueListView(APIView):
             OpenApiParameter("assignee", str),
             OpenApiParameter("overdue", bool),
             OpenApiParameter("ordering", str),
+            OpenApiParameter("label", int),
         ],
         responses=IssueSerializer(many=True),
         tags=["issues"],
@@ -248,6 +249,11 @@ class IssueListView(APIView):
         search = request.query_params.get("search", "").strip()
         if search:
             rows = rows.filter(Q(title__icontains=search) | Q(reference__icontains=search))
+        label = request.query_params.get("label")
+        if label:
+            if not label.isdigit():
+                raise ValidationError({"label": "Invalid filter."})
+            rows = rows.filter(label_selection__label_id=int(label))
         # Narrowing filters apply after tenant scoping, so they can never widen access.
         bank = request.query_params.get("organization")
         if bank:
