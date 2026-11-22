@@ -107,6 +107,7 @@ class Command(BaseCommand):
             candidates_by_tenant[issue.organization_id].append(issue)
         cutoff = timezone.now() - timedelta(days=365)
         rankings = {name: defaultdict(list) for name in ("lexical", "dense", "hybrid")}
+        hard_negative_ranks = {name: [] for name in rankings}
         labels_report = []
         tenants = {}
         cross_bank_candidates = 0
@@ -131,7 +132,9 @@ class Command(BaseCommand):
             group_peers = {
                 item["issue_id"]
                 for item in records
-                if item["tenant"] == record["tenant"] and item["group"] == record["group"]
+                if item["tenant"] == record["tenant"]
+                and item["group"] == record["group"]
+                and not item.get("hard_negative", False)
             }
             relevant_ids = group_peers - {query.pk}
             ordered = sorted(candidates, key=lambda row: row.pk)
@@ -140,6 +143,16 @@ class Command(BaseCommand):
             lexical_order = sorted(
                 range(len(ordered)), key=lambda idx: (-lexical_scores[idx], ordered[idx].pk)
             )
+            hard_negative_ids = {
+                item["issue_id"]
+                for item in records
+                if item["tenant"] == record["tenant"] and item.get("hard_negative", False)
+            }
+            hard_negative_candidates = hard_negative_ids & {row.pk for row in ordered}
+            if hard_negative_candidates:
+                hard_negative_ranks["lexical"].append(
+                    any(ordered[idx].pk in hard_negative_candidates for idx in lexical_order[:5])
+                )
             rankings["lexical"][(record["tenant"], record["language"])].append(
                 (grades, lexical_order)
             )
@@ -163,6 +176,10 @@ class Command(BaseCommand):
                 rankings["dense"][(record["tenant"], record["language"])].append(
                     (grades, dense_order)
                 )
+                if hard_negative_candidates:
+                    hard_negative_ranks["dense"].append(
+                        any(ordered[idx].pk in hard_negative_candidates for idx in dense_order[:5])
+                    )
                 rrf = {
                     idx: 1 / (60 + lexical_order.index(idx) + 1)
                     + 1 / (60 + dense_order.index(idx) + 1)
@@ -174,6 +191,10 @@ class Command(BaseCommand):
                 rankings["hybrid"][(record["tenant"], record["language"])].append(
                     (grades, hybrid_order)
                 )
+                if hard_negative_candidates:
+                    hard_negative_ranks["hybrid"].append(
+                        any(ordered[idx].pk in hard_negative_candidates for idx in hybrid_order[:5])
+                    )
             suggestions = label_suggestions(
                 title=query.title,
                 description=query.description,
@@ -206,9 +227,11 @@ class Command(BaseCommand):
         ranking_result = {}
         for mode in ("lexical", "dense", "hybrid"):
             by_variant = {}
+            variant_samples = defaultdict(list)
             all_rows = [item for samples in rankings[mode].values() for item in samples]
             for key, samples in rankings[mode].items():
                 by_variant[f"{key[0]}:{key[1]}"] = cls._rank_metrics(samples)
+                variant_samples[key[1]].extend(samples)
             if all_rows:
                 ranking_result[mode] = cls._rank_metrics(all_rows)
             elif mode == "lexical" or embedder is not None:
@@ -222,16 +245,36 @@ class Command(BaseCommand):
                     "reason": "no local embedder available",
                 }
             ranking_result[mode]["per_tenant_language"] = by_variant
+            ranking_result[mode]["per_variant"] = {
+                variant: cls._rank_metrics(samples)
+                for variant, samples in sorted(variant_samples.items())
+            }
+            negative_samples = hard_negative_ranks[mode]
+            ranking_result[mode]["hard_negatives"] = {
+                "false_positive_rate@5": round(sum(negative_samples) / len(negative_samples), 4)
+                if negative_samples
+                else 0.0,
+                "sample_count": len(negative_samples),
+            }
             if mode in {"dense", "hybrid"} and embedder is None:
                 ranking_result[mode] = {
                     "status": "SKIPPED",
                     "reason": "no local embedder available",
                     "per_tenant_language": {},
+                    "per_variant": {},
+                    "hard_negatives": {
+                        "false_positive_rate@5": 0.0,
+                        "sample_count": len(hard_negative_ranks[mode]),
+                    },
                 }
         topic_ids = {
             str(record["issue_id"]): record.get("topic", record["group"]) for record in records
         }
         topic_clusters = []
+        proposed_issue_ids = set()
+        emerging_ids = {
+            record["issue_id"] for record in records if record.get("emerging_topic_sample")
+        }
         topic_by_tenant = {}
         progress = ProgressReporter("topics", len(tenants), progress_every, log_file)
         progress.start()
@@ -242,6 +285,9 @@ class Command(BaseCommand):
             clusters = [
                 [str(issue_id) for issue_id in proposal["issue_ids"]] for proposal in proposals
             ]
+            proposed_issue_ids.update(
+                issue_id for proposal in proposals for issue_id in proposal["issue_ids"]
+            )
             topic_clusters.extend(clusters)
             topic_by_tenant[tenant] = {
                 "cluster_count": len(clusters),
@@ -250,6 +296,12 @@ class Command(BaseCommand):
             progress.item(done)
         progress.finish()
         mask_totals = {"true_positive": 0, "false_positive": 0, "false_negative": 0}
+        altered_lookalikes = []
+        sensitive_types = ("otp", "card", "account", "nid", "email", "phone")
+        mask_by_type = {
+            category: {"true_positive": 0, "false_positive": 0, "false_negative": 0}
+            for category in sensitive_types
+        }
         progress = ProgressReporter("masking", len(records), progress_every, log_file)
         progress.start()
         for done, record in enumerate(records, start=1):
@@ -258,9 +310,24 @@ class Command(BaseCommand):
             detected = {
                 category for category, marker in SENSITIVE.items() if marker in issue.description
             }
+            altered = [
+                token for token in record.get("must_not_mask", []) if token not in issue.description
+            ]
+            if altered:
+                altered_lookalikes.append({"issue_id": issue.pk, "substrings": altered})
             mask_totals["true_positive"] += len(expected & detected)
             mask_totals["false_positive"] += len(detected - expected)
             mask_totals["false_negative"] += len(expected - detected)
+            for category in sensitive_types:
+                mask_by_type[category]["true_positive"] += int(
+                    category in expected and category in detected
+                )
+                mask_by_type[category]["false_positive"] += int(
+                    category not in expected and category in detected
+                )
+                mask_by_type[category]["false_negative"] += int(
+                    category in expected and category not in detected
+                )
             progress.item(done)
         progress.finish()
         tp, fp, fn = (
@@ -270,6 +337,27 @@ class Command(BaseCommand):
             **mask_totals,
             "precision": round(tp / (tp + fp), 4) if tp + fp else 1.0,
             "recall": round(tp / (tp + fn), 4) if tp + fn else 1.0,
+            "per_type": {
+                category: {
+                    **totals,
+                    "precision": round(
+                        totals["true_positive"]
+                        / (totals["true_positive"] + totals["false_positive"]),
+                        4,
+                    )
+                    if totals["true_positive"] + totals["false_positive"]
+                    else 1.0,
+                    "recall": round(
+                        totals["true_positive"]
+                        / (totals["true_positive"] + totals["false_negative"]),
+                        4,
+                    )
+                    if totals["true_positive"] + totals["false_negative"]
+                    else 1.0,
+                }
+                for category, totals in mask_by_type.items()
+            },
+            "altered_must_not_mask": altered_lookalikes,
         }
         return {
             "dataset_revision": "p7t9-live",
@@ -278,6 +366,13 @@ class Command(BaseCommand):
             "labels": label_metrics(labels_report),
             "topics": {
                 "purity": topic_cluster_purity(topic_clusters, topic_ids),
+                "emerging_samples": len(emerging_ids),
+                "emerging_samples_proposed": len(emerging_ids & proposed_issue_ids),
+                "emerging_proposal_coverage": round(
+                    len(emerging_ids & proposed_issue_ids) / len(emerging_ids), 4
+                )
+                if emerging_ids
+                else 0.0,
                 "per_tenant": topic_by_tenant,
             },
             "masking": masking,
@@ -335,6 +430,14 @@ class Command(BaseCommand):
                     f"| {method} | {metrics['hit_rate@5']:.4f} | "
                     f"{metrics['mrr@5']:.4f} | {metrics['ndcg@5']:.4f} |"
                 )
+        lines.extend(["", "## Hard-negative ranking", ""])
+        for method, metrics in result["ranking"].items():
+            negative = metrics.get("hard_negatives", {})
+            lines.append(
+                f"{method}: false-positive rate@5 "
+                f"{negative.get('false_positive_rate@5', 0.0):.4f} "
+                f"({negative.get('sample_count', 0)} samples)."
+            )
         labels = result["labels"]
         lines.extend(
             [
@@ -346,7 +449,20 @@ class Command(BaseCommand):
                 f"abstention: {labels['abstention_rate']:.4f}.",
                 f"Masking precision: {result['masking']['precision']:.4f}; "
                 f"recall: {result['masking']['recall']:.4f}.",
+                "",
+                "| Sensitive type | Precision | Recall | TP | FP | FN |",
+                "|---|---:|---:|---:|---:|---:|",
+                *[
+                    f"| {category} | {metrics['precision']:.4f} | {metrics['recall']:.4f} | "
+                    f"{metrics['true_positive']} | {metrics['false_positive']} | "
+                    f"{metrics['false_negative']} |"
+                    for category, metrics in result["masking"]["per_type"].items()
+                ],
                 f"Topic cluster purity: {result['topics']['purity']:.4f}.",
+                f"Emerging topic proposal coverage: "
+                f"{result['topics']['emerging_proposal_coverage']:.4f} "
+                f"({result['topics']['emerging_samples_proposed']}/"
+                f"{result['topics']['emerging_samples']}).",
                 "",
             ]
         )

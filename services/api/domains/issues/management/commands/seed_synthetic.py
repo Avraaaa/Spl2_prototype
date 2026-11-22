@@ -1,6 +1,7 @@
 """Build a deterministic, clearly synthetic feature-evaluation dataset."""
 
 import json
+import random
 from datetime import timedelta
 from pathlib import Path
 
@@ -186,55 +187,48 @@ class Command(BaseCommand):
 
     def _generate(self, count, seed, progress_every=25, log_file=None):
         banks, officers, staff = self._actors()
-        product, _ = Product.objects.get_or_create(name="Synthetic Feature Lab")
-        module, _ = Module.objects.get_or_create(product=product, name="Synthetic Request Module")
-        labels = {
-            name: Label.objects.get_or_create(
-                name=name,
-                defaults={"description": f"Synthetic {name.lower()} issues", "keywords": keywords},
-            )[0]
-            for name, keywords in LABEL_KEYWORDS.items()
-        }
+        corpus, sensitive_cases = self._corpus()
+        random.Random(seed).shuffle(corpus)
+        corpus = [corpus[index % len(corpus)] for index in range(count)]
+        # Retain the legacy fixture product used by existing synthetic reset tests.
+        Product.objects.get_or_create(name="Synthetic Feature Lab")
         generated = []
         epoch = timezone.now()
         progress = ProgressReporter("generating requests", count, progress_every, log_file)
         progress.start()
+        emerging_start = max(0, count - max(3, count // 10))
         for index in range(count):
-            code = "NWD" if index % 2 == 0 else "RSD"
+            source = corpus[index]
+            # Keep every variant of one incident, including its hard negatives,
+            # in the same tenant. Stable group hashing makes the split seedable.
+            code = "NWD" if sum(source["group"].encode("utf-8")) % 2 == 0 else "RSD"
             officer = officers[code]
-            emerging_start = max(0, count - max(3, count // 10))
-            emerging = index >= emerging_start
-            group_index = (index // 5) % len(GROUPS)
-            group, label_name, phrase_a, phrase_b = GROUPS[group_index]
-            if emerging:
-                group = "emerging-passkey-traces"
-                phrase_a = "passkey audit trace"
-                phrase_b = "synthetic credential handoff telemetry is fragmented"
-            variant = VARIANTS[index % len(VARIANTS)]
-            title = f"Synthetic {phrase_a} case {index:04d}"
-            description = (
-                BANGLA_TEXT[group]
-                if variant == "Bangla"
-                else VARIANT_TEXT[variant].format(a=phrase_a, b=phrase_b)
-            )
-            category = index % 25
-            if category == 0:
-                description += " OTP 583104; contact demo.person@example.test."
-            elif category == 1:
-                description += " Test card 4111111111111111 and account 123456789012."
-            elif category == 2:
-                description += " NID 1987654321098; phone 01712345678."
-            elif category == 3:
-                description += " Txn ID 778899001122; version 2.4 and error E-4012 are lookalikes."
+            label_name = source["label"]
+            title = source["request"]["title"]
+            description = source["request"]["description"]
+            if index % 5 == 0:
+                sensitive = sensitive_cases[index % len(sensitive_cases)]
+                description = f"{description}\n{sensitive['text']}"
+            product, _ = Product.objects.get_or_create(name=source["product"])
+            module, _ = Module.objects.get_or_create(product=product, name=source["module"])
+            label = None
+            if label_name:
+                label, _ = Label.objects.get_or_create(
+                    name=label_name,
+                    defaults={
+                        "description": f"Synthetic {label_name.lower()} issues",
+                        "keywords": [],
+                    },
+                )
             issue = services.create_draft(
                 officer,
                 {
                     "title": title,
                     "description": description,
-                    "request_type": "BUG",
+                    "request_type": source["request"]["request_type"].upper(),
                     "product": product,
                     "module": module,
-                    "priority": "MEDIUM",
+                    "priority": source["request"]["priority"].upper(),
                     "environment": "Synthetic sandbox only",
                     "steps_to_reproduce": "Use synthetic account and inspect test screen.",
                     "expected_result": "Synthetic request completes.",
@@ -246,17 +240,21 @@ class Command(BaseCommand):
                 is_synthetic=True,
                 synthetic_key=key,
                 created_at=epoch
-                - timedelta(days=index - emerging_start if emerging else 365 - (index % 365)),
+                - timedelta(
+                    days=(
+                        index - emerging_start if index >= emerging_start else 365 - (index % 365)
+                    )
+                ),
             )
             issue.refresh_from_db()
             target = STATUSES[index % len(STATUSES)]
             if target != "DRAFT":
                 issue = services.submit(officer, issue, comment="Synthetic dataset submission.")
             issue = self._advance(issue, target, staff, banks[code])
-            if not emerging:
+            if label and not source["hard_negative"] and index < emerging_start:
                 IssueLabelSelection.objects.update_or_create(
                     issue=issue,
-                    defaults={"label": labels[label_name], "actor": staff},
+                    defaults={"label": label, "actor": staff},
                 )
             if index % 17 == 0:
                 create_comment(issue=issue, author=officer, body="Synthetic comment; OTP 315624.")
@@ -264,6 +262,50 @@ class Command(BaseCommand):
             progress.item(index + 1)
         progress.finish()
         return generated
+
+    @staticmethod
+    def _corpus():
+        root = Path.cwd() / "seed" / "synthetic_corpus"
+        try:
+            documents = [
+                json.loads(path.read_text(encoding="utf-8")) for path in sorted(root.glob("*.json"))
+            ]
+        except (OSError, json.JSONDecodeError) as exc:
+            raise CommandError(f"Cannot read synthetic request corpus: {exc}") from exc
+        if not documents:
+            raise CommandError(f"No synthetic request corpus files found under {root}.")
+        records = []
+        sensitive_cases = []
+        for document in documents:
+            for group in document.get("groups", []):
+                records.extend(
+                    {
+                        "group": group["group_id"],
+                        "label": group.get("label"),
+                        "product": group["product"],
+                        "module": group["module"],
+                        "request": request,
+                        "hard_negative": False,
+                        "emerging_topic": group.get("label") is None,
+                    }
+                    for request in group["requests"]
+                )
+            records.extend(
+                {
+                    "group": item["near_group"],
+                    "label": item.get("label"),
+                    "product": item["product"],
+                    "module": item["module"],
+                    "request": item,
+                    "hard_negative": True,
+                    "emerging_topic": False,
+                }
+                for item in document.get("hard_negatives", [])
+            )
+            sensitive_cases.extend(document.get("sensitive_cases", []))
+        if not records or not sensitive_cases:
+            raise CommandError("Synthetic corpus is missing requests or sensitive masking cases.")
+        return records, sensitive_cases
 
     @staticmethod
     def _advance(issue, target, staff, bank):
@@ -357,32 +399,34 @@ class Command(BaseCommand):
 
     @staticmethod
     def _manifest(rows, seed):
+        corpus, sensitive_cases = Command._corpus()
+        random.Random(seed).shuffle(corpus)
         group_rows = {}
         expected_masks = []
         must_not_mask = []
         records = []
         for index, issue in enumerate(rows):
             emerging_start = max(0, len(rows) - max(3, len(rows) // 10))
-            emerging = index >= emerging_start
-            group = "emerging-passkey-traces" if emerging else GROUPS[(index // 5) % len(GROUPS)][0]
-            variant = VARIANTS[index % len(VARIANTS)]
+            source = corpus[index % len(corpus)]
+            emerging = source.get("emerging_topic", False) or index >= emerging_start
+            group = source["group"]
+            variant = source["request"]["variant"]
             group_rows.setdefault(f"{issue.organization.code}:{group}", []).append(issue.pk)
-            categories = {
-                0: ["otp", "email"],
-                1: ["card", "account"],
-                2: ["nid", "phone"],
-                3: [],
-            }.get(index % 25, [])
+            categories = []
+            sensitive = None
+            if index % 5 == 0:
+                sensitive = sensitive_cases[index % len(sensitive_cases)]
+                categories = sorted({item["type"].lower() for item in sensitive["expected"]})
             if categories:
                 expected_masks.append({"issue_id": issue.pk, "categories": categories})
-            if index % 25 == 3:
+            if sensitive:
                 must_not_mask.append(
                     {
                         "issue_id": issue.pk,
-                        "tokens": ["Txn ID 778899001122", "error_code", "version"],
+                        "tokens": sensitive.get("must_not_mask", []),
                     }
                 )
-            expected_label = None if emerging else GROUPS[(index // 5) % len(GROUPS)][1]
+            expected_label = None if source["hard_negative"] or emerging else source["label"]
             records.append(
                 {
                     "issue_id": issue.pk,
@@ -395,6 +439,10 @@ class Command(BaseCommand):
                     "workflow_events": list(issue.events.values_list("kind", flat=True)),
                     "expected_label": expected_label,
                     "mask_categories": categories,
+                    "must_not_mask": sensitive.get("must_not_mask", []) if sensitive else [],
+                    "hard_negative": source["hard_negative"],
+                    "near_group": source["group"] if source["hard_negative"] else None,
+                    "emerging_topic_sample": emerging,
                 }
             )
         return {

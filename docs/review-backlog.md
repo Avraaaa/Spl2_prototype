@@ -139,3 +139,10 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] The outbox scrub only redacts `body` and `html` keys. Any other payload key that carries secrets would be left in place.
 - [ ] [follow-up] `_send_temporary_credential` now emails a one-time link instead of the password and discards `temporary`. I did not confirm that completing the reset clears any must-change-password flag.
 - [ ] [follow-up] CompletePasswordResetPage reads the URL with `window.location` rather than the router. This works, but the page has no component-level test for the history-stripping effect.
+
+## P7-T12 — 2026-11-22
+- [ ] [follow-up] seed_synthetic._corpus reads seed/synthetic_corpus relative to Path.cwd(), so running the command from a directory other than the repo root raises CommandError. Resolve the path from the file location or settings.BASE_DIR.
+- [ ] [follow-up] Tenant assignment uses sum of the group's UTF-8 bytes modulo 2. Groups can end up unevenly split between the two banks, and a single bank could receive nearly all groups on a small corpus. Use a stable hash instead.
+- [ ] [follow-up] The _manifest and _generate methods each reload and shuffle the corpus independently. They stay consistent only because the seed is the same. Share the shuffled corpus to avoid drift.
+- [ ] [follow-up] In compare_features, the hard-negative false-positive rate counts any hard negative in the top 5. Hard negatives belonging to a different group than the query are included, so the metric is coarse.
+- [ ] [follow-up] Masking 'detected' is computed from SENSITIVE markers in the description. It does not exercise the real masking function, so the per-type precision and recall are only as meaningful as that proxy.
