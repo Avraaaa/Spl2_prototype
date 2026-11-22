@@ -867,7 +867,7 @@
         "apps/web/src/features/issues/IssueListPage.tsx",
         "apps/web/src/features/issues/IssueDetailPage.tsx",
         "apps/web/src/features/issues/",
-        "apps/web/src/styles/"
+        "apps/web/src/style.css"
       ],
       "gates": [
         "node scripts/validate-repo.mjs",
