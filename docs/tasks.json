@@ -1001,6 +1001,40 @@
         "contact_email_placeholder is recomputed whenever contact_email is saved (blank => True).",
         "NEW tests only: payload scrubbed after send and after terminal failure; per-email throttle; reset API rejects GET token use; placeholder recompute. Do not edit existing tests."
       ]
+    },
+    {
+      "id": "P7-T13",
+      "phase": 7,
+      "title": "Load the everyday request corpus with request types and bug evidence",
+      "req": [
+        "N-06",
+        "N-08",
+        "E-01",
+        "E-05",
+        "E-09"
+      ],
+      "depends_on": [
+        "P7-T12"
+      ],
+      "allow": [
+        "services/api/domains/search/",
+        "services/api/domains/issues/management/",
+        "services/api/tests/",
+        "seed/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "seed_synthetic also loads seed/synthetic_corpus_everyday/*.json (format in its README.md: 60 groups x 5 variants = 300 requests + 30 hard negatives; group-level and request-level request_type in bug/change/feature/support; bug requests carry environment, steps_to_reproduce, expected_result, actual_result; attachments_mentioned is names only and is NOT turned into files). Map request_type, priority and the four bug evidence fields onto the existing Issue fields; non-bug requests leave them blank. Both corpora load by default; add --corpus {realistic,everyday,all} (default all). Do not edit corpus files.",
+        "Same rules as P7-T12: each group stays within one bank, deterministic by --seed, created through normal services (masking, audit, history), ground truth in the manifest (group ids, near_group, label, request_type), --skip-embeddings respected, progress logging kept.",
+        "compare_features adds a breakdown by request_type for ranking and label metrics.",
+        "NEW tests with small --count: everyday requests map request_type and bug evidence fields correctly, non-bug requests have blank evidence, --corpus filter works, groups never split across banks. Do not edit existing tests."
+      ]
     }
   ]
 }
