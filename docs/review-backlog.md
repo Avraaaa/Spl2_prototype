@@ -169,3 +169,10 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] The cache is `lru_cache(maxsize=1)` with no lock. If several first requests arrive at once while the model is not yet loaded, the model could be built more than once. This only happens if startup preloading failed. The preload at startup normally avoids it.
 - [ ] [follow-up] A failed startup load is not cached, so every later /internal/embed call retries the slow load. If the model is missing, the API's 1.5 s timeout will keep firing. Consider caching the failure for a while.
 - [ ] [follow-up] The tests use a fake SentenceTransformer, so real model loading time is not exercised. They do cover one construction across three calls, and that startup loads nothing when the model is disabled.
+
+## P8-T1 — 2026-11-23
+- [ ] [follow-up] TaskBoard.tsx and TasksPage.tsx still have very long JSX lines. The acceptance criteria asked for no 300-character JSX lines.
+- [ ] [follow-up] Dropping a card on its own column still sends a redundant PATCH with the same status. Skip the call when the status is unchanged.
+- [ ] [follow-up] The whole card wrapper is draggable, including the notes and editor inputs. Selecting text in them may start a drag. Limit dragging to a handle or the card header.
+- [ ] [follow-up] The task-column class has no drop-target highlight tied to the column being hovered. Only a generic can-drop class is applied while dragging.
+- [ ] [follow-up] rollbackTaskMove ignores its first argument and just returns the previous list. This is fine, but the helper is trivial and its test coverage is weak.

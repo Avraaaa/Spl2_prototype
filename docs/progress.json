@@ -34,7 +34,8 @@
     "P7-T13",
     "P7-T14",
     "P7-T15",
-    "P7-T16"
+    "P7-T16",
+    "P8-T1"
   ],
   "last_updated": "2026-11-23",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
@@ -651,6 +652,28 @@
         "[follow-up] The tests use a fake SentenceTransformer, so real model loading time is not exercised. They do cover one construction across three calls, and that startup loads nothing when the model is disabled."
       ],
       "rebased_onto": "3cea416f109491e783205e73f8ef2fa304870a96"
+    },
+    "P8-T1": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 1,
+      "base": "561652b71ce30f088afe5e63c6e0cae414a0238f",
+      "follow_ups": [
+        "[follow-up] TaskBoard.tsx and TasksPage.tsx still have very long JSX lines. The acceptance criteria asked for no 300-character JSX lines.",
+        "[follow-up] Dropping a card on its own column still sends a redundant PATCH with the same status. Skip the call when the status is unchanged.",
+        "[follow-up] The whole card wrapper is draggable, including the notes and editor inputs. Selecting text in them may start a drag. Limit dragging to a handle or the card header.",
+        "[follow-up] The task-column class has no drop-target highlight tied to the column being hovered. Only a generic can-drop class is applied while dragging.",
+        "[follow-up] rollbackTaskMove ignores its first argument and just returns the previous list. This is fine, but the helper is trivial and its test coverage is weak."
+      ],
+      "rebased_onto": "1d4d65467a1091982eaa65727ed3017d4b49a49b"
     }
   },
   "latest_review": "PASS"
