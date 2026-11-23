@@ -1035,6 +1035,36 @@
         "compare_features adds a breakdown by request_type for ranking and label metrics.",
         "NEW tests with small --count: everyday requests map request_type and bug evidence fields correctly, non-bug requests have blank evidence, --corpus filter works, groups never split across banks. Do not edit existing tests."
       ]
+    },
+    {
+      "id": "P7-T14",
+      "phase": 7,
+      "title": "Full-corpus seeding (790) and fast compare_features",
+      "req": [
+        "E-01",
+        "E-05",
+        "E-09"
+      ],
+      "depends_on": [
+        "P7-T13"
+      ],
+      "allow": [
+        "services/api/domains/search/",
+        "services/api/domains/issues/management/",
+        "services/api/tests/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "seed_synthetic loads every request of the selected corpora by default (realistic 460 + everyday 330 = 790 for --corpus all); --count becomes optional (omitted = full corpus) and its upper bound is raised to at least 2000. Existing behaviour for an explicit --count stays deterministic by --seed.",
+        "compare_features encodes each request at most once per run (cache vectors by issue id, or reuse stored IssueEmbedding vectors when the model id matches) instead of re-encoding all candidates per query; metrics unchanged for the same data. Full 790 run should finish in a few minutes on CPU.",
+        "NEW tests only: default count loads all records of a small fixture corpus; encoder call count is O(n) not O(n^2) (mock embedder). Do not edit existing tests."
+      ]
     }
   ]
 }
