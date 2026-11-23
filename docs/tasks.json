@@ -1065,6 +1065,40 @@
         "compare_features encodes each request at most once per run (cache vectors by issue id, or reuse stored IssueEmbedding vectors when the model id matches) instead of re-encoding all candidates per query; metrics unchanged for the same data. Full 790 run should finish in a few minutes on CPU.",
         "NEW tests only: default count loads all records of a small fixture corpus; encoder call count is O(n) not O(n^2) (mock embedder). Do not edit existing tests."
       ]
+    },
+    {
+      "id": "P7-T15",
+      "phase": 7,
+      "title": "Masking detector fixes from the 790-request comparison",
+      "req": [
+        "E-11",
+        "E-12",
+        "E-13",
+        "E-14",
+        "E-15"
+      ],
+      "depends_on": [
+        "P7-T14"
+      ],
+      "allow": [
+        "services/api/domains/issues/services.py",
+        "services/api/tests/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "Phone numbers in +8801XXXXXXXXX / 8801 / 01XXXXXXXXX form (with optional spaces or dashes) and in Bangla digits (০১৯১২৩৪৫৬৭৮) become [PHONE_NUMBER], never [CARD REDACTED].",
+        "Account numbers after account/a/c/acct/acount/hisab/হিসাব নম্বর/অ্যাকাউন্ট (ASCII or Bangla digits, 8-20 digits) become [ACCOUNT_NUMBER], never [CARD REDACTED]. [CARD REDACTED] is used only for 13-19 digit sequences that pass the Luhn check.",
+        "Transaction/order references (Txn ID 7788990011, Order no 5566778899) survive unchanged: the protection sentinel must not contain digits any detector can match.",
+        "OTP proximity masking never touches digits that are part of a reference token such as E-2210, SR-1043, v2.4.1, 12/11/2026, BDT 50,000 (digit run preceded by letters plus a hyphen, or part of a dotted/slashed/comma number).",
+        "Existing behaviour kept: OTP/PIN, email, NID and Luhn card masking still pass all existing tests.",
+        "NEW test file only (services/api/tests/test_p7_t15_masking_fixes.py): a must-mask / must-not-mask table covering every phrasing listed in docs/task-notes/P7-T15.md. Do not edit existing tests."
+      ]
     }
   ]
 }
