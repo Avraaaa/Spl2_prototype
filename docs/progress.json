@@ -33,7 +33,8 @@
     "P7-T12",
     "P7-T13",
     "P7-T14",
-    "P7-T15"
+    "P7-T15",
+    "P7-T16"
   ],
   "last_updated": "2026-11-23",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
@@ -630,6 +631,26 @@
         "[follow-up] The OTP_DIGITS lookbehinds skip digit runs like `1,2345` and `12.3456` that follow a digit and a separator, so an OTP written in that grouped form would be missed.",
         "No tenant, permission or workflow changes in the diff. The change is limited to masking in services.py plus a new test file, and all gates exited 0."
       ]
+    },
+    "P7-T16": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 1,
+      "base": "561652b71ce30f088afe5e63c6e0cae414a0238f",
+      "follow_ups": [
+        "[follow-up] The cache is `lru_cache(maxsize=1)` with no lock. If several first requests arrive at once while the model is not yet loaded, the model could be built more than once. This only happens if startup preloading failed. The preload at startup normally avoids it.",
+        "[follow-up] A failed startup load is not cached, so every later /internal/embed call retries the slow load. If the model is missing, the API's 1.5 s timeout will keep firing. Consider caching the failure for a while.",
+        "[follow-up] The tests use a fake SentenceTransformer, so real model loading time is not exercised. They do cover one construction across three calls, and that startup loads nothing when the model is disabled."
+      ],
+      "rebased_onto": "3cea416f109491e783205e73f8ef2fa304870a96"
     }
   },
   "latest_review": "PASS"

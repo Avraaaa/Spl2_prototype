@@ -164,3 +164,8 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] The reference-protection marker code is duplicated between mask_sensitive and safe_original_text. It could be factored into one helper.
 - [ ] [follow-up] The OTP_DIGITS lookbehinds skip digit runs like `1,2345` and `12.3456` that follow a digit and a separator, so an OTP written in that grouped form would be missed.
 - [ ] No tenant, permission or workflow changes in the diff. The change is limited to masking in services.py plus a new test file, and all gates exited 0.
+
+## P7-T16 — 2026-11-23
+- [ ] [follow-up] The cache is `lru_cache(maxsize=1)` with no lock. If several first requests arrive at once while the model is not yet loaded, the model could be built more than once. This only happens if startup preloading failed. The preload at startup normally avoids it.
+- [ ] [follow-up] A failed startup load is not cached, so every later /internal/embed call retries the slow load. If the model is missing, the API's 1.5 s timeout will keep firing. Consider caching the failure for a while.
+- [ ] [follow-up] The tests use a fake SentenceTransformer, so real model loading time is not exercised. They do cover one construction across three calls, and that startup loads nothing when the model is disabled.

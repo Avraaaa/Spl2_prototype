@@ -6,9 +6,11 @@ This code requires the optional requirements-model.txt environment.
 """
 
 import os
+from functools import lru_cache
 from pathlib import Path
 
 
+@lru_cache(maxsize=1)
 def load_local_sentence_transformer():
     if os.environ.get("ML_MODEL_ENABLED") != "1":
         raise RuntimeError("ML inference disabled by default")

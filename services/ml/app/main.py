@@ -1,14 +1,34 @@
 """Service boundary: ML inference is optional; do not send raw personal data here."""
 
+import logging
 import os
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
+from app.embedding import load_local_sentence_transformer
 from app.masking import mask_text
 from app.ranking import semantic_scores
 
-app = FastAPI(title="DataSoft private NLP service", docs_url=None, redoc_url=None)
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    if os.getenv("ML_MODEL_ENABLED", "0") == "1":
+        try:
+            load_local_sentence_transformer()
+        except Exception as exc:
+            # Log only the exception class; model loader errors may contain local paths.
+            logger.warning("Local embedding model unavailable at startup (%s)", type(exc).__name__)
+    yield
+
+
+app = FastAPI(
+    title="DataSoft private NLP service", docs_url=None, redoc_url=None, lifespan=lifespan
+)
 
 
 class MaskRequest(BaseModel):
@@ -75,8 +95,6 @@ def embedding_readiness() -> ReadinessResponse:
             reason="Model deliberately disabled until approved local checkpoint is pinned",
         )
     try:
-        from app.embedding import load_local_sentence_transformer
-
         load_local_sentence_transformer()
     except Exception as exc:
         return ReadinessResponse(enabled=False, reason=type(exc).__name__)
@@ -86,8 +104,6 @@ def embedding_readiness() -> ReadinessResponse:
 @app.post("/internal/embed", response_model=EmbeddingResponse, dependencies=[Depends(service_auth)])
 def embed(payload: EmbeddingRequest) -> EmbeddingResponse:
     try:
-        from app.embedding import load_local_sentence_transformer
-
         model = load_local_sentence_transformer()
         vectors = model.encode(
             [mask_text(text) for text in payload.texts], normalize_embeddings=True
