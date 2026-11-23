@@ -152,3 +152,9 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] The `request.get("request_type", "bug")` default in _corpus silently labels any untyped record as bug. A malformed corpus file would be mislabelled rather than rejected.
 - [ ] [follow-up] When the corpus has no sensitive_cases (for example `--corpus everyday` if the files lack them), the masking evidence is skipped silently. The report does not say masking was not exercised.
 - [ ] No blocking defects found: there are no tenant or permission changes, request_type uses valid uppercase RequestType values, no migration is needed, scope is limited to seeding and the compare_features breakdown, and the new tests are in a new file. I reviewed the diff, the corpus format and the test names. I did not run the tests, and relied on the supplied gate results (all exit 0).
+
+## P7-T14 — 2026-11-23
+- [ ] [follow-up] _compare ranks candidates from every issue in `issues`, but vectors are encoded only for manifest `records`. If `issues` ever holds an issue that isn't in the manifest, `vectors_by_issue[ordered[idx].pk]` raises KeyError. This is unlikely if `issues` is built from the records. Consider encoding over `issues.values()`.
+- [ ] [follow-up] Tests are shallow. They check the argparse default and a mocked batch encode. No test confirms that dense rankings and metrics are identical to the old per-query encoding. No test runs seed_synthetic end-to-end at 790 records or exercises the new 2000 cap.
+- [ ] [follow-up] The `--count` cap was raised from 500 to 2000, but the corpus is 790 records. A count above the corpus size may be handled by the existing generator code, and no test covers it.
+- [ ] [follow-up] Every passage and query text is encoded in one embedder.encode call. At 790 records that is about 1580 inputs, which may use a lot of memory. Batching would be safer.

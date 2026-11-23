@@ -31,7 +31,8 @@
     "P7-T11",
     "P3-T3b",
     "P7-T12",
-    "P7-T13"
+    "P7-T13",
+    "P7-T14"
   ],
   "last_updated": "2026-11-23",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
@@ -587,6 +588,26 @@
         "[follow-up] The `request.get(\"request_type\", \"bug\")` default in _corpus silently labels any untyped record as bug. A malformed corpus file would be mislabelled rather than rejected.",
         "[follow-up] When the corpus has no sensitive_cases (for example `--corpus everyday` if the files lack them), the masking evidence is skipped silently. The report does not say masking was not exercised.",
         "No blocking defects found: there are no tenant or permission changes, request_type uses valid uppercase RequestType values, no migration is needed, scope is limited to seeding and the compare_features breakdown, and the new tests are in a new file. I reviewed the diff, the corpus format and the test names. I did not run the tests, and relied on the supplied gate results (all exit 0)."
+      ]
+    },
+    "P7-T14": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 4,
+      "base": "33db4d90cdf0d275de20b34ef68e17c521473e77",
+      "follow_ups": [
+        "[follow-up] _compare ranks candidates from every issue in `issues`, but vectors are encoded only for manifest `records`. If `issues` ever holds an issue that isn't in the manifest, `vectors_by_issue[ordered[idx].pk]` raises KeyError. This is unlikely if `issues` is built from the records. Consider encoding over `issues.values()`.",
+        "[follow-up] Tests are shallow. They check the argparse default and a mocked batch encode. No test confirms that dense rankings and metrics are identical to the old per-query encoding. No test runs seed_synthetic end-to-end at 790 records or exercises the new 2000 cap.",
+        "[follow-up] The `--count` cap was raised from 500 to 2000, but the corpus is 790 records. A count above the corpus size may be handled by the existing generator code, and no test covers it.",
+        "[follow-up] Every passage and query text is encoded in one embedder.encode call. At 790 records that is about 1580 inputs, which may use a lot of memory. Batching would be safer."
       ]
     }
   },

@@ -100,6 +100,29 @@ class Command(BaseCommand):
     def _load_embedder(path):
         return _load_embedder(path)
 
+    @staticmethod
+    def _encode_issue_vectors(records, issues, embedder):
+        """Encode each manifest issue as a query and passage in one batch."""
+        issue_ids = [record["issue_id"] for record in records]
+        inputs = [
+            encoded_text
+            for issue_id in issue_ids
+            for encoded_text in (
+                embedding_input(
+                    query_text(f"{issues[issue_id].title}\n{issues[issue_id].description}")
+                ),
+                embedding_input(
+                    passage_text(f"{issues[issue_id].title}\n{issues[issue_id].description}")
+                ),
+            )
+        ]
+        encoded = embedder.encode(inputs, normalize_embeddings=True)
+        vectors = encoded.tolist() if hasattr(encoded, "tolist") else encoded
+        return {
+            issue_id: (vectors[index * 2], vectors[index * 2 + 1])
+            for index, issue_id in enumerate(issue_ids)
+        }
+
     @classmethod
     def _compare(cls, records, issues, embedder, progress_every=25, log_file=None):
         candidates_by_tenant = defaultdict(list)
@@ -113,6 +136,9 @@ class Command(BaseCommand):
         tenants = {}
         cross_bank_candidates = 0
         labels = list(Label.objects.filter(is_active=True).order_by("pk"))
+        vectors_by_issue = (
+            cls._encode_issue_vectors(records, issues, embedder) if embedder is not None else {}
+        )
         progress = ProgressReporter(
             "ranking lexical and dense", len(records), progress_every, log_file
         )
@@ -160,19 +186,18 @@ class Command(BaseCommand):
             request_type = record.get("request_type", query.request_type or "unknown")
             rankings_by_type["lexical"][request_type].append((grades, lexical_order))
             if embedder is not None and ordered:
-                inputs = [
-                    embedding_input(query_text(f"{query.title}\n{query.description}")),
-                    *(
-                        embedding_input(passage_text(f"{row.title}\n{row.description}"))
-                        for row in ordered
-                    ),
-                ]
-                encoded = embedder.encode(inputs, normalize_embeddings=True)
-                vectors = encoded.tolist() if hasattr(encoded, "tolist") else encoded
+                query_vector = vectors_by_issue[query.pk][0]
                 dense_order = sorted(
                     range(len(ordered)),
                     key=lambda idx: (
-                        -sum(a * b for a, b in zip(vectors[0], vectors[idx + 1], strict=True)),
+                        -sum(
+                            a * b
+                            for a, b in zip(
+                                query_vector,
+                                vectors_by_issue[ordered[idx].pk][1],
+                                strict=True,
+                            )
+                        ),
                         ordered[idx].pk,
                     ),
                 )

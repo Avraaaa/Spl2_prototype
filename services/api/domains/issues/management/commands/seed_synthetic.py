@@ -80,7 +80,7 @@ class Command(BaseCommand):
     help = "Create deterministic synthetic requests for live feature comparison."
 
     def add_arguments(self, parser):
-        parser.add_argument("--count", type=int, default=400)
+        parser.add_argument("--count", type=int)
         parser.add_argument("--seed", type=int, default=20261122)
         parser.add_argument("--manifest", default="seed/p7t9_synthetic_manifest.json")
         parser.add_argument("--reset", action="store_true")
@@ -99,10 +99,12 @@ class Command(BaseCommand):
         if not settings.DEBUG and not options["allow"]:
             raise CommandError("seed_synthetic requires DEBUG or the explicit --allow flag.")
         count = options["count"]
+        if count is None:
+            count = self._default_count(options["corpus"])
         if options["progress_every"] < 1:
             raise CommandError("--progress-every must be positive")
-        if count < 2 or count > 500:
-            raise CommandError("--count must be between 2 and 500.")
+        if count < 2 or count > 2000:
+            raise CommandError("--count must be between 2 and 2000.")
         manifest_path = Path(options["manifest"])
         if not manifest_path.is_absolute():
             manifest_path = Path.cwd() / manifest_path
@@ -280,6 +282,10 @@ class Command(BaseCommand):
             progress.item(index + 1)
         progress.finish()
         return generated
+
+    @staticmethod
+    def _default_count(corpus_kind):
+        return len(Command._corpus(corpus_kind)[0])
 
     @staticmethod
     def _corpus(corpus_kind="all"):
