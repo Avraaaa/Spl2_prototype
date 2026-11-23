@@ -3,6 +3,22 @@
 Last updated: 2026-11-24 04:00 (local).  Owner: sole author of every commit (no co-author trailers).
 Next session: read this file, then `learning.md`, then continue at **Next steps**.
 
+## Roles (who does what)
+- **You, the AI reading this file (Claude Code, main session) = supervisor/orchestrator.** You do NOT write product code. You:
+  pick the next task, write its entry in `docs/tasks.json` + `implementation.md` (+ a note in `docs/task-notes/` if needed),
+  launch coders through the runner, watch the logs, diagnose failures, resume blocked tasks, run measurements
+  (`compare_features`, test suites), verify features yourself in the browser (Claude in Chrome) as each role,
+  update `docs/traceability.csv`, `learning.md` and this file, and commit docs/config as the owner (no AI attribution).
+  You may edit only files the runner freezes for coders (tasks.json, implementation.md, traceability.csv, learning.md,
+  scripts/dev.mjs, docs/task-notes/, progress.md) and anchor comments that coordinate parallel tasks.
+- **Coder = Codex `gpt-6-luna`, medium effort**, launched only via `scripts/agent-runner.mjs`, one task per call, at most 2 in parallel.
+  It writes code and new tests; it cannot run Python in its sandbox; the runner runs the gates.
+- **Reviewer = Claude Sonnet, medium effort**, run automatically by the runner (read-only). It fails only on blocking defects;
+  everything else goes to `docs/review-backlog.md` as follow-ups.
+- **Research / side jobs = a Sonnet subagent at low effort** (or luna at medium), e.g. the paper study in `papers/NOTES.md`.
+- **Opus**: only for phase architecture or a real blocker, sparingly.
+- **Owner (human)**: makes product decisions, approves model downloads and anything outward-facing; is sole Git author.
+
 ## How work is done
 - Claude orchestrates and verifies; **luna (Codex `gpt-6-luna`, medium effort)** writes code through the runner:
   `DATASOFT_CODER=codex DATASOFT_CODER_MODEL=gpt-6-luna DATASOFT_CODER_EFFORT=medium DATASOFT_RETRY_EFFORT=medium POSTGRES_TEST_DB=test_datasoft_<task> node scripts/agent-runner.mjs --task <ID>`
