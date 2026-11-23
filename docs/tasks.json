@@ -1162,6 +1162,169 @@
         "Readable code: split into TaskBoard.tsx, TaskCard.tsx, TaskList.tsx and a pure helpers module (no 300-character JSX lines). Keep the existing exported editDraftFor/editBodyFor in TasksPage.tsx working because tasks.observers.test.ts imports them.",
         "NEW vitest file apps/web/src/features/tasks/taskBoard.test.ts covering the pure helpers: grouping by status, filter logic, optimistic move and rollback. Do not edit existing tests."
       ]
+    },
+    {
+      "id": "P8-T2",
+      "phase": 8,
+      "title": "Audit log viewer for administrators",
+      "req": [
+        "E-16",
+        "E-17",
+        "E-18",
+        "EX-06",
+        "EX-02"
+      ],
+      "depends_on": [
+        "P7-T15"
+      ],
+      "allow": [
+        "services/api/domains/audit/",
+        "services/api/tests/",
+        "apps/web/src/features/audit/",
+        "apps/web/src/app/App.tsx",
+        "apps/web/src/features/tenants/AdminFrame.tsx",
+        "apps/web/src/features/auth/nav.ts"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "GET /api/audit/records/ (DATASOFT_ADMIN only; everyone else 403) returns AuditRecord rows newest first, paginated (page size 50, max 200), with id, organization {id,name,code}, sequence, created_at, actor {id, full name}, action, a human summary built server-side from payload (for example request reference plus from/to status), record_hash and previous_hash. Filters: organization, action (exact; plus GET /api/audit/actions/ listing distinct actions), actor, date_from, date_to, q (request reference or text in the summary). Read-only: no create/update/delete routes; AuditRecord stays append-only.",
+        "GET /api/audit/records/csv/ exports the filtered rows with the same permission and is formula-injection safe (cells starting with = + - @ are prefixed with a quote).",
+        "Admin page /admin/audit, section \"Audit log\": filter bar; table with time, bank, actor, action chip, summary linking to the request, sequence, shortened hash; a chain-integrity banner per bank using the existing /api/audit/verify/ (Intact, or Broken at sequence N); Export CSV button. Put page CSS in apps/web/src/features/audit/audit.css imported by the page; do NOT edit style.css.",
+        "Use ONLY the P8-T2 ANCHOR comment lines in the shared files (App.tsx, AdminFrame.tsx, nav.ts); replace the anchor line with your code and do not touch any other line of those files, because another task runs in parallel.",
+        "NEW tests: services/api/tests/test_p8_t2_audit_log.py (admin sees records of both banks; support agent, bank officer and verifier get 403; filters; pagination; CSV escaping; write methods rejected) and apps/web/src/features/audit/auditLog.test.ts for pure helpers. Do not edit existing tests."
+      ]
+    },
+    {
+      "id": "P8-T3",
+      "phase": 8,
+      "title": "Custom colours for labels, request types, statuses and products",
+      "req": [
+        "E-05",
+        "E-07",
+        "N-05",
+        "EX-10"
+      ],
+      "depends_on": [
+        "P7-T15"
+      ],
+      "allow": [
+        "services/api/domains/search/",
+        "services/api/domains/products/",
+        "services/api/domains/issues/",
+        "services/api/tests/",
+        "apps/web/src/features/ui/",
+        "apps/web/src/features/tenants/",
+        "apps/web/src/features/issues/",
+        "apps/web/src/features/dashboard/",
+        "apps/web/src/app/App.tsx",
+        "apps/web/src/features/tenants/AdminFrame.tsx",
+        "apps/web/src/features/auth/nav.ts"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "Data: Label.color and Product.color (hex #RRGGBB, validated, sensible defaults via migration), and a new DisplayColor model (kind in {request_type, status}, key = the existing enum value, color) seeded by a data migration with defaults for every request type (BUG, CHANGE, FEATURE, SUPPORT) and every issue status. Invalid hex or unknown key returns 400.",
+        "API: GET /api/display-colors/ for any authenticated user returns {labels:{id:color}, products:{id:color}, request_types:{KEY:color}, statuses:{KEY:color}} (active labels/products only; no tenant data). Only DATASOFT_ADMIN can change colours: the existing label and product admin endpoints accept color, and PUT /api/display-colors/{kind}/{key}/ sets type/status colours.",
+        "UI: admin page /admin/colors, section \"Colours\", with a native input type=color plus a hex text box and a live preview chip for every label, product, request type and status. A shared ColorChip component and useDisplayColors() hook in apps/web/src/features/ui/ render coloured chips with automatic black or white text meeting WCAG AA contrast; use them for status, type, label and product in the issue list and queue tables, the issue detail header and the dashboard cards. Put CSS in apps/web/src/features/ui/colors.css imported by ColorChip; do NOT edit style.css.",
+        "Use ONLY the P8-T3 ANCHOR comment lines in the shared files (App.tsx, AdminFrame.tsx, nav.ts); replace the anchor line with your code and do not touch any other line of those files, because another task runs in parallel.",
+        "NEW tests: services/api/tests/test_p8_t3_colors.py (defaults present; admin can change; support agent and bank users get 403 on change; invalid hex 400; GET readable by bank users without leaking other data) and apps/web/src/features/ui/colors.test.ts (contrast helper, fallback colour for a missing key). Do not edit existing tests."
+      ]
+    },
+    {
+      "id": "P8-T4",
+      "phase": 8,
+      "title": "Custom workflow sub-stages and a drag-and-drop request board",
+      "req": [
+        "N-12",
+        "N-13",
+        "N-16",
+        "N-19",
+        "EX-06",
+        "EX-07",
+        "EX-11",
+        "E-16"
+      ],
+      "depends_on": [
+        "P8-T3"
+      ],
+      "allow": [
+        "services/api/domains/issues/",
+        "services/api/domains/workflow/",
+        "services/api/domains/audit/",
+        "services/api/tests/",
+        "apps/web/src/features/issues/",
+        "apps/web/src/features/workflow/",
+        "apps/web/src/features/board/",
+        "apps/web/src/features/tenants/",
+        "apps/web/src/app/App.tsx",
+        "apps/web/src/features/tenants/AdminFrame.tsx",
+        "apps/web/src/features/auth/nav.ts"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "Owner decision 2026-11-24: custom workflow means administrator-defined SUB-STAGES inside the locked QFD lifecycle; request statuses and their allowed transitions do not change. New model WorkflowStage(status = an existing issue status, name, color hex, order, is_active), unique (status, name). Issue gets a nullable stage foreign key. DATASOFT_ADMIN manages stages via /api/workflow/stages/ (create, rename, recolour, reorder, deactivate; deleting a stage in use deactivates it). Support agents can read stages; bank users never see internal stage names, only the parent status.",
+        "Staff (Support Agent or Admin) set a request stage with POST /api/issues/{id}/stage/ {stage, version}: the stage must belong to the request current status, the existing optimistic version check applies (409 when stale), and an IssueEvent plus an audit record are appended in the SAME transaction as the change. Every status transition clears the stage or sets the first active stage of the new status, recorded in the same event.",
+        "Request board page /board for staff (route and console nav at the P8-T4 anchors): one column per status DataSoft works on (Submitted, Accepted, Pending, In progress, Awaiting verification) with sub-stage groups inside a column, coloured with useDisplayColors() and ColorChip from P8-T3. Native HTML5 drag and drop: dropping within a status changes the stage; dropping onto another status column calls the EXISTING transition endpoint only when that transition is valid for this user, otherwise the target is disabled and shows why; transitions that need input (reject reason, tentative date, delivery note) open the existing form instead of moving silently. Optimistic update with rollback. Filters: bank, assignee, priority, type, label. Keyboard alternative: a stage/status select on each card.",
+        "Admin page /admin/stages (P8-T4 admin section anchor): stages grouped by status; add, rename, recolour, reorder with up/down buttons, deactivate.",
+        "Use ONLY the P8-T4 ANCHOR comment lines in the shared files (App.tsx, AdminFrame.tsx, nav.ts); replace the anchor line with your code and do not touch any other line of those files, because another task runs in parallel.",
+        "NEW tests: services/api/tests/test_p8_t4_stages.py (stage must match status; a transition clears or resets the stage; audit and event appended atomically; 409 on stale version; bank users cannot read stage names; a support agent cannot manage stages; tenant isolation with two banks) and apps/web/src/features/board/board.test.ts (grouping, allowed-drop logic). Do not edit existing tests."
+      ]
+    },
+    {
+      "id": "P8-T5",
+      "phase": 8,
+      "title": "Analytics dashboard modelled on service-desk and Kanban tools",
+      "req": [
+        "N-23",
+        "N-24",
+        "N-25",
+        "E-09",
+        "EX-02",
+        "EX-10"
+      ],
+      "depends_on": [
+        "P8-T3"
+      ],
+      "allow": [
+        "services/api/domains/reports/",
+        "services/api/tests/",
+        "apps/web/src/features/analytics/",
+        "apps/web/src/app/App.tsx",
+        "apps/web/src/features/tenants/AdminFrame.tsx",
+        "apps/web/src/features/auth/nav.ts"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "Metrics chosen from Jira Service Management (created vs resolved, time to resolution, SLA met vs breached), Zendesk and Freshdesk (first response time, backlog, reopen rate) and Kanban tools (cumulative flow, cycle time, throughput, aging WIP). GET /api/reports/analytics/?date_from&date_to&bank&product&request_type (default range: current year) is computed server-side from Issue and IssueEvent with the SAME tenant scoping as the existing reports: bank users see only their bank and the bank filter is ignored for them; staff see all banks or the selected one.",
+        "It returns: (1) created vs closed per week and open backlog per week; (2) first response time (submitted to accepted or rejected) and time to resolution (submitted to closed) as median, p90 and average, overall and by priority and request type; (3) delivered on time vs late against the tentative delivery date, and response-due met vs breached; (4) reopen rate and verification-failed rate; (5) cumulative flow: daily count per status; (6) cycle time (in progress to delivered) per closed request for a scatter plot; (7) throughput per week; (8) aging WIP: open requests with days in current status, flagged above the 85th percentile for that status; (9) distribution by status, type, priority, label, product and, for staff only, bank; (10) workload per assignee (staff only); (11) suggestion acceptance rates from the existing evaluation data (staff only).",
+        "Analytics page /analytics for staff and bank users (route and nav at the P8-T5 anchors): KPI tiles (open backlog, median first response, median resolution, on-time delivery %, reopen rate) followed by charts. NO new npm dependencies (package.json and the lockfile are frozen): build small reusable inline-SVG chart components in apps/web/src/features/analytics/charts/ (line/area, stacked area for the cumulative flow, bar, stacked bar, scatter) with axes, a legend, tooltips on hover and keyboard focus, and a visually hidden data table for screen readers. Colours for statuses, types and labels come from useDisplayColors() (P8-T3). Usable at 360px width. Filter bar: date range, bank (staff only), product, type. Put CSS in apps/web/src/features/analytics/analytics.css; do NOT edit style.css.",
+        "Performance: aggregate queries rather than per-request Python loops wherever possible; the endpoint answers in under 1 second on the 790-request synthetic dataset.",
+        "Use ONLY the P8-T5 ANCHOR comment lines in the shared files (App.tsx, AdminFrame.tsx, nav.ts); replace the anchor line with your code and do not touch any other line of those files, because another task runs in parallel.",
+        "NEW tests: services/api/tests/test_p8_t5_analytics.py (each metric on a small hand-built fixture with known answers; a bank user sees only their own bank even with bank=<other>; staff-only sections absent for bank users; an empty range returns zeros without errors) and apps/web/src/features/analytics/analytics.test.ts (scales, percentile helper, data-to-path). Do not edit existing tests."
+      ]
     }
   ]
 }
