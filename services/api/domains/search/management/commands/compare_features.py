@@ -1,5 +1,6 @@
 """Compare live, tenant-scoped suggestions with the synthetic ground-truth manifest."""
 
+import hashlib
 import json
 import os
 import re
@@ -19,6 +20,13 @@ from domains.search.evaluation import (
     ndcg_at_k,
     reciprocal_rank,
     topic_cluster_purity,
+)
+from domains.search.fusion import (
+    alpha_for,
+    bangla_ratio,
+    fuse,
+    normalise_dense,
+    normalise_lexical,
 )
 from domains.search.models import IssueLabelSelection, Label
 from domains.search.progress import ProgressReporter
@@ -58,6 +66,7 @@ class Command(BaseCommand):
         parser.add_argument("--embedder-path", default=os.getenv("ML_MODELS_DIR"))
         parser.add_argument("--progress-every", type=int, default=25)
         parser.add_argument("--log-file")
+        parser.add_argument("--fusion-alphas")
 
     def handle(self, *args, **options):
         root = Path.cwd()
@@ -85,7 +94,12 @@ class Command(BaseCommand):
         if options["progress_every"] < 1:
             raise CommandError("--progress-every must be positive")
         result = self._compare(
-            records, issues, embedder, options["progress_every"], options["log_file"]
+            records,
+            issues,
+            embedder,
+            options["progress_every"],
+            options["log_file"],
+            fusion_alphas=options["fusion_alphas"],
         )
         output = Path(options["output"])
         if not output.is_absolute():
@@ -124,7 +138,9 @@ class Command(BaseCommand):
         }
 
     @classmethod
-    def _compare(cls, records, issues, embedder, progress_every=25, log_file=None):
+    def _compare(
+        cls, records, issues, embedder, progress_every=25, log_file=None, fusion_alphas=None
+    ):
         candidates_by_tenant = defaultdict(list)
         for issue in issues.values():
             candidates_by_tenant[issue.organization_id].append(issue)
@@ -133,6 +149,7 @@ class Command(BaseCommand):
         rankings_by_type = {name: defaultdict(list) for name in rankings}
         hard_negative_ranks = {name: [] for name in rankings}
         labels_report = []
+        fusion_samples = []
         tenants = {}
         cross_bank_candidates = 0
         labels = list(Label.objects.filter(is_active=True).order_by("pk"))
@@ -209,13 +226,27 @@ class Command(BaseCommand):
                     hard_negative_ranks["dense"].append(
                         any(ordered[idx].pk in hard_negative_candidates for idx in dense_order[:5])
                     )
-                rrf = {
-                    idx: 1 / (60 + lexical_order.index(idx) + 1)
-                    + 1 / (60 + dense_order.index(idx) + 1)
-                    for idx in range(len(ordered))
-                }
+                lexical_by_index = dict(
+                    zip(range(len(ordered)), normalise_lexical(lexical_scores), strict=True)
+                )
+                similarities = [
+                    sum(
+                        a * b
+                        for a, b in zip(
+                            vectors_by_issue[query.pk][0],
+                            vectors_by_issue[row.pk][1],
+                            strict=True,
+                        )
+                    )
+                    for row in ordered
+                ]
+                dense_by_index = dict(
+                    zip(range(len(ordered)), normalise_dense(similarities), strict=True)
+                )
+                query_text_value = f"{query.title} {query.description}"
+                hybrid_scores = fuse(lexical_by_index, dense_by_index, alpha_for(query_text_value))
                 hybrid_order = sorted(
-                    range(len(ordered)), key=lambda idx: (-rrf[idx], ordered[idx].pk)
+                    range(len(ordered)), key=lambda idx: (-hybrid_scores[idx], ordered[idx].pk)
                 )
                 rankings["hybrid"][(record["tenant"], record["language"])].append(
                     (grades, hybrid_order)
@@ -225,6 +256,18 @@ class Command(BaseCommand):
                     hard_negative_ranks["hybrid"].append(
                         any(ordered[idx].pk in hard_negative_candidates for idx in hybrid_order[:5])
                     )
+                fusion_samples.append(
+                    {
+                        "key": query.synthetic_key or str(query.pk),
+                        "text": query_text_value,
+                        "grades": grades,
+                        "lexical": lexical_by_index,
+                        "dense": dense_by_index,
+                        "ids": list(range(len(ordered))),
+                        "candidate_ids": [row.pk for row in ordered],
+                        "hard_negative_ids": hard_negative_candidates,
+                    }
+                )
             suggestions = label_suggestions(
                 title=query.title,
                 description=query.description,
@@ -398,7 +441,7 @@ class Command(BaseCommand):
             },
             "altered_must_not_mask": altered_lookalikes,
         }
-        return {
+        result = {
             "dataset_revision": "p7t9-live",
             "sample_count": len(records),
             "ranking": ranking_result,
@@ -425,6 +468,75 @@ class Command(BaseCommand):
             "masking": masking,
             "tenant_isolation": {"cross_bank_candidates": cross_bank_candidates},
         }
+        if fusion_alphas is not None and embedder is not None:
+            try:
+                alphas = sorted(
+                    {min(1.0, max(0.0, float(value.strip()))) for value in fusion_alphas.split(",")}
+                )
+            except ValueError as exc:
+                raise CommandError(
+                    "--fusion-alphas must be a comma-separated list of numbers"
+                ) from exc
+            if not alphas:
+                raise CommandError("--fusion-alphas must include at least one alpha")
+            result["fusion_alpha_sweep"] = cls._alpha_sweep(fusion_samples, alphas)
+        elif fusion_alphas is not None:
+            result["fusion_alpha_sweep"] = {
+                "status": "SKIPPED",
+                "reason": "no local embedder available",
+            }
+        return result
+
+    @staticmethod
+    def _evaluation_split(issue_key):
+        digest = hashlib.sha256(str(issue_key).encode("utf-8")).hexdigest()
+        return "tune" if int(digest, 16) % 2 == 0 else "holdout"
+
+    @classmethod
+    def _alpha_sweep(cls, samples, alphas):
+        reports = {}
+        for setting in ("default", "bangla"):
+            alpha_results = {}
+            for alpha in alphas:
+                halves = {"tune": [], "holdout": []}
+                hard_negatives = {"tune": [], "holdout": []}
+                for sample in samples:
+                    selected_alpha = (
+                        alpha
+                        if (bangla_ratio(sample["text"]) >= 0.5) == (setting == "bangla")
+                        else alpha_for(sample["text"])
+                    )
+                    scores = fuse(sample["lexical"], sample["dense"], selected_alpha)
+                    order = sorted(
+                        sample["ids"],
+                        key=lambda index: (-scores[index], sample["candidate_ids"][index]),
+                    )
+                    split = cls._evaluation_split(sample["key"])
+                    halves[split].append((sample["grades"], order))
+                    negatives = sample["hard_negative_ids"]
+                    if negatives:
+                        hard_negatives[split].append(
+                            any(sample["candidate_ids"][index] in negatives for index in order[:5])
+                        )
+                alpha_results[str(alpha)] = {
+                    half: {
+                        **cls._rank_metrics(halves[half]),
+                        "hard_negative_fp@5": round(
+                            sum(hard_negatives[half]) / len(hard_negatives[half]), 4
+                        )
+                        if hard_negatives[half]
+                        else 0.0,
+                    }
+                    for half in ("tune", "holdout")
+                }
+            best = max(alphas, key=lambda value: alpha_results[str(value)]["tune"]["mrr@5"])
+            reports[setting] = {
+                "alpha_results": alpha_results,
+                "selected_alpha": best,
+                "tune": alpha_results[str(best)]["tune"],
+                "holdout": alpha_results[str(best)]["holdout"],
+            }
+        return {"split": "sha256(issue key) parity", **reports}
 
     @staticmethod
     def _overlap(query, candidate):

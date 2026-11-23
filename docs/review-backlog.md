@@ -184,3 +184,9 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] The 'ordering' query parameter used in the test is ignored by the view, so that test does not exercise ordering.
 - [ ] [follow-up] The 'Export CSV' link is a plain anchor with query-string filters. It is backed by a real endpoint, but it does not surface errors (for example, a 400 on a bad date).
 - [ ] [follow-up] Tests do not cover tamper detection (an invalid chain showing valid=false) or invalid date filters.
+
+## P9-T1 — 2026-11-23
+- [ ] [follow-up] normalise_lexical maps all-tied or single-candidate lexical scores to 0.0. With SEARCH_MIN_RELEVANCE=0, a lone lexical match is still returned but its displayed score is 0. A lexical-only fallback, where alpha is 0 because ML is offline, can therefore show a score of 0 for a genuine match. Consider mapping ties to 1.0 when the raw score is positive.
+- [ ] [follow-up] Dense scores are (cosine+1)/2, so the fused score scale differs from the old RRF scale. Any deployment that tuned SEARCH_MIN_RELEVANCE against RRF values needs retuning.
+- [ ] [follow-up] The alpha sweep in compare_features is selected on the tune half of a sha256 parity split and reported on the holdout half. The split is deterministic, but both halves come from the same synthetic set, so there is no external validation.
+- [ ] [follow-up] Tenant scoping, the query paths and the DB writes are untouched. The diff only changes scoring, so there are no tenant, permission or workflow regressions. All five gates passed.

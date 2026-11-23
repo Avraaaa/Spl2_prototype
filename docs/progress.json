@@ -36,7 +36,8 @@
     "P7-T15",
     "P7-T16",
     "P8-T1",
-    "P8-T2"
+    "P8-T2",
+    "P9-T1"
   ],
   "last_updated": "2026-11-23",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
@@ -698,6 +699,27 @@
         "[follow-up] Tests do not cover tamper detection (an invalid chain showing valid=false) or invalid date filters."
       ],
       "rebased_onto": "a62444adea05e07ada63c1d3343330c1d1127806"
+    },
+    "P9-T1": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 1,
+      "base": "8ff77a8961c8d7888513e74b73bf81095ab29250",
+      "follow_ups": [
+        "[follow-up] normalise_lexical maps all-tied or single-candidate lexical scores to 0.0. With SEARCH_MIN_RELEVANCE=0, a lone lexical match is still returned but its displayed score is 0. A lexical-only fallback, where alpha is 0 because ML is offline, can therefore show a score of 0 for a genuine match. Consider mapping ties to 1.0 when the raw score is positive.",
+        "[follow-up] Dense scores are (cosine+1)/2, so the fused score scale differs from the old RRF scale. Any deployment that tuned SEARCH_MIN_RELEVANCE against RRF values needs retuning.",
+        "[follow-up] The alpha sweep in compare_features is selected on the tune half of a sha256 parity split and reported on the holdout half. The split is deterministic, but both halves come from the same synthetic set, so there is no external validation.",
+        "[follow-up] Tenant scoping, the query paths and the DB writes are untouched. The diff only changes scoring, so there are no tenant, permission or workflow regressions. All five gates passed."
+      ],
+      "rebased_onto": "aa259f30db6881093acfc0935b8cf0dab21585b2"
     }
   },
   "latest_review": "PASS"

@@ -28,6 +28,7 @@ from .embeddings import (
     embedding_input,
     query_text,
 )
+from .fusion import alpha_for, fuse, normalise_dense, normalise_lexical
 from .models import IssueLabelSelection, Label, LabelConfidenceThreshold, TopicProposal
 
 TOKEN = re.compile(r"[\w\u0980-\u09ff]{2,}", re.UNICODE)
@@ -68,14 +69,6 @@ def _ml_embeddings(texts: list[str]) -> list[list[float]] | None:
         return [[float(value) for value in vector] for vector in vectors]
     except (OSError, URLError, ValueError, TypeError, KeyError):
         return None
-
-
-def _rrf(ranks: list[dict[int, int]], *, k: int = 60) -> dict[int, float]:
-    fused: dict[int, float] = {}
-    for ranking in ranks:
-        for issue_id, rank in ranking.items():
-            fused[issue_id] = fused.get(issue_id, 0.0) + (1 / (k + rank))
-    return fused
 
 
 def candidate_suggestions(
@@ -122,9 +115,12 @@ def candidate_suggestions(
             lexical.append((score, issue))
     lexical.sort(key=lambda item: (-item[0], -item[1].pk))
     lexical = lexical[:40]
-    lexical_rank = {issue.pk: rank for rank, (_, issue) in enumerate(lexical, start=1)}
+    lexical_scores = normalise_lexical([score for score, _ in lexical])
+    lexical_by_id = {
+        issue.pk: score for score, (_, issue) in zip(lexical_scores, lexical, strict=True)
+    }
 
-    semantic_rank: dict[int, int] = {}
+    semantic_scores: dict[int, float] = {}
     semantic_candidates: list[Issue] = []
     vectors = _ml_embeddings([embedding_input(query_text(f"{title}\n{description}"))])
     if vectors:
@@ -140,11 +136,16 @@ def candidate_suggestions(
                 .order_by("distance", "-id")[:40]
             )
             semantic_candidates = [cast(Issue, issue) for issue in semantic_rows]
-            semantic_rank = {issue.pk: rank for rank, issue in enumerate(semantic_rows, start=1)}
+            similarities = [1.0 - float(issue.distance) for issue in semantic_rows]
+            semantic_scores = {
+                issue.pk: score
+                for score, issue in zip(normalise_dense(similarities), semantic_rows, strict=True)
+            }
         except Exception:
-            semantic_rank = {}
+            semantic_scores = {}
 
-    fused = _rrf([ranking for ranking in (lexical_rank, semantic_rank) if ranking])
+    alpha = alpha_for(f"{title} {description}") if semantic_scores else 0.0
+    fused = fuse(lexical_by_id, semantic_scores, alpha)
     candidate_by_id: dict[int, Issue] = {issue.pk: cast(Issue, issue) for issue in candidates}
     candidate_by_id.update({issue.pk: cast(Issue, issue) for issue in semantic_candidates})
     ranked = sorted(
