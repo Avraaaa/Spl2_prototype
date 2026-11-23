@@ -196,6 +196,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/audit/records/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["audit_records_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/audit/records/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["audit_record_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/audit/records/export/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["audit_records_export_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/audit/verify/": {
         parameters: {
             query?: never;
@@ -1155,8 +1203,30 @@ export interface components {
             file: string;
             comment?: number;
         };
+        AuditListResponse: {
+            results: components["schemas"]["AuditRecord"][];
+            integrity: components["schemas"]["ChainIntegrity"];
+            organizations: components["schemas"]["OrganizationIntegrity"][];
+        };
+        AuditRecord: {
+            id: number;
+            organization_code: string;
+            organization_name: string;
+            sequence: number;
+            actor_username: string;
+            action: string;
+            payload: unknown;
+            previous_hash: string;
+            record_hash: string;
+            /** Format: date-time */
+            created_at: string;
+        };
         /** @enum {unknown} */
         BlankEnum: "";
+        ChainIntegrity: {
+            valid: boolean;
+            first_invalid_sequence: number | null;
+        };
         ChangePasswordRequest: {
             current_password: string;
             new_password: string;
@@ -1501,6 +1571,12 @@ export interface components {
             readonly is_active: boolean;
             /** Format: date-time */
             readonly created_at: string;
+        };
+        OrganizationIntegrity: {
+            valid: boolean;
+            first_invalid_sequence: number | null;
+            code: string;
+            name: string;
         };
         OrganizationRequest: {
             name: string;
@@ -2117,6 +2193,80 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnchorResponse"];
+                };
+            };
+        };
+    };
+    audit_records_retrieve: {
+        parameters: {
+            query?: {
+                action?: string;
+                actor?: string;
+                /** @description Inclusive ISO date */
+                after?: string;
+                /** @description Inclusive ISO date */
+                before?: string;
+                /** @description Bank organization code */
+                organization?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditListResponse"];
+                };
+            };
+        };
+    };
+    audit_record_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditRecord"];
+                };
+            };
+        };
+    };
+    audit_records_export_retrieve: {
+        parameters: {
+            query?: {
+                action?: string;
+                actor?: string;
+                after?: string;
+                before?: string;
+                organization?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
                 };
             };
         };

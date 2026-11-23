@@ -176,3 +176,11 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] The whole card wrapper is draggable, including the notes and editor inputs. Selecting text in them may start a drag. Limit dragging to a handle or the card header.
 - [ ] [follow-up] The task-column class has no drop-target highlight tied to the column being hovered. Only a generic can-drop class is applied while dragging.
 - [ ] [follow-up] rollbackTaskMove ignores its first argument and just returns the previous list. This is fine, but the helper is trivial and its test coverage is weak.
+
+## P8-T2 — 2026-11-23
+- [ ] [follow-up] Audit list endpoint recomputes verify_chain for every bank twice per request (once for `results`, once for the `organizations` list), which will be slow on large chains.
+- [ ] [follow-up] The list is capped at 500 rows with no pagination, so large logs are truncated in the UI. The CSV export is unbounded and builds the whole response in memory.
+- [ ] [follow-up] AuditRecordListView and AuditRecordDetailView duplicate the record serialization dict. Detail view serves any record, which is fine because it is admin-only.
+- [ ] [follow-up] The 'ordering' query parameter used in the test is ignored by the view, so that test does not exercise ordering.
+- [ ] [follow-up] The 'Export CSV' link is a plain anchor with query-string filters. It is backed by a real endpoint, but it does not surface errors (for example, a 400 on a bad date).
+- [ ] [follow-up] Tests do not cover tamper detection (an invalid chain showing valid=false) or invalid date filters.

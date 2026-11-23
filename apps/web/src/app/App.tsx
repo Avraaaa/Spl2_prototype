@@ -8,6 +8,7 @@ import { redirectFor } from '../features/auth/nav';
 import { landingFor, type PortalUser } from '../features/auth/roles';
 import { Dashboard } from '../features/dashboard/Dashboard';
 // ANCHOR P8-T2 imports (audit log)
+import { AuditLogPage } from '../features/audit/AuditLogPage';
 import { IssueDetailPage } from '../features/issues/IssueDetailPage';
 import { IssueDraftPage } from '../features/issues/IssueDraftPage';
 import { IssueListPage } from '../features/issues/IssueListPage';
@@ -73,6 +74,7 @@ export function App() {
       <Route path="/admin/intelligence" element={page(() => <AdminFrame><IntelligenceAdminPage /></AdminFrame>)} />
       <Route path="/admin/settings" element={page(() => <AdminFrame><WorkflowSettingsPage /></AdminFrame>)} />
       {/* ANCHOR P8-T2 routes (audit log) */}
+      <Route path="/admin/audit" element={page(() => <AdminFrame><AuditLogPage /></AdminFrame>)} />
       <Route path="*" element={<Navigate to={landingFor(user ?? null)} replace />} />
     </Routes>
   );

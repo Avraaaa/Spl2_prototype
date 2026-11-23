@@ -35,7 +35,8 @@
     "P7-T14",
     "P7-T15",
     "P7-T16",
-    "P8-T1"
+    "P8-T1",
+    "P8-T2"
   ],
   "last_updated": "2026-11-23",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
@@ -674,6 +675,29 @@
         "[follow-up] rollbackTaskMove ignores its first argument and just returns the previous list. This is fine, but the helper is trivial and its test coverage is weak."
       ],
       "rebased_onto": "1d4d65467a1091982eaa65727ed3017d4b49a49b"
+    },
+    "P8-T2": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 4,
+      "base": "1d4d65467a1091982eaa65727ed3017d4b49a49b",
+      "follow_ups": [
+        "[follow-up] Audit list endpoint recomputes verify_chain for every bank twice per request (once for `results`, once for the `organizations` list), which will be slow on large chains.",
+        "[follow-up] The list is capped at 500 rows with no pagination, so large logs are truncated in the UI. The CSV export is unbounded and builds the whole response in memory.",
+        "[follow-up] AuditRecordListView and AuditRecordDetailView duplicate the record serialization dict. Detail view serves any record, which is fine because it is admin-only.",
+        "[follow-up] The 'ordering' query parameter used in the test is ignored by the view, so that test does not exercise ordering.",
+        "[follow-up] The 'Export CSV' link is a plain anchor with query-string filters. It is backed by a real endpoint, but it does not surface errors (for example, a 400 on a bad date).",
+        "[follow-up] Tests do not cover tamper detection (an invalid chain showing valid=false) or invalid date filters."
+      ],
+      "rebased_onto": "a62444adea05e07ada63c1d3343330c1d1127806"
     }
   },
   "latest_review": "PASS"
