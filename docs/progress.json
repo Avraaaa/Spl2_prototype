@@ -32,7 +32,8 @@
     "P3-T3b",
     "P7-T12",
     "P7-T13",
-    "P7-T14"
+    "P7-T14",
+    "P7-T15"
   ],
   "last_updated": "2026-11-23",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
@@ -608,6 +609,26 @@
         "[follow-up] Tests are shallow. They check the argparse default and a mocked batch encode. No test confirms that dense rankings and metrics are identical to the old per-query encoding. No test runs seed_synthetic end-to-end at 790 records or exercises the new 2000 cap.",
         "[follow-up] The `--count` cap was raised from 500 to 2000, but the corpus is 790 records. A count above the corpus size may be handled by the existing generator code, and no test covers it.",
         "[follow-up] Every passage and query text is encoded in one embedder.encode call. At 790 records that is about 1580 inputs, which may use a lot of memory. Batching would be safer."
+      ]
+    },
+    "P7-T15": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 2,
+      "base": "7e63088832950e79f1c15ad13f3c0e84b6f0cf23",
+      "follow_ups": [
+        "[follow-up] Non-Luhn 13-19 digit runs are no longer masked unless a 'card' keyword precedes them. This is the intended trade-off from the task, but a mistyped card number with no keyword will leak into the NLP text.",
+        "[follow-up] The reference-protection marker code is duplicated between mask_sensitive and safe_original_text. It could be factored into one helper.",
+        "[follow-up] The OTP_DIGITS lookbehinds skip digit runs like `1,2345` and `12.3456` that follow a digit and a separator, so an OTP written in that grouped form would be missed.",
+        "No tenant, permission or workflow changes in the diff. The change is limited to masking in services.py plus a new test file, and all gates exited 0."
       ]
     }
   },

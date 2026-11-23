@@ -158,3 +158,9 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] Tests are shallow. They check the argparse default and a mocked batch encode. No test confirms that dense rankings and metrics are identical to the old per-query encoding. No test runs seed_synthetic end-to-end at 790 records or exercises the new 2000 cap.
 - [ ] [follow-up] The `--count` cap was raised from 500 to 2000, but the corpus is 790 records. A count above the corpus size may be handled by the existing generator code, and no test covers it.
 - [ ] [follow-up] Every passage and query text is encoded in one embedder.encode call. At 790 records that is about 1580 inputs, which may use a lot of memory. Batching would be safer.
+
+## P7-T15 — 2026-11-23
+- [ ] [follow-up] Non-Luhn 13-19 digit runs are no longer masked unless a 'card' keyword precedes them. This is the intended trade-off from the task, but a mistyped card number with no keyword will leak into the NLP text.
+- [ ] [follow-up] The reference-protection marker code is duplicated between mask_sensitive and safe_original_text. It could be factored into one helper.
+- [ ] [follow-up] The OTP_DIGITS lookbehinds skip digit runs like `1,2345` and `12.3456` that follow a digit and a separator, so an OTP written in that grouped form would be missed.
+- [ ] No tenant, permission or workflow changes in the diff. The change is limited to masking in services.py plus a new test file, and all gates exited 0.

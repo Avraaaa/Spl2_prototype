@@ -1,7 +1,6 @@
 """Bank-owned draft writes and the officer's atomic submission action."""
 
 import re
-import uuid
 from functools import partial
 
 from django.contrib.auth.models import User
@@ -41,14 +40,29 @@ OTP_KEYWORDS = re.compile(
     r"(?![\w\u0980-\u09ff])",
     re.IGNORECASE,
 )
-OTP_DIGITS = re.compile(r"(?<![\w\u0980-\u09ff])[0-9\u09e6-\u09ef]{4,8}(?![\w\u0980-\u09ff])")
+OTP_DIGITS = re.compile(
+    r"(?<![\w\u0980-\u09ff])(?<![A-Za-z]-)(?<![0-9\u09e6-\u09ef][./,])"
+    r"[0-9\u09e6-\u09ef]{4,8}(?![\w\u0980-\u09ff])"
+    r"(?![./,][0-9\u09e6-\u09ef])"
+)
 SENTENCE_TEXT = re.compile(r"[^.!?\u0964\r\n]+")
 CARD_DIGITS = re.compile(r"(?<!\d)(?:\d[ .-]?){12,18}\d(?!\d)")
-ACCOUNT_NUMBER = re.compile(
-    r"(?i)(?<![\w\u0980-\u09ff])(?:account|a/c|acct|account\s+no(?:\.|\s+number)?)"
-    r"(?:[^0-9\r\n]{0,24})(?:\d[ -]?){7,19}\d(?!\d)"
+CARD_DIGIT_TRANSLATION = str.maketrans(
+    "٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹০১২৩৪৫৬৭৮৯",
+    "012345678901234567890123456789",
 )
-PHONE_NUMBER = re.compile(r"(?<!\d)(?:\+?8801|01)[ -]?\d{3}[ -]?\d{3}[ -]?\d{2,3}(?!\d)")
+ACCOUNT_NUMBER = re.compile(
+    r"(?i)(?<![\w\u0980-\u09ff])(?:account|acount|a/c|acct|hisab|account\s+no(?:\.|\s+number)?|"
+    r"হিসাব(?:\s+নম্বর)?)"
+    r"(?:[^0-9\u09e6-\u09ef\r\n]{0,24})(?:[0-9\u09e6-\u09ef][ -]?){7,19}"
+    r"[0-9\u09e6-\u09ef](?![0-9\u09e6-\u09ef])"
+)
+PHONE_NUMBER = re.compile(
+    r"(?<![0-9\u09e6-\u09ef])(?:\+?[8৮][8৮][0০][1১]|[0০][1১])"
+    r"[ -]?[0-9\u09e6-\u09ef]{3}"
+    r"[ -]?[0-9\u09e6-\u09ef]{3}[ -]?[0-9\u09e6-\u09ef]{2,3}"
+    r"(?![0-9\u09e6-\u09ef])"
+)
 EMAIL_ADDRESS = re.compile(
     r"(?i)(?<![\w.+-])[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@"
     r"[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?"
@@ -103,6 +117,24 @@ def _replace_with_configured_value(_match: re.Match[str], *, replacement: str) -
     return replacement
 
 
+def _luhn_valid_card(match: re.Match[str]) -> str:
+    translated = match.group().translate(CARD_DIGIT_TRANSLATION)
+    digits = "".join(char for char in translated if char.isdigit())
+    doubled = [
+        int(digit) * (2 if index % 2 == len(digits) % 2 else 1)
+        for index, digit in enumerate(digits)
+    ]
+    checksum = sum(value - 9 if value > 9 else value for value in doubled)
+    if checksum % 10 == 0:
+        return "[CARD REDACTED]"
+    # Keep the established protection for an explicitly identified card
+    # number, even when a synthetic or mistyped number fails its checksum.
+    prefix = match.string[max(0, match.start() - 32) : match.start()]
+    if re.search(r"(?i)(?:credit\s+)?card(?:\s+(?:number|no\.?))?\s*[:#-]?\s*$", prefix):
+        return "[CARD REDACTED]"
+    return match.group()
+
+
 def _mask_nid_in_context(value: str) -> str:
     keywords = [match.span() for match in NID_KEYWORDS.finditer(value)]
 
@@ -138,19 +170,23 @@ def mask_sensitive(value: str) -> str:
     value = EMAIL_ADDRESS.sub("[EMAIL]", value)
     value = _mask_nid_in_context(value)
     protected_references: dict[str, str] = {}
-    sentinel_nonce = uuid.uuid4().hex
-    while sentinel_nonce in value:
-        sentinel_nonce = uuid.uuid4().hex
 
     def protect_reference(match: re.Match[str]) -> str:
-        marker = f"\u2063{sentinel_nonce}:{len(protected_references)}\u2063"
+        index = len(protected_references)
+        letters = ""
+        while index:
+            index, remainder = divmod(index, 26)
+            letters = chr(ord("a") + remainder) + letters
+        marker = f"\u2063ref{letters or 'a'}\u2063"
+        while marker in value or marker in protected_references:
+            marker += "x"
         protected_references[marker] = match.group()
         return marker
 
     value = TRANSACTION_REFERENCE.sub(protect_reference, value)
-    value = CARD_DIGITS.sub("[CARD REDACTED]", value)
     value = ACCOUNT_NUMBER.sub("[ACCOUNT_NUMBER]", value)
     value = PHONE_NUMBER.sub("[PHONE_NUMBER]", value)
+    value = CARD_DIGITS.sub(_luhn_valid_card, value)
     value = SENTENCE_TEXT.sub(_mask_otp_in_sentence, value)
     for marker, reference in protected_references.items():
         value = value.replace(marker, reference)
@@ -164,8 +200,26 @@ def mask_extracted_text(value: str) -> str:
 
 def safe_original_text(value: str) -> str:
     """Retain reviewable original text while irreversibly removing OTPs and card numbers."""
-    value = CARD_DIGITS.sub("[CARD REDACTED]", value)
-    return SENTENCE_TEXT.sub(_mask_otp_in_sentence, value)
+    protected_references: dict[str, str] = {}
+
+    def protect_reference(match: re.Match[str]) -> str:
+        index = len(protected_references)
+        letters = ""
+        while index:
+            index, remainder = divmod(index, 26)
+            letters = chr(ord("a") + remainder) + letters
+        marker = f"\u2063ref{letters or 'a'}\u2063"
+        while marker in value or marker in protected_references:
+            marker += "x"
+        protected_references[marker] = match.group()
+        return marker
+
+    value = TRANSACTION_REFERENCE.sub(protect_reference, value)
+    value = CARD_DIGITS.sub(_luhn_valid_card, value)
+    value = SENTENCE_TEXT.sub(_mask_otp_in_sentence, value)
+    for marker, reference in protected_references.items():
+        value = value.replace(marker, reference)
+    return value
 
 
 MASKABLE_FIELDS = frozenset(
