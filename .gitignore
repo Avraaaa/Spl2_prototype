@@ -22,3 +22,5 @@ dist/
 services/api/media/
 models/
 CLAUDE.md
+# Research papers (downloaded PDFs, not part of the product)
+papers/
