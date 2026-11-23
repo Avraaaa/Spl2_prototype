@@ -1099,6 +1099,69 @@
         "Existing behaviour kept: OTP/PIN, email, NID and Luhn card masking still pass all existing tests.",
         "NEW test file only (services/api/tests/test_p7_t15_masking_fixes.py): a must-mask / must-not-mask table covering every phrasing listed in docs/task-notes/P7-T15.md. Do not edit existing tests."
       ]
+    },
+    {
+      "id": "P7-T16",
+      "phase": 7,
+      "title": "ML service: load the embedding model once and preload it at startup",
+      "req": [
+        "E-01",
+        "E-02",
+        "E-05",
+        "EX-08"
+      ],
+      "depends_on": [
+        "P7-T15"
+      ],
+      "allow": [
+        "services/ml/app/",
+        "services/ml/tests/"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "/internal/embed and /internal/embedding-readiness reuse ONE cached SentenceTransformer per process (e.g. functools.lru_cache on the loader, or a module-level singleton guarded by a lock). Today every request calls load_local_sentence_transformer() and reloads the weights (4-17 s per call), so the API 1.5 s timeout always fires and dense duplicates/label suggestions silently fall back to lexical in the running app.",
+        "When ML_MODEL_ENABLED=1, the model is loaded during FastAPI startup (lifespan) so the first request is fast; when disabled, startup does not import sentence_transformers and /health still reports ml=disabled.",
+        "A load failure is logged without confidential data and the endpoint keeps returning the same error status as today (no crash loop).",
+        "NEW test file services/ml/tests/test_p7_t16_model_cache.py: with a monkeypatched loader, N embed calls construct the model exactly once; startup preloads when enabled and does not when disabled. Do not edit existing tests."
+      ]
+    },
+    {
+      "id": "P8-T1",
+      "phase": 8,
+      "title": "Drag-and-drop Kanban board for internal tasks",
+      "req": [
+        "N-14",
+        "N-15",
+        "EX-10"
+      ],
+      "depends_on": [
+        "P7-T15"
+      ],
+      "allow": [
+        "apps/web/src/features/tasks/",
+        "apps/web/src/style.css"
+      ],
+      "gates": [
+        "node scripts/validate-repo.mjs",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run",
+        "node scripts/check-contract.mjs",
+        "node scripts/dev.mjs lint",
+        "node scripts/dev.mjs test"
+      ],
+      "acceptance": [
+        "The Tasks page opens on the Kanban board by default (list view still available via a toggle, remembered in localStorage with try/catch). Three columns To do / In progress / Done side by side on desktop, stacked on mobile, each with a header count.",
+        "Cards can be dragged between columns with native HTML5 drag and drop (NO new npm dependencies: package.json and the lockfile are frozen). Dropping calls the existing PATCH /api/tasks/{id}/ {status}. The card moves immediately (optimistic update via TanStack Query setQueryData) and rolls back with a visible error message if the request fails.",
+        "Keyboard/accessibility: every card keeps Move buttons (or a status select) so moving works without a mouse; columns are labelled regions; the dragged card and the drop target have visible styles.",
+        "Compact cards: title, request reference link, assignee initials/name, commit/PR link icons; Edit details and Notes collapse behind buttons instead of always rendering. Filters above the board: All tasks / My tasks, assignee select, text search over title and request reference.",
+        "Readable code: split into TaskBoard.tsx, TaskCard.tsx, TaskList.tsx and a pure helpers module (no 300-character JSX lines). Keep the existing exported editDraftFor/editBodyFor in TasksPage.tsx working because tasks.observers.test.ts imports them.",
+        "NEW vitest file apps/web/src/features/tasks/taskBoard.test.ts covering the pure helpers: grouping by status, filter logic, optimistic move and rollback. Do not edit existing tests."
+      ]
     }
   ]
 }
