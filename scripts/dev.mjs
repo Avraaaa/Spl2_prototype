@@ -2,7 +2,7 @@
 /**
  * Native (Windows/macOS/Linux) local development launcher. No Docker required.
  *
- *   node scripts/dev.mjs            migrate, then run Django (8000) + Vite (5173)
+ *   node scripts/dev.mjs            migrate, then run Django (8000) + Vite (5173) + ML (8001)
  *   node scripts/dev.mjs api|web|ml  run one service
  *   node scripts/dev.mjs migrate     apply Django migrations
  *   node scripts/dev.mjs seed        load synthetic demo banks/users/issues
@@ -43,12 +43,18 @@ const devDefaults = {
   POSTGRES_PASSWORD: 'datasoft-local-dev',
   DATABASE_HOST: 'localhost',
   DATABASE_PORT: '5432',
-  ML_MODEL_ENABLED: '0',
+  // Wire the API to the local ML service (E-xx dense duplicates and label suggestions).
+  // The model is enabled only when its local checkpoint exists; otherwise the API falls
+  // back to lexical suggestions, as the core app must when ML is offline.
+  ML_MODEL_ENABLED: existsSync(resolve(root, 'models', 'multilingual-e5-small')) ? '1' : '0',
+  ML_SERVICE_URL: 'http://127.0.0.1:8001',
+  ML_SHARED_TOKEN: 'local-dev-ml-token-not-a-secret',
   PYTHONUTF8: '1',
 };
 const env = { ...devDefaults, ...fileEnv, ...process.env };
 const hermeticEnv = Object.fromEntries(Object.entries(env).filter(([key]) =>
   key !== 'RESEND_API_KEY' && !key.startsWith('EMAIL_DELIVERY_') && key !== 'ML_SERVICE_URL' && key !== 'ML_SHARED_TOKEN'));
+hermeticEnv.ML_MODEL_ENABLED = '0';
 
 const api = ['uv', 'run', '--locked', '--package', 'datasoft-api'];
 const manage = (...a) => [...api, 'python', 'services/api/manage.py', ...a];
@@ -98,8 +104,8 @@ if (cmd === 'manage') await sequence([manage(...rest)]);
 else if (cmd === 'pytest') await sequence([[...api, 'pytest', ...(rest.length ? rest : ['-q', 'services/api/tests'])]], hermeticEnv);
 else if (cmd === 'all') {
   await sequence(commands.migrate);
-  const children = [start(commands.api[0], 'api'), start(commands.web[0], 'web')];
-  console.log('API http://127.0.0.1:8000/api/health/  |  Web http://localhost:5173  (Ctrl+C to stop)');
+  const children = [start(commands.api[0], 'api'), start(commands.web[0], 'web'), start(commands.ml[0], 'ml')];
+  console.log('API http://127.0.0.1:8000/api/health/  |  Web http://localhost:5173  |  ML http://127.0.0.1:8001/health  (Ctrl+C to stop)');
   const stop = () => { for (const c of children) c.kill(); process.exit(0); };
   process.on('SIGINT', stop);
   for (const c of children) c.on('exit', code => { if (code) console.error(`a service exited with ${code}`); });
