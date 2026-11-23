@@ -146,3 +146,9 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] The _manifest and _generate methods each reload and shuffle the corpus independently. They stay consistent only because the seed is the same. Share the shuffled corpus to avoid drift.
 - [ ] [follow-up] In compare_features, the hard-negative false-positive rate counts any hard negative in the top 5. Hard negatives belonging to a different group than the query are included, so the metric is coarse.
 - [ ] [follow-up] Masking 'detected' is computed from SENSITIVE markers in the description. It does not exercise the real masking function, so the per-type precision and recall are only as meaningful as that proxy.
+
+## P7-T13 — 2026-11-23
+- [ ] [follow-up] Dataset-mismatch check in seed_synthetic only compares synthetic_key patterns, so re-running with a different --corpus and the same seed and count silently reuses the existing dataset. The manifest is then built from the new corpus kind and may not match the stored rows. Consider storing the corpus kind in the key or manifest and refusing a mismatch.
+- [ ] [follow-up] The `request.get("request_type", "bug")` default in _corpus silently labels any untyped record as bug. A malformed corpus file would be mislabelled rather than rejected.
+- [ ] [follow-up] When the corpus has no sensitive_cases (for example `--corpus everyday` if the files lack them), the masking evidence is skipped silently. The report does not say masking was not exercised.
+- [ ] No blocking defects found: there are no tenant or permission changes, request_type uses valid uppercase RequestType values, no migration is needed, scope is limited to seeding and the compare_features breakdown, and the new tests are in a new file. I reviewed the diff, the corpus format and the test names. I did not run the tests, and relied on the supplied gate results (all exit 0).

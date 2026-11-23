@@ -89,6 +89,7 @@ class Command(BaseCommand):
         parser.add_argument("--embed-locally", action="store_true")
         parser.add_argument("--progress-every", type=int, default=25)
         parser.add_argument("--log-file")
+        parser.add_argument("--corpus", choices=("realistic", "everyday", "all"), default="all")
 
     def handle(self, *args, **options):
         configured_hosts = set(settings.ALLOWED_HOSTS)
@@ -116,7 +117,7 @@ class Command(BaseCommand):
             expected_keys = [f"p7t9-{options['seed']}-{index:04d}" for index in range(count)]
             if [row.synthetic_key for row in existing] != expected_keys:
                 raise CommandError("A different synthetic dataset exists; run with --reset first.")
-            manifest = self._manifest(existing, options["seed"])
+            manifest = self._manifest(existing, options["seed"], options["corpus"])
             manifest_path.parent.mkdir(parents=True, exist_ok=True)
             manifest_path.write_text(
                 json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
@@ -130,9 +131,13 @@ class Command(BaseCommand):
 
         with transaction.atomic():
             rows = self._generate(
-                count, options["seed"], options["progress_every"], options["log_file"]
+                count,
+                options["seed"],
+                options["progress_every"],
+                options["log_file"],
+                options["corpus"],
             )
-            manifest = self._manifest(rows, options["seed"])
+            manifest = self._manifest(rows, options["seed"], options["corpus"])
         manifest_path.parent.mkdir(parents=True, exist_ok=True)
         manifest_path.write_text(
             json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
@@ -185,9 +190,9 @@ class Command(BaseCommand):
             raise CommandError("Run seed_demo first; a synthetic DataSoft operator is required.")
         return banks, officers, staff
 
-    def _generate(self, count, seed, progress_every=25, log_file=None):
+    def _generate(self, count, seed, progress_every=25, log_file=None, corpus_kind="all"):
         banks, officers, staff = self._actors()
-        corpus, sensitive_cases = self._corpus()
+        corpus, sensitive_cases = self._corpus(corpus_kind)
         random.Random(seed).shuffle(corpus)
         corpus = [corpus[index % len(corpus)] for index in range(count)]
         # Retain the legacy fixture product used by existing synthetic reset tests.
@@ -206,7 +211,9 @@ class Command(BaseCommand):
             label_name = source["label"]
             title = source["request"]["title"]
             description = source["request"]["description"]
-            if index % 5 == 0:
+            request_type = source["request_type"]
+            legacy_evidence = source["corpus"] == "synthetic_corpus"
+            if sensitive_cases and index % 5 == 0:
                 sensitive = sensitive_cases[index % len(sensitive_cases)]
                 description = f"{description}\n{sensitive['text']}"
             product, _ = Product.objects.get_or_create(name=source["product"])
@@ -225,14 +232,25 @@ class Command(BaseCommand):
                 {
                     "title": title,
                     "description": description,
-                    "request_type": source["request"]["request_type"].upper(),
+                    "request_type": request_type.upper(),
                     "product": product,
                     "module": module,
                     "priority": source["request"]["priority"].upper(),
-                    "environment": "Synthetic sandbox only",
-                    "steps_to_reproduce": "Use synthetic account and inspect test screen.",
-                    "expected_result": "Synthetic request completes.",
-                    "actual_result": "Synthetic test behavior is reproduced.",
+                    "environment": source["request"].get(
+                        "environment", "Synthetic sandbox only" if legacy_evidence else ""
+                    ),
+                    "steps_to_reproduce": source["request"].get(
+                        "steps_to_reproduce",
+                        "Use synthetic account and inspect test screen." if legacy_evidence else "",
+                    ),
+                    "expected_result": source["request"].get(
+                        "expected_result",
+                        "Synthetic request completes." if legacy_evidence else "",
+                    ),
+                    "actual_result": source["request"].get(
+                        "actual_result",
+                        "Synthetic test behavior is reproduced." if legacy_evidence else "",
+                    ),
                 },
             )
             key = f"p7t9-{seed}-{index:04d}"
@@ -264,19 +282,25 @@ class Command(BaseCommand):
         return generated
 
     @staticmethod
-    def _corpus():
-        root = Path.cwd() / "seed" / "synthetic_corpus"
+    def _corpus(corpus_kind="all"):
+        roots = []
+        if corpus_kind in {"realistic", "all"}:
+            roots.append(Path.cwd() / "seed" / "synthetic_corpus")
+        if corpus_kind in {"everyday", "all"}:
+            roots.append(Path.cwd() / "seed" / "synthetic_corpus_everyday")
         try:
             documents = [
-                json.loads(path.read_text(encoding="utf-8")) for path in sorted(root.glob("*.json"))
+                (json.loads(path.read_text(encoding="utf-8")), root.name)
+                for root in roots
+                for path in sorted(root.glob("*.json"))
             ]
         except (OSError, json.JSONDecodeError) as exc:
             raise CommandError(f"Cannot read synthetic request corpus: {exc}") from exc
         if not documents:
-            raise CommandError(f"No synthetic request corpus files found under {root}.")
+            raise CommandError("No synthetic request corpus files found.")
         records = []
         sensitive_cases = []
-        for document in documents:
+        for document, corpus_name in documents:
             for group in document.get("groups", []):
                 records.extend(
                     {
@@ -285,6 +309,8 @@ class Command(BaseCommand):
                         "product": group["product"],
                         "module": group["module"],
                         "request": request,
+                        "request_type": request.get("request_type", "bug"),
+                        "corpus": corpus_name,
                         "hard_negative": False,
                         "emerging_topic": group.get("label") is None,
                     }
@@ -297,14 +323,16 @@ class Command(BaseCommand):
                     "product": item["product"],
                     "module": item["module"],
                     "request": item,
+                    "request_type": item.get("request_type", "bug"),
+                    "corpus": corpus_name,
                     "hard_negative": True,
                     "emerging_topic": False,
                 }
                 for item in document.get("hard_negatives", [])
             )
             sensitive_cases.extend(document.get("sensitive_cases", []))
-        if not records or not sensitive_cases:
-            raise CommandError("Synthetic corpus is missing requests or sensitive masking cases.")
+        if not records:
+            raise CommandError("Synthetic corpus is missing requests.")
         return records, sensitive_cases
 
     @staticmethod
@@ -398,8 +426,8 @@ class Command(BaseCommand):
         return issue
 
     @staticmethod
-    def _manifest(rows, seed):
-        corpus, sensitive_cases = Command._corpus()
+    def _manifest(rows, seed, corpus_kind="all"):
+        corpus, sensitive_cases = Command._corpus(corpus_kind)
         random.Random(seed).shuffle(corpus)
         group_rows = {}
         expected_masks = []
@@ -414,7 +442,7 @@ class Command(BaseCommand):
             group_rows.setdefault(f"{issue.organization.code}:{group}", []).append(issue.pk)
             categories = []
             sensitive = None
-            if index % 5 == 0:
+            if sensitive_cases and index % 5 == 0:
                 sensitive = sensitive_cases[index % len(sensitive_cases)]
                 categories = sorted({item["type"].lower() for item in sensitive["expected"]})
             if categories:
@@ -438,11 +466,13 @@ class Command(BaseCommand):
                     "status": issue.status,
                     "workflow_events": list(issue.events.values_list("kind", flat=True)),
                     "expected_label": expected_label,
+                    "label": source["label"],
                     "mask_categories": categories,
                     "must_not_mask": sensitive.get("must_not_mask", []) if sensitive else [],
                     "hard_negative": source["hard_negative"],
                     "near_group": source["group"] if source["hard_negative"] else None,
                     "emerging_topic_sample": emerging,
+                    "request_type": source["request_type"],
                 }
             )
         return {

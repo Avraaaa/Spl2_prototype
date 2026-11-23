@@ -30,9 +30,10 @@
     "P3-T3",
     "P7-T11",
     "P3-T3b",
-    "P7-T12"
+    "P7-T12",
+    "P7-T13"
   ],
-  "last_updated": "2026-11-22",
+  "last_updated": "2026-11-23",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
   "evidence": {
     "P0-T1": {
@@ -567,6 +568,26 @@
         "[follow-up] Masking 'detected' is computed from SENSITIVE markers in the description. It does not exercise the real masking function, so the per-type precision and recall are only as meaningful as that proxy."
       ],
       "rebased_onto": "31e5652dff6efc9310f0fb9b481dd7a127ef2f78"
+    },
+    "P7-T13": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 2,
+      "base": "fa261356f4ff272029082a588398764883057576",
+      "follow_ups": [
+        "[follow-up] Dataset-mismatch check in seed_synthetic only compares synthetic_key patterns, so re-running with a different --corpus and the same seed and count silently reuses the existing dataset. The manifest is then built from the new corpus kind and may not match the stored rows. Consider storing the corpus kind in the key or manifest and refusing a mismatch.",
+        "[follow-up] The `request.get(\"request_type\", \"bug\")` default in _corpus silently labels any untyped record as bug. A malformed corpus file would be mislabelled rather than rejected.",
+        "[follow-up] When the corpus has no sensitive_cases (for example `--corpus everyday` if the files lack them), the masking evidence is skipped silently. The report does not say masking was not exercised.",
+        "No blocking defects found: there are no tenant or permission changes, request_type uses valid uppercase RequestType values, no migration is needed, scope is limited to seeding and the compare_features breakdown, and the new tests are in a new file. I reviewed the diff, the corpus format and the test names. I did not run the tests, and relied on the supplied gate results (all exit 0)."
+      ]
     }
   },
   "latest_review": "PASS"

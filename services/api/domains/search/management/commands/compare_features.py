@@ -107,6 +107,7 @@ class Command(BaseCommand):
             candidates_by_tenant[issue.organization_id].append(issue)
         cutoff = timezone.now() - timedelta(days=365)
         rankings = {name: defaultdict(list) for name in ("lexical", "dense", "hybrid")}
+        rankings_by_type = {name: defaultdict(list) for name in rankings}
         hard_negative_ranks = {name: [] for name in rankings}
         labels_report = []
         tenants = {}
@@ -156,6 +157,8 @@ class Command(BaseCommand):
             rankings["lexical"][(record["tenant"], record["language"])].append(
                 (grades, lexical_order)
             )
+            request_type = record.get("request_type", query.request_type or "unknown")
+            rankings_by_type["lexical"][request_type].append((grades, lexical_order))
             if embedder is not None and ordered:
                 inputs = [
                     embedding_input(query_text(f"{query.title}\n{query.description}")),
@@ -176,6 +179,7 @@ class Command(BaseCommand):
                 rankings["dense"][(record["tenant"], record["language"])].append(
                     (grades, dense_order)
                 )
+                rankings_by_type["dense"][request_type].append((grades, dense_order))
                 if hard_negative_candidates:
                     hard_negative_ranks["dense"].append(
                         any(ordered[idx].pk in hard_negative_candidates for idx in dense_order[:5])
@@ -191,6 +195,7 @@ class Command(BaseCommand):
                 rankings["hybrid"][(record["tenant"], record["language"])].append(
                     (grades, hybrid_order)
                 )
+                rankings_by_type["hybrid"][request_type].append((grades, hybrid_order))
                 if hard_negative_candidates:
                     hard_negative_ranks["hybrid"].append(
                         any(ordered[idx].pk in hard_negative_candidates for idx in hybrid_order[:5])
@@ -210,6 +215,7 @@ class Command(BaseCommand):
                 labels_report.append(
                     {
                         "tenant": record["tenant"],
+                        "request_type": request_type,
                         "expected": record["expected_label"],
                         "predicted": prediction["name"] if prediction else None,
                         "score": prediction["score"] if prediction else 0.0,
@@ -245,6 +251,10 @@ class Command(BaseCommand):
                     "reason": "no local embedder available",
                 }
             ranking_result[mode]["per_tenant_language"] = by_variant
+            ranking_result[mode]["per_request_type"] = {
+                request_type: cls._rank_metrics(samples)
+                for request_type, samples in sorted(rankings_by_type[mode].items())
+            }
             ranking_result[mode]["per_variant"] = {
                 variant: cls._rank_metrics(samples)
                 for variant, samples in sorted(variant_samples.items())
@@ -262,6 +272,10 @@ class Command(BaseCommand):
                     "reason": "no local embedder available",
                     "per_tenant_language": {},
                     "per_variant": {},
+                    "per_request_type": {
+                        request_type: cls._rank_metrics(samples)
+                        for request_type, samples in sorted(rankings_by_type[mode].items())
+                    },
                     "hard_negatives": {
                         "false_positive_rate@5": 0.0,
                         "sample_count": len(hard_negative_ranks[mode]),
@@ -363,7 +377,15 @@ class Command(BaseCommand):
             "dataset_revision": "p7t9-live",
             "sample_count": len(records),
             "ranking": ranking_result,
-            "labels": label_metrics(labels_report),
+            "labels": {
+                **label_metrics(labels_report),
+                "per_request_type": {
+                    request_type: label_metrics(
+                        [item for item in labels_report if item["request_type"] == request_type]
+                    )
+                    for request_type in sorted({item["request_type"] for item in labels_report})
+                },
+            },
             "topics": {
                 "purity": topic_cluster_purity(topic_clusters, topic_ids),
                 "emerging_samples": len(emerging_ids),
