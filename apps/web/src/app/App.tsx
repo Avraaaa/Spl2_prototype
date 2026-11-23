@@ -7,13 +7,17 @@ import { useMe } from '../features/auth/hooks';
 import { redirectFor } from '../features/auth/nav';
 import { landingFor, type PortalUser } from '../features/auth/roles';
 import { Dashboard } from '../features/dashboard/Dashboard';
+// ANCHOR P8-T2 imports (audit log)
 import { IssueDetailPage } from '../features/issues/IssueDetailPage';
 import { IssueDraftPage } from '../features/issues/IssueDraftPage';
 import { IssueListPage } from '../features/issues/IssueListPage';
 import { ProductsPage } from '../features/issues/ProductsPage';
 import { NotificationsPage } from '../features/notifications/NotificationsPage';
+// ANCHOR P8-T3 imports (colours)
 import { ReportsPage } from '../features/reports/ReportsPage';
+// ANCHOR P8-T5 imports (analytics)
 import { TasksPage } from '../features/tasks/TasksPage';
+// ANCHOR P8-T4 imports (stages, request board)
 import { AdminFrame, WorkflowSettingsPage } from '../features/tenants/AdminFrame';
 import { UsersAdminPage } from '../features/tenants/UsersAdminPage';
 import { LabelAdminPage } from '../features/tenants/LabelAdminPage';
@@ -56,15 +60,19 @@ export function App() {
       <Route path="/awaiting" element={page(u => <IssueListPage me={u} mode="awaiting" />)} />
       <Route path="/queue" element={page(u => <IssueListPage me={u} mode="queue" />)} />
       <Route path="/my-work" element={page(u => <IssueListPage me={u} mode="mine" />)} />
+      {/* ANCHOR P8-T4 routes (request board) */}
       <Route path="/tasks" element={page(u => <TasksPage me={u} />)} />
       <Route path="/reports" element={page(u => <ReportsPage me={u} />)} />
+      {/* ANCHOR P8-T5 routes (analytics) */}
       <Route path="/notifications" element={page(() => <NotificationsPage />)} />
       <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
       <Route path="/admin/users" element={page(u => <AdminFrame><UsersAdminPage me={u} /></AdminFrame>)} />
       <Route path="/admin/products" element={page(() => <AdminFrame><ProductsPage /></AdminFrame>)} />
       <Route path="/admin/labels" element={page(() => <AdminFrame><LabelAdminPage /></AdminFrame>)} />
+      {/* ANCHOR P8-T3 routes (colours) */}
       <Route path="/admin/intelligence" element={page(() => <AdminFrame><IntelligenceAdminPage /></AdminFrame>)} />
       <Route path="/admin/settings" element={page(() => <AdminFrame><WorkflowSettingsPage /></AdminFrame>)} />
+      {/* ANCHOR P8-T2 routes (audit log) */}
       <Route path="*" element={<Navigate to={landingFor(user ?? null)} replace />} />
     </Routes>
   );

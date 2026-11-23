@@ -16,8 +16,10 @@ export function navFor(user: RoleHolder): NavItem[] {
       { to: '/queue', label: 'Intake queue' },
       { to: '/issues', label: 'All requests', end: true },
       { to: '/my-work', label: 'My work' },
+      // ANCHOR P8-T4 console nav (request board)
       { to: '/tasks', label: 'Tasks board' },
       { to: '/reports', label: 'Reports' },
+      // ANCHOR P8-T5 console nav (analytics)
     ];
     if (hasRole(user, 'DATASOFT_ADMIN')) items.push({ to: '/admin', label: 'Admin' });
     return items;
@@ -29,6 +31,7 @@ export function navFor(user: RoleHolder): NavItem[] {
   if (hasRole(user, 'ISSUE_OFFICER')) items.push({ to: '/issues/new', label: 'New request' });
   if (hasRole(user, 'ISSUE_VERIFIER')) items.push({ to: '/awaiting', label: 'Awaiting my verification', badge: 'awaiting' });
   items.push({ to: '/reports', label: 'Reports' });
+  // ANCHOR P8-T5 client nav (analytics)
   items.push({ to: '/notifications', label: 'Notifications', badge: 'unread' });
   return items;
 }

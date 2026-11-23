@@ -11,8 +11,11 @@ const SECTIONS = [
   { to: '/admin/users', label: 'Users & banks' },
   { to: '/admin/products', label: 'Products' },
   { to: '/admin/labels', label: 'Issue labels' },
+  // ANCHOR P8-T3 admin section (colours)
   { to: '/admin/intelligence', label: 'Intelligence & privacy' },
+  // ANCHOR P8-T2 admin section (audit log)
   { to: '/admin/settings', label: 'Workflow settings' },
+  // ANCHOR P8-T4 admin section (stages)
 ];
 
 /** Administrator-only sub-navigation wrapped around each admin page. */
