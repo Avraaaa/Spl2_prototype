@@ -1,6 +1,6 @@
 # Progress — resume here
 
-Last updated: 2026-11-24 04:00 (local).  Owner: sole author of every commit (no co-author trailers).
+Last updated: 2026-11-24 10:15 BST.  Owner: sole author of every commit (no co-author trailers).
 Next session: read this file, then `learning.md`, then continue at **Next steps**.
 
 ## Roles (who does what)
@@ -36,33 +36,27 @@ Next session: read this file, then `learning.md`, then continue at **Next steps*
 | P7-T16 | ML service loads the model once and preloads it at startup (it used to reload per request, 4-17 s, so the app silently ran lexical-only) | merged 1d4d654; **not yet verified in browser** |
 | P8-T1 | Drag-and-drop Kanban for internal tasks (native HTML5 DnD, optimistic update + rollback, filters) | merged 1f6f32e; **not yet verified in browser** |
 | P9-T1 | Hybrid search fuses normalised scores (alpha*dense + (1-alpha)*lexical, separate alpha for Bangla script) instead of reciprocal rank; compare_features gains a held-out alpha sweep | merged; alpha not tuned yet |
+| P8-T3 | Custom colours for labels, request types, statuses, products (admin `/admin/colors`) | merged 9ed12b9; **not yet verified in browser** |
 | P8-T2 | Admin audit log viewer `/admin/audit` (filters, CSV, chain-integrity banner) | merged c41de37; **not yet verified in browser** |
 
 Key data files: `.agent_runs/compare-790.json` (before), `.agent_runs/compare-790-p7t15.json` (current baseline), `.agent_runs/synthetic-manifest.json`.
 
 Current baseline (790 synthetic requests): duplicate hit@5 lexical 0.738 / dense **0.917** / hybrid 0.877; hard-negative FP@5 dense 0.31; labels acc@1 0.972; topic purity 0.073; masking P 1.00 / R 0.89.
 
-## State at end of session
-- **P9-T1 merged** (score-based fusion + `--fusion-alphas` sweep). Its defaults (0.85 / 0.95 Bangla) are NOT tuned yet: see Next step 2.
-- **P8-T3 BLOCKED** after 3 retries, for a trivial reason: its new test file uses a non-existent fixture `client_for`. Feature code passed all other gates and the 339 existing tests. Seed patch: `.agent_runs/seeds/P8-T3-a62444ad.patch`; note: `docs/task-notes/P8-T3-resume.md`.
-- No runner or dev server is running.
+## State at end of session (2026-11-24 ~10:15 BST)
+- **Master is runnable**: P8-T3 (custom colours) merged as 9ed12b9, all gates green (validate, makemigrations, contract, lint, full tests, review PASS with 5 follow-ups). `node scripts/dev.mjs` starts it.
+- **P8-T4 and P8-T5 were launched in parallel at 04:06Z** (logs `.agent_runs/logs/p8t4.log`, `p8t5.log`; test DBs test_datasoft_p8t4 / _p8t5). The runner merges only after all gates pass, so master stays runnable whatever happens. If the session died mid-run, check the logs: a DONE/PASS "locally merged" line means it landed; otherwise resume with a seed patch from `.agent_runs/seeds/` (or rerun the task). Delete any leftover empty `agent/p8-t4-*`/`agent/p8-t5-*` branch first (`git log master..<branch>` empty), or the runner fails with "branch already exists".
+- **Fusion alpha sweep was stopped** (crawled at 0.03 req/s while coders ran; only 150/790). Rerun it alone with nothing else running (see Next step 2).
+- Learned: a seed patch goes stale when master changes; rebase it with `git apply --3way` in a temp worktree, resolve, re-export (done for P8-T3: `.agent_runs/seeds/P8-T3-rebased.patch`).
 
 ## Next steps (in order)
-1. Resume P8-T3: `POSTGRES_TEST_DB=test_datasoft_p8t3 DATASOFT_CODER=codex DATASOFT_CODER_MODEL=gpt-6-luna DATASOFT_CODER_EFFORT=medium DATASOFT_RETRY_EFFORT=medium node scripts/agent-runner.mjs --task P8-T3 --seed-patch .agent_runs/seeds/P8-T3-a62444ad.patch --note-file docs/task-notes/P8-T3-resume.md`
-2. **P9-T1 follow-up:** run `node scripts/dev.mjs manage compare_features --manifest .agent_runs/synthetic-manifest.json --output .agent_runs/compare-790-fusion.json --fusion-alphas "0.5,0.6,0.7,0.8,0.85,0.9,0.95,1.0"` (about 15 min). Set `SEARCH_FUSION_ALPHA` / `SEARCH_FUSION_ALPHA_BANGLA` defaults from the **tune-half** best and report holdout numbers. Hybrid must beat dense (0.917).
-3. Run **P8-T4** (sub-stages inside the locked lifecycle + drag-and-drop request board `/board`, admin `/admin/stages`) and **P8-T5** (analytics `/analytics`, metrics researched from Jira SM, Zendesk/Freshdesk and Kanban tools, inline SVG charts) **in parallel**. Both depend on P8-T3. They are already defined in `docs/tasks.json` with anchors in App.tsx, nav.ts and AdminFrame.tsx.
-4. **Browser verification** (`node scripts/dev.mjs`, demo password in `seed_demo.py`): label suggestions appear on the officer's new-request form (proves P7-T16 + the dev wiring); Kanban drag-and-drop as `ds.support`; audit log + colours as `ds.admin`; then the board and analytics once merged. Bank users must not see other banks or internal stage names.
-5. **Polish task** from review follow-ups (`docs/review-backlog.md`, P7-T16/P8-T1/P8-T2 sections): audit log pagination (capped at 500 today) and verify_chain once per request; Kanban long JSX lines, drag handle, no-op drop, hover highlight; ML failed-load caching and a lock.
-6. **ML improvements** (owner asked; research in `papers/NOTES.md`, 13 PDFs, gitignored):
-   a. done as P9-T1 (fusion);
-   b. benchmark `intfloat/multilingual-e5-base`, then `BAAI/bge-m3`. **Ask the owner before downloading any model** (state files and sizes);
-   c. bge-m3 sparse head instead of Postgres FTS for Bangla (lexical hit@5 only 0.35);
-   d. cross-encoder rerank of the top 10-20 for hard negatives (31% FP);
-   e. UMAP before HDBSCAN for topic clustering (purity 0.07).
-   Each change must beat `.agent_runs/compare-790-p7t15.json` on the same data.
-7. Small fixes: Bangla account numbers next to an NID are masked as `[NID]` instead of `[ACCOUNT_NUMBER]` (still hidden, wrong type); OTP after the generic word "code" is missed (acceptable).
-8. **EX-09:** run `node scripts/backup-restore-drill.mjs` once and keep the evidence. The QFD requires the backup and restore to be demonstrated, and no run record exists yet.
-9. Update `docs/traceability.csv` for the new P8/P9 tests when they merge.
+1. Check P8-T4 / P8-T5 outcome (see above). Then update `docs/traceability.csv` for P8-T3/T4/T5 tests.
+2. **P9-T1 follow-up:** with no runner active, run `node scripts/dev.mjs manage compare_features --manifest .agent_runs/synthetic-manifest.json --output .agent_runs/compare-790-fusion.json --fusion-alphas "0.5,0.6,0.7,0.8,0.85,0.9,0.95,1.0"` (~45 min alone). Set `SEARCH_FUSION_ALPHA` / `SEARCH_FUSION_ALPHA_BANGLA` from the tune-half best; hybrid must beat dense (0.917) on holdout.
+3. **Browser verification** (`node scripts/dev.mjs`, demo password in `seed_demo.py`): label suggestions on the officer new-request form (P7-T16); Kanban DnD as ds.support (P8-T1); audit log (P8-T2) + colours (P8-T3) as ds.admin; board + analytics once merged. Bank users must not see other banks or internal stage names.
+4. **Polish task** from `docs/review-backlog.md` (P7-T16/P8-T1/P8-T2/P8-T3 sections): audit-log pagination (500 cap), verify_chain once per request, Kanban drag handle/no-op drop/hover, ML failed-load caching + lock.
+5. **ML improvements** (papers/NOTES.md): b. benchmark multilingual-e5-base then bge-m3 (**ask owner before downloading, give sizes**); c. bge-m3 sparse for Bangla lexical; d. cross-encoder rerank top 10-20; e. UMAP before HDBSCAN. Each must beat `.agent_runs/compare-790-p7t15.json`.
+6. Small fixes: Bangla account number next to NID masked as [NID]; OTP after "code" missed (acceptable).
+7. **EX-09:** run `node scripts/backup-restore-drill.mjs` once and keep the evidence.
 
 ## Owner decisions (2026-11-24)
 - Custom workflow = **admin-defined sub-stages inside the locked QFD lifecycle** (statuses and transitions unchanged).
