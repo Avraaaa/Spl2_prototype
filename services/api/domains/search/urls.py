@@ -1,6 +1,8 @@
 from django.urls import path
 
 from .api import (
+    DisplayColorDetailView,
+    DisplayColorsView,
     DuplicateCandidatesView,
     DuplicateReviewView,
     LabelAdminDetailView,
@@ -13,6 +15,12 @@ from .api import (
 )
 
 urlpatterns = [
+    path("display-colors/", DisplayColorsView.as_view(), name="display-colors"),
+    path(
+        "display-colors/<str:kind>/<str:key>/",
+        DisplayColorDetailView.as_view(),
+        name="display-color-detail",
+    ),
     path("search/suggestions/", SuggestionsView.as_view(), name="search-suggestions"),
     path("search/feedback/", SuggestionFeedbackView.as_view(), name="search-feedback"),
     path("search/evaluation/", SuggestionEvaluationView.as_view(), name="search-evaluation"),

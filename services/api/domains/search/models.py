@@ -12,6 +12,7 @@ class Label(models.Model):
     keywords = models.JSONField(default=list, blank=True)
     confidence_threshold = models.FloatField(default=0.55)
     is_active = models.BooleanField(default=True)
+    color = models.CharField(max_length=7, default="#64748B")
     updated_at = models.DateTimeField(auto_now=True)
     embedding = VectorField(dimensions=384, null=True, blank=True)
     embedding_model_id = models.CharField(max_length=120, blank=True)
@@ -19,6 +20,21 @@ class Label(models.Model):
 
     class Meta:
         ordering = ["name"]
+
+
+class DisplayColor(models.Model):
+    class Kind(models.TextChoices):
+        REQUEST_TYPE = "request_type", "Request type"
+        STATUS = "status", "Status"
+
+    kind = models.CharField(max_length=20, choices=Kind.choices)
+    key = models.CharField(max_length=24)
+    color = models.CharField(max_length=7, default="#64748B")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["kind", "key"], name="unique_display_color_kind_key")
+        ]
 
 
 class LabelConfidenceThreshold(models.Model):

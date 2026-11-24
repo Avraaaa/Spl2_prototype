@@ -17,12 +17,17 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ("id", "name", "is_active", "modules")
+        fields = ("id", "name", "is_active", "color", "modules")
         read_only_fields = ("id", "modules")
 
 
 class ProductWriteSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=160)
+    color = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
+
+
+class ProductColorWriteSerializer(serializers.Serializer):
+    color = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$")
 
 
 class ModuleWriteSerializer(serializers.Serializer):

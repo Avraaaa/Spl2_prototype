@@ -1,5 +1,8 @@
-import { statusLabel, statusTone } from './labels';
+import { statusLabel } from './labels';
+import { ColorChip } from './ColorChip';
+import { useDisplayColors } from './useDisplayColors';
 
 export function StatusBadge({ status = '' }: { status?: string }) {
-  return <span className={`badge tone-${statusTone(status)}`}>{statusLabel(status)}</span>;
+  const colors = useDisplayColors();
+  return <ColorChip color={colors.data?.statuses[status]}>{statusLabel(status)}</ColorChip>;
 }

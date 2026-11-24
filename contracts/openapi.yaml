@@ -102,6 +102,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/Product'
           description: ''
+  /api/admin/products/{product_id}/:
+    patch:
+      operationId: admin_products_update_color
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductColorWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductColorWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductColorWriteRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
   /api/admin/products/{product_id}/modules/:
     post:
       operationId: admin_products_modules_create
@@ -699,6 +730,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeployedVersion'
+          description: ''
+  /api/display-colors/:
+    get:
+      operationId: display_colors_list
+      tags:
+      - display-colors
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayColorsResponse'
+          description: ''
+  /api/display-colors/{kind}/{key}/:
+    put:
+      operationId: display_color_update
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: kind
+        schema:
+          type: string
+        required: true
+      tags:
+      - display-colors
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColorWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ColorWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ColorWriteRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayColorsResponse'
           description: ''
   /api/health/:
     get:
@@ -2402,6 +2484,15 @@ components:
       required:
       - current_password
       - username
+    ColorWriteRequest:
+      type: object
+      properties:
+        color:
+          type: string
+          minLength: 1
+          pattern: ^#[0-9A-Fa-f]{6}$
+      required:
+      - color
     Comment:
       type: object
       properties:
@@ -2640,6 +2731,30 @@ components:
       - submission_date
       - tentative_delivery_date
       - title
+    DisplayColorsResponse:
+      type: object
+      properties:
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+        products:
+          type: object
+          additionalProperties:
+            type: string
+        request_types:
+          type: object
+          additionalProperties:
+            type: string
+        statuses:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - labels
+      - products
+      - request_types
+      - statuses
     DuplicateReviewRequestRequest:
       type: object
       properties:
@@ -2783,6 +2898,10 @@ components:
         product:
           type: integer
           nullable: true
+        product_name:
+          type: string
+          readOnly: true
+          nullable: true
         module:
           type: integer
           nullable: true
@@ -2913,6 +3032,7 @@ components:
       - organization
       - organization_code
       - organization_name
+      - product_name
       - recurring_of_reference
       - recurring_of_title
       - recurring_requests
@@ -3054,7 +3174,10 @@ components:
           format: double
         is_active:
           type: boolean
+        color:
+          type: string
       required:
+      - color
       - confidence_threshold
       - description
       - id
@@ -3084,6 +3207,10 @@ components:
           minimum: 0
         is_active:
           type: boolean
+        color:
+          type: string
+          minLength: 1
+          pattern: ^#[0-9A-Fa-f]{6}$
       required:
       - keywords
       - name
@@ -3435,6 +3562,10 @@ components:
           minimum: 0
         is_active:
           type: boolean
+        color:
+          type: string
+          minLength: 1
+          pattern: ^#[0-9A-Fa-f]{6}$
     PatchedMaskingPatternRequest:
       type: object
       properties:
@@ -3470,6 +3601,13 @@ components:
             maxLength: 254
           - type: string
             maxLength: 0
+    PatchedProductColorWriteRequest:
+      type: object
+      properties:
+        color:
+          type: string
+          minLength: 1
+          pattern: ^#[0-9A-Fa-f]{6}$
     PatchedProfileUpdateRequest:
       type: object
       properties:
@@ -3605,6 +3743,9 @@ components:
           maxLength: 160
         is_active:
           type: boolean
+        color:
+          type: string
+          maxLength: 7
         modules:
           type: array
           items:
@@ -3621,6 +3762,10 @@ components:
           type: string
           minLength: 1
           maxLength: 160
+        color:
+          type: string
+          minLength: 1
+          pattern: ^#[0-9A-Fa-f]{6}$
       required:
       - name
     ReasonRequest:

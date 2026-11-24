@@ -2,12 +2,13 @@ from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from domains.accounts.api import ADMIN_PERMISSIONS
+from domains.accounts.services import is_datasoft_admin
 from domains.tenants.models import OrganizationKind
 from domains.tenants.selectors import portal_organization
 
@@ -16,6 +17,7 @@ from .serializers import (
     DeployedVersionSerializer,
     ModuleSerializer,
     ModuleWriteSerializer,
+    ProductColorWriteSerializer,
     ProductSerializer,
     ProductWriteSerializer,
     ResponseDuePeriodsSerializer,
@@ -29,15 +31,14 @@ class ProductListView(APIView):
         return Response(ProductSerializer(products, many=True).data)
 
 
-class ProductAdminView(APIView):
-    def get_permissions(self):
-        permissions = (
-            ADMIN_PERMISSIONS if self.request.method == "POST" else self.permission_classes
-        )
-        return [permission() for permission in permissions]
+class ProductAdminCreateView(APIView):
+    permission_classes = ADMIN_PERMISSIONS
 
     @extend_schema(
-        request=ProductWriteSerializer, responses={201: ProductSerializer}, tags=["admin"]
+        operation_id="admin_products_create",
+        request=ProductWriteSerializer,
+        responses={201: ProductSerializer},
+        tags=["admin"],
     )
     def post(self, request: Request) -> Response:
         data = ProductWriteSerializer(data=request.data)
@@ -48,6 +49,27 @@ class ProductAdminView(APIView):
         except IntegrityError as exc:
             raise ValidationError({"name": "Product already exists."}) from exc
         return Response(ProductSerializer(product).data, status=status.HTTP_201_CREATED)
+
+
+class ProductAdminDetailView(APIView):
+    permission_classes = ADMIN_PERMISSIONS
+
+    @extend_schema(
+        operation_id="admin_products_update_color",
+        request=ProductColorWriteSerializer,
+        responses=ProductSerializer,
+        tags=["admin"],
+    )
+    def patch(self, request: Request, product_id: int) -> Response:
+        if not is_datasoft_admin(request.user):
+            raise PermissionDenied("DataSoft administrator role required.")
+        product = get_object_or_404(Product, pk=product_id)
+        data = ProductColorWriteSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        for key, value in data.validated_data.items():
+            setattr(product, key, value)
+        product.save()
+        return Response(ProductSerializer(product).data)
 
 
 class ModuleAdminView(APIView):

@@ -13,7 +13,7 @@ const SECTIONS = [
   { to: '/admin/labels', label: 'Issue labels' },
   // ANCHOR P8-T2 admin section (audit log)
   { to: '/admin/audit', label: 'Audit log' },
-  // ANCHOR P8-T3 admin section (colours)
+  { to: '/admin/colors', label: 'Colours' },
   { to: '/admin/intelligence', label: 'Intelligence & privacy' },
   // ANCHOR P8-T2 admin section (audit log)
   { to: '/admin/settings', label: 'Workflow settings' },

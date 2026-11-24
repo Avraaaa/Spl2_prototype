@@ -9,8 +9,10 @@ import { useIssues, type IssueFilters } from '../issues/hooks';
 import { EmptyState, ErrorState, LoadingState } from '../ui/EmptyState';
 import { PageHeader } from '../ui/PageHeader';
 import { StatusBadge } from '../ui/StatusBadge';
+import { ColorChip } from '../ui/ColorChip';
 import { formatDate } from '../ui/format';
-import { statusLabel } from '../ui/labels';
+import { statusLabel, typeLabel } from '../ui/labels';
+import { useDisplayColors } from '../ui/useDisplayColors';
 
 type Counts = components['schemas']['DashboardCounts'];
 
@@ -45,6 +47,7 @@ type ListProps = {
 
 /** A short action list backed by the real request list endpoint. */
 function ActionList({ title, filters, empty, to, showBank, limit = 5 }: ListProps) {
+  const colors = useDisplayColors();
   const issues = useIssues(filters);
   const rows = (issues.data ?? []).slice(0, limit);
   return (
@@ -70,6 +73,19 @@ function ActionList({ title, filters, empty, to, showBank, limit = 5 }: ListProp
               {formatDate(issue.updated_at ?? null)}
             </span>
             <StatusBadge status={issue.status} />
+            <ColorChip color={colors.data?.request_types[issue.request_type ?? '']}>
+              {typeLabel(issue.request_type)}
+            </ColorChip>
+            {issue.product_name && (
+              <ColorChip color={colors.data?.products[String(issue.product)]}>
+                {issue.product_name}
+              </ColorChip>
+            )}
+            {issue.confirmed_label && (
+              <ColorChip color={colors.data?.labels[String(issue.confirmed_label.id)]}>
+                {issue.confirmed_label.name}
+              </ColorChip>
+            )}
           </li>
         ))}
       </ul>

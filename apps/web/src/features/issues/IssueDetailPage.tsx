@@ -9,6 +9,8 @@ import { hasRole, type PortalUser } from '../auth/roles';
 import { IssueReportSignals } from '../reports/ReportsPage';
 import { EmptyState, ErrorState, LoadingState } from '../ui/EmptyState';
 import { StatusBadge } from '../ui/StatusBadge';
+import { ColorChip } from '../ui/ColorChip';
+import { useDisplayColors } from '../ui/useDisplayColors';
 import { formatDateTime } from '../ui/format';
 import { priorityLabel, typeLabel } from '../ui/labels';
 import { WorkflowActions } from '../workflow/WorkflowActions';
@@ -35,11 +37,12 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 }
 
 function Details({ row }: { row: Issue }) {
+  const colors = useDisplayColors();
   return (
     <section className="card stack" aria-label="Details">
       <h3>Details</h3>
       <p className="prewrap">{row.description || 'No description yet.'}</p>
-      {row.confirmed_label && <p><strong>Confirmed label:</strong> <span className="chip">{row.confirmed_label.name}</span></p>}
+      {row.confirmed_label && <p><strong>Confirmed label:</strong> <ColorChip color={colors.data?.labels[String(row.confirmed_label.id)]}>{row.confirmed_label.name}</ColorChip></p>}
       {row.request_type === 'BUG' && (
         <Facts>
           <Fact label="Environment">{row.environment || '—'}</Fact>
@@ -249,6 +252,7 @@ function Conversation({ id, me }: { id: number; me: PortalUser }) {
 }
 
 export function IssueDetailPage({ me }: { me: PortalUser }) {
+  const colors = useDisplayColors();
   const id = Number(useParams().id);
   const issue = useIssue(id);
   if (!Number.isInteger(id) || id <= 0) return <p className="alert error">Request unavailable.</p>;
@@ -266,7 +270,8 @@ export function IssueDetailPage({ me }: { me: PortalUser }) {
           <StatusBadge status={row.status} />
           <span>{row.organization_name}</span>
           <span>{priorityLabel(row.priority)} priority</span>
-          <span>{typeLabel(row.request_type)}</span>
+          <ColorChip color={colors.data?.request_types[row.request_type ?? '']}>{typeLabel(row.request_type)}</ColorChip>
+          {row.product_name && <ColorChip color={colors.data?.products[String(row.product)]}>{row.product_name}</ColorChip>}
           <span className="muted">Created by {row.created_by_name}</span>
         </div>
         {canViewOriginal && <OriginalTextButton id={id} />}

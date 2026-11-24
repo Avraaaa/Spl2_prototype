@@ -190,3 +190,10 @@ Recorded by agent-runner (or the orchestrator) when a task PASSed with follow-up
 - [ ] [follow-up] Dense scores are (cosine+1)/2, so the fused score scale differs from the old RRF scale. Any deployment that tuned SEARCH_MIN_RELEVANCE against RRF values needs retuning.
 - [ ] [follow-up] The alpha sweep in compare_features is selected on the tune half of a sha256 parity split and reported on the holdout half. The split is deterministic, but both halves come from the same synthetic set, so there is no external validation.
 - [ ] [follow-up] Tenant scoping, the query paths and the DB writes are untouched. The diff only changes scoring, so there are no tenant, permission or workflow regressions. All five gates passed.
+
+## P8-T3 — 2026-11-24
+- [ ] [follow-up] Color writes are not audited. Product, label and display-color changes don't write AuditRecord rows. Colors are cosmetic, so this isn't blocking.
+- [ ] [follow-up] DisplayColorDetailView.put returns DisplayColorsView().get(request) by instantiating the view directly. It works, but it's brittle.
+- [ ] [follow-up] The product PATCH has a redundant is_datasoft_admin check on top of ADMIN_PERMISSIONS. This is harmless.
+- [ ] [follow-up] Colors are global rather than per bank. This matches the task, and GET /display-colors/ exposes only IDs, keys and hex colors with no tenant data. Product and label IDs are enumerable by any authenticated user, which is low risk.
+- [ ] [follow-up] I checked the diff, the tests and the permission checks only. I did not re-run the test suite and I did not read the frontend files. The five gates you listed all reported exit 0.

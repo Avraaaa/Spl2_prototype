@@ -9,6 +9,8 @@ import { canLoadLabelOptions, labelOptionSource } from './labelFilter';
 import { EmptyState, ErrorState, LoadingState } from '../ui/EmptyState';
 import { PageHeader } from '../ui/PageHeader';
 import { StatusBadge } from '../ui/StatusBadge';
+import { ColorChip } from '../ui/ColorChip';
+import { useDisplayColors } from '../ui/useDisplayColors';
 import { formatDate } from '../ui/format';
 import { PRIORITY_CODES, priorityLabel, STATUS_CODES, statusLabel, TYPE_CODES, typeLabel } from '../ui/labels';
 import { useBanks, useIssues, type IssueFilters } from './hooks';
@@ -38,6 +40,7 @@ const MODES: Record<ListMode, { title: string; subtitle: string; fixed: IssueFil
 };
 
 export function IssueListPage({ me, mode = 'all' }: { me: PortalUser; mode?: ListMode }) {
+  const colors = useDisplayColors();
   const config = MODES[mode];
   const staff = isStaff(me);
   const canLoadLabels = canLoadLabelOptions(me.roles);
@@ -138,6 +141,7 @@ export function IssueListPage({ me, mode = 'all' }: { me: PortalUser; mode?: Lis
                 {staff && <th>Bank</th>}
                 <th>Title</th>
                 <th>Type</th>
+                <th>Product</th>
                 <th>Priority</th>
                 <th>Status</th>
                 <th>Confirmed label</th>
@@ -153,12 +157,13 @@ export function IssueListPage({ me, mode = 'all' }: { me: PortalUser; mode?: Lis
                   </td>
                   {staff && <td>{issue.organization_name}</td>}
                   <td>{issue.title || 'Untitled draft'}</td>
-                  <td>{typeLabel(issue.request_type)}</td>
+                  <td><ColorChip color={colors.data?.request_types[issue.request_type ?? '']}>{typeLabel(issue.request_type)}</ColorChip></td>
+                  <td>{issue.product_name ? <ColorChip color={colors.data?.products[String(issue.product)]}>{issue.product_name}</ColorChip> : '—'}</td>
                   <td>{priorityLabel(issue.priority)}</td>
                   <td>
                     <StatusBadge status={issue.status} />
                   </td>
-                  <td>{issue.confirmed_label?.name ?? '—'}</td>
+                  <td>{issue.confirmed_label ? <ColorChip color={colors.data?.labels[String(issue.confirmed_label.id)]}>{issue.confirmed_label.name}</ColorChip> : '—'}</td>
                   {staff && <td>{issue.assignee_name ?? '—'}</td>}
                   <td>{formatDate((mode === 'queue' ? issue.submitted_at : issue.created_at) ?? null)}</td>
                 </tr>

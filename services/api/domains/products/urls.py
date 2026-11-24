@@ -3,7 +3,8 @@ from django.urls import path
 from .api import (
     DeployedVersionView,
     ModuleAdminView,
-    ProductAdminView,
+    ProductAdminCreateView,
+    ProductAdminDetailView,
     ProductListView,
     ResponseDuePeriodsView,
 )
@@ -14,7 +15,12 @@ urlpatterns = [
     path(
         "admin/response-due-periods/", ResponseDuePeriodsView.as_view(), name="response-due-periods"
     ),
-    path("admin/products/", ProductAdminView.as_view(), name="admin-product-create"),
+    path("admin/products/", ProductAdminCreateView.as_view(), name="admin-product-create"),
+    path(
+        "admin/products/<int:product_id>/",
+        ProductAdminDetailView.as_view(),
+        name="admin-product-detail",
+    ),
     path(
         "admin/products/<int:product_id>/modules/",
         ModuleAdminView.as_view(),

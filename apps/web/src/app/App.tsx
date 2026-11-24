@@ -14,7 +14,7 @@ import { IssueDraftPage } from '../features/issues/IssueDraftPage';
 import { IssueListPage } from '../features/issues/IssueListPage';
 import { ProductsPage } from '../features/issues/ProductsPage';
 import { NotificationsPage } from '../features/notifications/NotificationsPage';
-// ANCHOR P8-T3 imports (colours)
+import { ColorsAdminPage } from '../features/tenants/ColorsAdminPage';
 import { ReportsPage } from '../features/reports/ReportsPage';
 // ANCHOR P8-T5 imports (analytics)
 import { TasksPage } from '../features/tasks/TasksPage';
@@ -70,7 +70,7 @@ export function App() {
       <Route path="/admin/users" element={page(u => <AdminFrame><UsersAdminPage me={u} /></AdminFrame>)} />
       <Route path="/admin/products" element={page(() => <AdminFrame><ProductsPage /></AdminFrame>)} />
       <Route path="/admin/labels" element={page(() => <AdminFrame><LabelAdminPage /></AdminFrame>)} />
-      {/* ANCHOR P8-T3 routes (colours) */}
+      <Route path="/admin/colors" element={page(() => <AdminFrame><ColorsAdminPage /></AdminFrame>)} />
       <Route path="/admin/intelligence" element={page(() => <AdminFrame><IntelligenceAdminPage /></AdminFrame>)} />
       <Route path="/admin/settings" element={page(() => <AdminFrame><WorkflowSettingsPage /></AdminFrame>)} />
       {/* ANCHOR P8-T2 routes (audit log) */}

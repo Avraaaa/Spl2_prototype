@@ -50,6 +50,7 @@ class IssueSerializer(serializers.ModelSerializer):
     recurring_requests = serializers.SerializerMethodField()
     is_overdue = serializers.SerializerMethodField()
     organization_name = serializers.CharField(source="organization.name", read_only=True)
+    product_name = serializers.CharField(source="product.name", read_only=True, allow_null=True)
     organization_code = serializers.CharField(source="organization.code", read_only=True)
     created_by_name = serializers.CharField(source="created_by.account.full_name", read_only=True)
     assignee_name = serializers.SerializerMethodField()
@@ -120,6 +121,7 @@ class IssueSerializer(serializers.ModelSerializer):
             "acceptance_criteria",
             "request_type",
             "product",
+            "product_name",
             "module",
             "priority",
             "environment",

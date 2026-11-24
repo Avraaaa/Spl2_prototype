@@ -52,6 +52,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/products/{product_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["admin_products_update_color"];
+        trace?: never;
+    };
     "/api/admin/products/{product_id}/modules/": {
         parameters: {
             query?: never;
@@ -402,6 +418,38 @@ export interface paths {
         get: operations["deployed_versions_list"];
         put?: never;
         post: operations["deployed_versions_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/display-colors/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["display_colors_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/display-colors/{kind}/{key}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["display_color_update"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1235,6 +1283,9 @@ export interface components {
             username: string;
             current_password: string;
         };
+        ColorWriteRequest: {
+            color: string;
+        };
         Comment: {
             readonly id: number;
             readonly issue: number;
@@ -1327,6 +1378,20 @@ export interface components {
             is_overdue: boolean;
             response_due_date: string;
         };
+        DisplayColorsResponse: {
+            labels: {
+                [key: string]: string;
+            };
+            products: {
+                [key: string]: string;
+            };
+            request_types: {
+                [key: string]: string;
+            };
+            statuses: {
+                [key: string]: string;
+            };
+        };
         DuplicateReviewRequestRequest: {
             issue: number;
             candidate_issue: number;
@@ -1386,6 +1451,7 @@ export interface components {
             acceptance_criteria?: string;
             request_type?: components["schemas"]["RequestTypeEnum"] | components["schemas"]["BlankEnum"];
             product?: number | null;
+            readonly product_name: string | null;
             module?: number | null;
             priority?: components["schemas"]["PriorityEnum"] | components["schemas"]["BlankEnum"];
             environment?: string;
@@ -1489,6 +1555,7 @@ export interface components {
             /** Format: double */
             confidence_threshold: number;
             is_active: boolean;
+            color: string;
         };
         LabelWriteRequest: {
             name: string;
@@ -1497,6 +1564,7 @@ export interface components {
             /** Format: double */
             confidence_threshold?: number;
             is_active?: boolean;
+            color?: string;
         };
         LoginRequest: {
             username: string;
@@ -1612,6 +1680,7 @@ export interface components {
             /** Format: double */
             confidence_threshold?: number;
             is_active?: boolean;
+            color?: string;
         };
         PatchedMaskingPatternRequest: {
             name?: string;
@@ -1623,6 +1692,9 @@ export interface components {
             name?: string;
             code?: string;
             contact_email?: string;
+        };
+        PatchedProductColorWriteRequest: {
+            color?: string;
         };
         PatchedProfileUpdateRequest: {
             full_name?: string;
@@ -1679,10 +1751,12 @@ export interface components {
             readonly id: number;
             name: string;
             is_active?: boolean;
+            color?: string;
             readonly modules: components["schemas"]["Module"][];
         };
         ProductWriteRequest: {
             name: string;
+            color?: string;
         };
         ReasonRequest: {
             version: number;
@@ -1937,6 +2011,33 @@ export interface operations {
         };
         responses: {
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+        };
+    };
+    admin_products_update_color: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedProductColorWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedProductColorWriteRequest"];
+                "multipart/form-data": components["schemas"]["PatchedProductColorWriteRequest"];
+            };
+        };
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2551,6 +2652,53 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeployedVersion"];
+                };
+            };
+        };
+    };
+    display_colors_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisplayColorsResponse"];
+                };
+            };
+        };
+    };
+    display_color_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ColorWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ColorWriteRequest"];
+                "multipart/form-data": components["schemas"]["ColorWriteRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisplayColorsResponse"];
                 };
             };
         };

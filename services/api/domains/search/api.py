@@ -11,7 +11,14 @@ from domains.issues.api import visible_rows
 from domains.tenants.models import Organization
 from domains.tenants.selectors import get_authorized_object_or_404, portal_organization
 
-from .models import DuplicateReview, IssueLabelSelection, Label, SuggestionFeedback, TopicProposal
+from .models import (
+    DisplayColor,
+    DuplicateReview,
+    IssueLabelSelection,
+    Label,
+    SuggestionFeedback,
+    TopicProposal,
+)
 from .services import candidate_suggestions, create_topic_proposals, label_suggestions
 
 
@@ -95,6 +102,7 @@ class LabelWrite(serializers.Serializer):
     keywords = serializers.ListField(child=serializers.CharField(max_length=80), allow_empty=True)
     confidence_threshold = serializers.FloatField(min_value=0, max_value=1, required=False)
     is_active = serializers.BooleanField(required=False)
+    color = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
 
 
 class LabelResponse(serializers.Serializer):
@@ -104,6 +112,69 @@ class LabelResponse(serializers.Serializer):
     keywords = serializers.ListField(child=serializers.CharField())
     confidence_threshold = serializers.FloatField()
     is_active = serializers.BooleanField()
+    color = serializers.CharField()
+
+
+class ColorWrite(serializers.Serializer):
+    color = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$")
+
+
+class DisplayColorsResponse(serializers.Serializer):
+    labels = serializers.DictField(child=serializers.CharField())
+    products = serializers.DictField(child=serializers.CharField())
+    request_types = serializers.DictField(child=serializers.CharField())
+    statuses = serializers.DictField(child=serializers.CharField())
+
+
+class DisplayColorsView(APIView):
+    @extend_schema(
+        operation_id="display_colors_list",
+        responses=DisplayColorsResponse,
+        tags=["display-colors"],
+    )
+    def get(self, request):
+        from domains.products.models import Product
+
+        return Response(
+            {
+                "labels": {str(row.pk): row.color for row in Label.objects.filter(is_active=True)},
+                "products": {
+                    str(row.pk): row.color for row in Product.objects.filter(is_active=True)
+                },
+                "request_types": {
+                    row.key: row.color
+                    for row in DisplayColor.objects.filter(kind=DisplayColor.Kind.REQUEST_TYPE)
+                },
+                "statuses": {
+                    row.key: row.color
+                    for row in DisplayColor.objects.filter(kind=DisplayColor.Kind.STATUS)
+                },
+            }
+        )
+
+
+class DisplayColorDetailView(APIView):
+    @extend_schema(
+        operation_id="display_color_update",
+        request=ColorWrite,
+        responses=DisplayColorsResponse,
+        tags=["display-colors"],
+    )
+    def put(self, request, kind, key):
+        if not is_datasoft_admin(request.user):
+            raise PermissionDenied("DataSoft administrator role required.")
+        from domains.issues.models import IssueStatus, RequestType
+
+        choices = {
+            DisplayColor.Kind.REQUEST_TYPE: set(RequestType.values),
+            DisplayColor.Kind.STATUS: set(IssueStatus.values),
+        }
+        if kind not in choices or key not in choices[kind]:
+            raise ValidationError({"key": "Unknown display color key."})
+        data = ColorWrite(data=request.data)
+        data.is_valid(raise_exception=True)
+        DisplayColor.objects.update_or_create(kind=kind, key=key, defaults=data.validated_data)
+        return DisplayColorsView().get(request)
 
 
 class SuggestionsView(APIView):
@@ -345,6 +416,7 @@ def _label_payload(label: Label) -> dict:
         "keywords": label.keywords,
         "confidence_threshold": label.confidence_threshold,
         "is_active": label.is_active,
+        "color": label.color,
     }
 
 

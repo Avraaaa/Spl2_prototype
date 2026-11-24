@@ -37,9 +37,10 @@
     "P7-T16",
     "P8-T1",
     "P8-T2",
-    "P9-T1"
+    "P9-T1",
+    "P8-T3"
   ],
-  "last_updated": "2026-11-23",
+  "last_updated": "2026-11-24",
   "note": "Native Windows execution (no Docker/Codex available): tasks implemented directly with the same tests-first protocol; gates below are the native equivalents of docs/tasks.json gates.",
   "evidence": {
     "P0-T1": {
@@ -720,6 +721,27 @@
         "[follow-up] Tenant scoping, the query paths and the DB writes are untouched. The diff only changes scoring, so there are no tenant, permission or workflow regressions. All five gates passed."
       ],
       "rebased_onto": "aa259f30db6881093acfc0935b8cf0dab21585b2"
+    },
+    "P8-T3": {
+      "mode": "native-windows",
+      "implemented_by": "codex (agent-runner)",
+      "gates": [
+        "node scripts/validate-repo.mjs: EXIT 0",
+        "node scripts/dev.mjs manage makemigrations --check --dry-run: EXIT 0",
+        "node scripts/check-contract.mjs: EXIT 0",
+        "node scripts/dev.mjs lint: EXIT 0",
+        "node scripts/dev.mjs test: EXIT 0"
+      ],
+      "review": "codex read-only PASS",
+      "attempts": 2,
+      "base": "e86f7585651e36859b025596cb48a6a61e7c070b",
+      "follow_ups": [
+        "[follow-up] Color writes are not audited. Product, label and display-color changes don't write AuditRecord rows. Colors are cosmetic, so this isn't blocking.",
+        "[follow-up] DisplayColorDetailView.put returns DisplayColorsView().get(request) by instantiating the view directly. It works, but it's brittle.",
+        "[follow-up] The product PATCH has a redundant is_datasoft_admin check on top of ADMIN_PERMISSIONS. This is harmless.",
+        "[follow-up] Colors are global rather than per bank. This matches the task, and GET /display-colors/ exposes only IDs, keys and hex colors with no tenant data. Product and label IDs are enumerable by any authenticated user, which is low risk.",
+        "[follow-up] I checked the diff, the tests and the permission checks only. I did not re-run the test suite and I did not read the frontend files. The five gates you listed all reported exit 0."
+      ]
     }
   },
   "latest_review": "PASS"

@@ -4,6 +4,7 @@ from django.db import models
 class Product(models.Model):
     name = models.CharField(max_length=160, unique=True)
     is_active = models.BooleanField(default=True)
+    color = models.CharField(max_length=7, default="#64748B")
 
     class Meta:
         ordering = ["name"]
